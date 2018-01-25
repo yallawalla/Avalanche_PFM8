@@ -81,14 +81,14 @@ int			DecodeMinus(char *c) {
 				break;
 //__________________________________________________Pfm8, V to F ___________
 				case 'f':
-					Initialize_F2V(pfm);
+					Initialize_F2V(NULL);
 					_SET_MODE(pfm,_F2V);
 				break;
 //__________________________________________________soft crowbar reset______
 				case 'r':
 					_SET_STATUS(pfm,_PFM_CWBAR_STAT);
 					_CLEAR_ERROR(pfm, _CRITICAL_ERR_MASK);
-					EnableIgbtOut();
+					_ENABLE_PWM_OUT();
 				break;
 //__________________________________________________boot disable____________
 				case 'B':
@@ -334,6 +334,9 @@ int			DecodeWhat(char *c) {
 				int			k,m,n;
 				void 		*v;
 				switch(*c) {
+				case 'f':
+					__print("%d,%d\r\n",TIM_GetCapture1(TIM3),TIM_GetCapture2(TIM3));
+				break;
 //______________________________________________________________________________________
 				case 't':
 				{
@@ -357,42 +360,6 @@ int			DecodeWhat(char *c) {
 				}
 				break;
 //______________________________________________________________________________________
-				case 'a':
-					_proc_list();
-					break;
-//______________________________________________________________________________________
-				case 'B':
-#if defined (_NRST_DISABLE_BIT) && defined (_BOOT_ENABLE_BIT)
-					if(GPIO_ReadOutputDataBit(_BOOT_ENABLE_PORT,_BOOT_ENABLE_BIT)==SET)
-						printf (" ..boot enabled");
-					else
-						printf (" ..boot disabled");
-					if(pfm->boot_timeout)
-						printf(", timeout=%d ms",pfm->boot_timeout - __time__);
-#endif
-					break;
-//______________________________________________________________________________________
-				case 'h':
-					k=0;
-					while(1) {
-						v=malloc(0x400 * k);
-						if(!v)
-							break;
-						free(v);
-						++k;
-						printf(".");
-					}
-					m=(int)__heap_limit;
-					n=(int)__heap_base;
-					printf("\r\n%d of %dk heap left, ",k,(m - n)/0x400);
-					m=(int)__initial_sp;
-					n=(int)__heap_limit;
-					for(k=0; k<(m - n)/sizeof(int); ++k)
-						if(__heap_limit[k])
-							break;
-					printf("\r\n%d of %dk stack clean",k*sizeof(int)/0x400,(m-n)/0x400);					
-					break;
-//__izpis user shape ___________________________________________________________________
 				case '#':
 					__print("%d",*(int *)ushape);
 					for(n=1; ushape[n].T && n<_MAX_USER_SHAPE;++n)
@@ -414,14 +381,41 @@ int			DecodeWhat(char *c) {
 					__print(" error=%08X,mask=%08X",pfm->Error,pfm->Errmask);
 					break;
 //______________________________________________________________________________________
-				case 's':
-					__print(" %08X",pfm->Status);
+				case 'P':
+					_proc_list();
 					break;
 //______________________________________________________________________________________
-				case 'f':
-					__print(" %08X,%08X",TIM_GetCapture1(TIM3),TIM_GetCapture2(TIM3));
+				case 'B':
+#if defined (_NRST_DISABLE_BIT) && defined (_BOOT_ENABLE_BIT)
+					if(GPIO_ReadOutputDataBit(_BOOT_ENABLE_PORT,_BOOT_ENABLE_BIT)==SET)
+						printf (" ..boot enabled");
+					else
+						printf (" ..boot disabled");
+					if(pfm->boot_timeout)
+						printf(", timeout=%d ms",pfm->boot_timeout - __time__);
+#endif
 					break;
 //______________________________________________________________________________________
+				case 'H':
+					k=0;
+					while(1) {
+						v=malloc(0x400 * k);
+						if(!v)
+							break;
+						free(v);
+						++k;
+						printf(".");
+					}
+					m=(int)__heap_limit;
+					n=(int)__heap_base;
+					printf("\r\n%d of %dk heap left, ",k,(m - n)/0x400);
+					m=(int)__initial_sp;
+					n=(int)__heap_limit;
+					for(k=0; k<(m - n)/sizeof(int); ++k)
+						if(__heap_limit[k])
+							break;
+					printf("\r\n%d of %dk stack clean",k*sizeof(int)/0x400,(m-n)/0x400);					
+					break;
 //				case 'e':
 //					for(pfm->Burst->Pmax=0; pfm->Burst->Pmax<600; ++pfm->Burst->Pmax) {
 //						SetPwmTab(pfm);

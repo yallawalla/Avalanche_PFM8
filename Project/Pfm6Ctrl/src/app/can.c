@@ -28,7 +28,8 @@ struct { int id, mask; } canFilter[28] =
 	{_ID_SYS_TRIGG,0x7ff},
 	{_PFM_POCKELS,0x7ff},
 	{_ID_SYS2ENRG,0x7ff},
-	{_ID_ENRG2SYS,0x7ff}
+	{_ID_ENRG2SYS,0x7ff},
+	{_PFM_TAND_CH0,0x7f0}
 };
 /*******************************************************************************
 * Function Name  : CAN_Initialize

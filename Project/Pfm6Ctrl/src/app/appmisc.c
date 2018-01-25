@@ -253,10 +253,10 @@ int 	psimm1=p->Simmer.pw[1];
 					TIM8->CCR4=TIM8->CCR3=TIM1->CCR4=TIM1->CCR3=psimm1;
 				else
 					TIM8->CCR4=TIM8->CCR3=TIM1->CCR4=TIM1->CCR3=0;
-				TIM_OC2PolarityConfig(TIM1, TIM_OCPolarity_High);
-				TIM_OC4PolarityConfig(TIM1, TIM_OCPolarity_High);
-				TIM_OC2PolarityConfig(TIM8, TIM_OCPolarity_High);
-				TIM_OC4PolarityConfig(TIM8, TIM_OCPolarity_High);
+				TIM_OC2PolarityConfig(TIM1, _PWM_HIGH);
+				TIM_OC4PolarityConfig(TIM1, _PWM_HIGH);
+				TIM_OC2PolarityConfig(TIM8, _PWM_HIGH);
+				TIM_OC4PolarityConfig(TIM8, _PWM_HIGH);
 			} else {
 				if(_STATUS(p, PFM_STAT_SIMM1))  {
 					TIM8->CCR1=TIM1->CCR1=psimm0;
@@ -272,10 +272,10 @@ int 	psimm1=p->Simmer.pw[1];
 					TIM8->CCR3=TIM1->CCR3=0;
 					TIM8->CCR4=TIM1->CCR4=rate;
 				}
-				TIM_OC2PolarityConfig(TIM1, TIM_OCPolarity_Low);
-				TIM_OC4PolarityConfig(TIM1, TIM_OCPolarity_Low);
-				TIM_OC2PolarityConfig(TIM8, TIM_OCPolarity_Low);
-				TIM_OC4PolarityConfig(TIM8, TIM_OCPolarity_Low);
+				TIM_OC2PolarityConfig(TIM1, _PWM_LOW);
+				TIM_OC4PolarityConfig(TIM1, _PWM_LOW);
+				TIM_OC2PolarityConfig(TIM8, _PWM_LOW);
+				TIM_OC4PolarityConfig(TIM8, _PWM_LOW);
 			}
 #if defined __PFM8__
 			if(_MODE(p,_XLAP_SINGLE)) {
@@ -287,10 +287,10 @@ int 	psimm1=p->Simmer.pw[1];
 					TIM2->CCR4=TIM2->CCR3=TIM4->CCR4=TIM4->CCR3=psimm1/2;
 				else
 					TIM2->CCR4=TIM2->CCR3=TIM4->CCR4=TIM4->CCR3=0;
-				TIM_OC2PolarityConfig(TIM2, TIM_OCPolarity_High);
-				TIM_OC4PolarityConfig(TIM2, TIM_OCPolarity_High);
-				TIM_OC2PolarityConfig(TIM4, TIM_OCPolarity_High);
-				TIM_OC4PolarityConfig(TIM4, TIM_OCPolarity_High);
+				TIM_OC2PolarityConfig(TIM2, _PWM_HIGH);
+				TIM_OC4PolarityConfig(TIM2, _PWM_HIGH);
+				TIM_OC2PolarityConfig(TIM4, _PWM_HIGH);
+				TIM_OC4PolarityConfig(TIM4, _PWM_HIGH);
 			} else {
 				if(_STATUS(p, PFM_STAT_SIMM1))  {
 					TIM2->CCR1=TIM4->CCR1=psimm0/2;
@@ -306,10 +306,10 @@ int 	psimm1=p->Simmer.pw[1];
 					TIM2->CCR3=TIM4->CCR3=0;
 					TIM2->CCR4=TIM4->CCR4=rate/2;
 				}
-				TIM_OC2PolarityConfig(TIM4, TIM_OCPolarity_Low);
-				TIM_OC4PolarityConfig(TIM4, TIM_OCPolarity_Low);
-				TIM_OC2PolarityConfig(TIM2, TIM_OCPolarity_Low);
-				TIM_OC4PolarityConfig(TIM2, TIM_OCPolarity_Low);
+				TIM_OC2PolarityConfig(TIM4, _PWM_LOW);
+				TIM_OC4PolarityConfig(TIM4, _PWM_LOW);
+				TIM_OC2PolarityConfig(TIM2, _PWM_LOW);
+				TIM_OC4PolarityConfig(TIM2, _PWM_LOW);
 			}
 #endif
 }
@@ -364,29 +364,7 @@ int		simmrate;
 				TIM_ITConfig(TIM1,TIM_IT_Update,DISABLE);
 			}
 			TIM_Cmd(TIM1,ENABLE);
-			EnableIgbtOut();
-}
-
-/*******************************************************************************/
-void	EnableIgbtOut(void) {
-			GPIOE->MODER |= ((2<<(2*9))  | (2<<(2*11)) | (2<<(2*13)) | (2<<(2*14))); 							//tim1, PE 9,11,13,14		00101000100010000000000000000000
-			GPIOC->MODER |= ((2<<(2*6))  | (2<<(2*7))  | (2<<(2*8))  | (2<<(2*9)));	  						//tim8, PC 6,7,8,9			
-#if defined __PFM8__
-			GPIOA->MODER |= ((2<<(2*0))  | (2<<(2*1)));																						//tim2,	PA 0,1
-			GPIOB->MODER |= ((2<<(2*10)) | (2<<(2*11)));																					//PB 8,9
-			GPIOD->MODER |= ((2<<(2*12)) | (2<<(2*13)) | (2<<(2*14)) | ((uint32_t)2<<(2*15)));		//tim4	PD 12,13,14,15
-			_IGBT_RESET;
-#endif
-}
-/*******************************************************************************/
-void	_DISABLE_PWM_OUT(void) {
-			GPIOE->MODER &= ~((3<<(2*9)) | (3<<(2*11)) | (3<<(2*13)) | (3<<(2*14))); 							//tim1, PE 9,11,13,14
-			GPIOC->MODER &= ~((3<<(2*6)) | (3<<(2*7))  | (3<<(2*8))  | (3<<(2*9)));								//tim8, PC 6,7,8,9
-#if defined __PFM8__
-			GPIOA->MODER &= ~((3<<(2*0)) | (3<<(2*1)));																						//tim2,	PA 0,1
-			GPIOB->MODER &= ~((3<<(2*10))| (3<<(2*11)));																					//PB 8,9
-			GPIOD->MODER &= ~((3<<(2*12))| (3<<(2*13)) | (3<<(2*14)) | ((uint32_t)3<<(2*15)));		//tim4	PD 12,13,14,15
-#endif	
+			_ENABLE_PWM_OUT();
 }
 /*******************************************************************************/
 int		fanPmin=20;
@@ -947,11 +925,13 @@ GPIO_InitTypeDef					GPIO_InitStructure;
 
 void	 	USB_MSC_device(void) {
 				Vbus(off);
+				GPIO_SetBits(_USB_DIR_PORT,_USB_DIR_BIT);
 				USBD_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USR_MSC_desc, &USBD_MSC_cb, &USR_MSC_cb);
 }
 
 void		USB_VCP_device(void) {
 				Vbus(off);
+				GPIO_SetBits(_USB_DIR_PORT,_USB_DIR_BIT);
 				USBD_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USR_VCP_desc, &USBD_CDC_cb, &USR_CDC_cb);
 }
 
@@ -960,7 +940,9 @@ void		USBHost (_proc *p) {
 }
 
 void		USB_MSC_host(void) {
+				GPIO_ResetBits(_USB_DIR_PORT,_USB_DIR_BIT);
 				Vbus(on);
+	
 				USBH_App=USBH_Iap;
 				USBH_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USB_Host, &USBH_MSC_cb, &USR_USBH_MSC_cb);
 				if(!_proc_find((func *)USBHost,&USB_Host))

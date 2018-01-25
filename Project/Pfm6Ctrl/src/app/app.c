@@ -142,12 +142,12 @@ int				i,j;
 #endif
 //---------------------------------------------------------------------------------
 					if(__com1)
-						_proc_add((func *)ParseCom,__com1,						"ParseCOM0",0);
+						_proc_add((func *)ParseCom,__com1,						"COM1 parser",0);
 					if(__com3)
-						_proc_add((func *)ParseCom,__com3,						"ParseCOM3",0);
+						_proc_add((func *)ParseCom,__com3,						"COM3 parser",0);
 					
-					_proc_add((func *)ParseCanTx,pfm,								"txCAN",0);
-					_proc_add((func *)ParseCanRx,pfm,								"rxCAN",0);
+					_proc_add((func *)ParseCanTx,pfm,								"CAN tx",0);
+					_proc_add((func *)ParseCanRx,pfm,								"CAN rx",0);
 					_proc_add((func *)ProcessingEvents,pfm,					"events",0);
 					_proc_add((func *)ProcessingStatus,pfm,					"status",1);
 					_proc_add((func *)ProcessingCharger,pfm,				"charger6",1);
@@ -160,7 +160,7 @@ int				i,j;
 					SysTick_init();
 					SetSimmerRate(pfm,_SIMMER_LOW);
 					SetPwmTab(pfm);
-					Watchdog_init(300);	
+//					Watchdog_init(300);	
 					Initialize_DAC();
 //---------------------------------------------------------------------------------
 					_stdio(__com1);
@@ -650,7 +650,16 @@ PFM				*p=proc->arg;
 						switch(rx.StdId) {
 							case _ID_SYS_TRIGG:
 								_SET_EVENT(p,_TRIGGER);
-							break;				
+							break;
+							case _PFM_TAND_CH0:
+										p->burst[0].Time=		*(short *)q++;q++;
+										p->burst[0].U=			*(short *)q++;q++;
+										p->burst[0].Length=	*(short *)q++;q++;
+										p->burst[0].N=			*(char *)q++;
+										p->burst[0].Ereq=		*(char *)q++;
+										SetPwmTab(p);
+										Eack(NULL);	
+									break;
 //______________________________________________________________________________________
 							case _ID_PFMcom2SYS:
 								if(_MODE(p,_CAN_2_COM))	{

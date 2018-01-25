@@ -20,8 +20,10 @@
 
 #include				"usb_conf.h"
 #include				"usbh_core.h"
-
 //________SW version string_____________________________	
+
+
+// TIM1_polarity TIM_OCPolarity_High);
 
 #if		defined		(__PFM6__)
 	#define 				SW_version			215		
@@ -211,7 +213,6 @@ extern const char *_errStr[];
 
 
 #define					_ERROR(p,a)					(p->Error & (a))
-
 #define					_CLEAR_ERROR(p,a)	do {																																				\
 									if(p->Error & (a)) {																																				\
 /*										_DEBUG_(_DBG_ERR_MSG,"error %04X,clear from %04X, status=%04X",a,p->Error,p->Status);	*/		\
@@ -329,6 +330,10 @@ int							USBH_Iap(int);
 #define 				_PFM_TRIGG						0x71
 #define					_PFM_SetHVmode				0x72
 #define 				_PFM_POCKELS					0x73
+
+#define 				_PFM_TAND_CH0					0x100
+#define 				_PFM_TAND_CH1					0x101
+#define 				_PFM_TAND_DLY					0x102
 
 #define					_ID_SYS2ENRG					0x1f
 #define					_ID_ENRG2SYS					0x3f
@@ -464,8 +469,6 @@ void						App_Init(void),
 				        
 								SetSimmerRate(PFM *, SimmerType),
 								SetPwmTab(PFM *),
-								EnableIgbtOut(void),
-								_DISABLE_PWM_OUT(void),
 								Trigger(PFM *),
 								TriggerADC(PFM *),
 								CanReply(char *, ...);
@@ -531,7 +534,7 @@ _io 						*Initialize_USART1(int),
 								*Initialize_CAN(int);
 void						canFilterConfig(int, int);
 
-void	 					*Initialize_F2V(PFM *);
+void	 					*Initialize_F2V(_proc *);
 _i2c*						Initialize_I2C(int, int);
 				
 extern int			fanPmin,fanPmax,fanTL,fanTH;
@@ -603,8 +606,10 @@ int			SetChargerVoltage(int);
 #define _IGBT_RESET_PORT 	GPIOE
 #define _USB_PIN_BIT 			GPIO_Pin_8
 #define _USB_PIN_PORT 		GPIOD
-#define _USB_PDEN_BIT 		GPIO_Pin_9
-#define _USB_PDEN_PORT	 	GPIOD
+#define _USB_DIR_BIT 			GPIO_Pin_9
+#define _USB_DIR_PORT	 		GPIOD
+#define _USB_SENSE_BIT 		GPIO_Pin_10
+#define _USB_SENSE_PORT	 	GPIOD
 
 #if defined (__PFM6__)
 #define _TRIGGER1_BIT GPIO_Pin_12
@@ -630,15 +635,18 @@ int			SetChargerVoltage(int);
 #define	_BOOT_ENABLE_BIT				GPIO_Pin_14
 #define _BOOT_ENABLE_PORT				GPIOF			        
 
-#define _CWBAR_BIT GPIO_Pin_7
-#define _CWBAR_PORT GPIOE
-#define _CWBAR_INT_port EXTI_PortSourceGPIOE
-#define _CWBAR_INT_pin	EXTI_PinSource7
-#define _CWBAR_INT_line	EXTI_Line7
-#define _CWBAR_HANDLER EXTI9_5_IRQHandler
+#define _CWBAR_BIT							GPIO_Pin_6								//	GPIO_Pin_7
+#define _CWBAR_PORT							GPIOE
+#define _CWBAR_INT_port					EXTI_PortSourceGPIOE
+#define _CWBAR_INT_pin					EXTI_PinSource6						//	EXTI_PinSource7
+#define _CWBAR_INT_line					EXTI_Line6								//	EXTI_Line7
+#define _CWBAR_HANDLER					EXTI9_5_IRQHandler
 
-#define	_ERROR_OW_BIT		GPIO_Pin_13
-#define	_ERROR_OW_PORT	GPIOB
+#define	_ERROR_OW_BIT						GPIO_Pin_13
+#define	_ERROR_OW_PORT					GPIOB
+#define	_F2V_OW_BIT							GPIO_Pin_5
+#define	_F2V_OW_AF							GPIO_PinSource5
+#define	_F2V_OW_PORT						GPIOB
 
 #else
 *** error, define platform
@@ -654,51 +662,51 @@ int			SetChargerVoltage(int);
 #define _VBUS_PORT GPIOC
 #endif
 
-#define 				_TRIGGER1			(!GPIO_ReadOutputDataBit(_TRIGGER1_PORT,_TRIGGER1_BIT))				        
-#define 				_TRIGGER2			(!GPIO_ReadOutputDataBit(_TRIGGER2_PORT,_TRIGGER2_BIT))			        
-#define 				_TRIGGER3			(!GPIO_ReadOutputDataBit(_TRIGGER3_PORT,_TRIGGER3_BIT))				        		        
-#define 				_IGBT_READY		(GPIO_ReadInputDataBit(_IGBT_READY_PORT,_IGBT_READY_BIT)== Bit_SET)				        		        
-#define					_PFM_CWBAR		(GPIO_ReadInputDataBit(_CWBAR_PORT, _CWBAR_BIT)== Bit_RESET)
+#define _TRIGGER1			(!GPIO_ReadOutputDataBit(_TRIGGER1_PORT,_TRIGGER1_BIT))				        
+#define _TRIGGER2			(!GPIO_ReadOutputDataBit(_TRIGGER2_PORT,_TRIGGER2_BIT))			        
+#define _TRIGGER3			(!GPIO_ReadOutputDataBit(_TRIGGER3_PORT,_TRIGGER3_BIT))				        		        
+#define _IGBT_READY		(GPIO_ReadInputDataBit(_IGBT_READY_PORT,_IGBT_READY_BIT)== Bit_SET)				        		        
+#define	_PFM_CWBAR		(GPIO_ReadInputDataBit(_CWBAR_PORT, _CWBAR_BIT)== Bit_RESET)
 
-#define					_IGBT_RESET		{ int i; 																							\
-																for(i=0; i<10; ++i)		 															\
-																	GPIO_ResetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT); \
-															}																											\
-															GPIO_SetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT);				
+#define	_IGBT_RESET		{ int i; 																							\
+												for(i=0; i<10; ++i)		 															\
+													GPIO_ResetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT); \
+											}																											\
+											GPIO_SetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT);				
 
-#define 				_TRIGGER1_ON	do {															\
-											if(!_TRIGGER1)														\
-												_DEBUG_(_DBG_SYS_MSG,"trigger 1 enabled");				\
-												GPIO_ResetBits(_TRIGGER1_PORT,_TRIGGER1_BIT);			\
-											} while(0)
-#define 				_TRIGGER1_OFF	do {															\
-											if(_TRIGGER1)															\
-												_DEBUG_(_DBG_SYS_MSG,"trigger 1 disabled");				\
-												GPIO_SetBits(_TRIGGER1_PORT,_TRIGGER1_BIT);	  		\
-											} while(0)
-#define 				_TRIGGER2_ON	do {															\
-											if(!_TRIGGER2)														\
-												_DEBUG_(_DBG_SYS_MSG,"trigger 2 enabled");				\
-												GPIO_ResetBits(_TRIGGER2_PORT,_TRIGGER2_BIT);			\
-											} while(0)
-#define 				_TRIGGER2_OFF	do {															\
-											if(_TRIGGER2)															\
-												_DEBUG_(_DBG_SYS_MSG,"trigger 2 disabled");				\
-												GPIO_SetBits(_TRIGGER2_PORT,_TRIGGER2_BIT);		  	\
-											} while(0)
-#define 				_TRIGGER3_ON	do {															\
-											if(!_TRIGGER3)														\
-												_DEBUG_(_DBG_SYS_MSG,"trigger 2 enabled");				\
-												GPIO_ResetBits(_TRIGGER3_PORT,_TRIGGER3_BIT);			\
-											} while(0)
-#define 				_TRIGGER3_OFF	do {															\
-											if(_TRIGGER3)															\
-												_DEBUG_(_DBG_SYS_MSG,"trigger 2 disabled");				\
-												GPIO_SetBits(_TRIGGER3_PORT,_TRIGGER3_BIT);		  	\
-											} while(0)
-											      
-#define					_CRITICAL_ERR_MASK		(PFM_ERR_DRVERR | PFM_ERR_PULSEENABLE | PFM_ADCWDG_ERR | PFM_ERR_PSRDYN | PFM_ERR_LNG | PFM_HV2_ERR)
-#define					_PFM_CWBAR_STAT				PFM_ERR_PULSEENABLE
+#define _TRIGGER1_ON	do {															\
+							if(!_TRIGGER1)														\
+								_DEBUG_(_DBG_SYS_MSG,"trigger 1 enabled");				\
+								GPIO_ResetBits(_TRIGGER1_PORT,_TRIGGER1_BIT);			\
+							} while(0)
+#define _TRIGGER1_OFF	do {															\
+							if(_TRIGGER1)															\
+								_DEBUG_(_DBG_SYS_MSG,"trigger 1 disabled");				\
+								GPIO_SetBits(_TRIGGER1_PORT,_TRIGGER1_BIT);	  		\
+							} while(0)
+#define _TRIGGER2_ON	do {															\
+							if(!_TRIGGER2)														\
+								_DEBUG_(_DBG_SYS_MSG,"trigger 2 enabled");				\
+								GPIO_ResetBits(_TRIGGER2_PORT,_TRIGGER2_BIT);			\
+							} while(0)
+#define _TRIGGER2_OFF	do {															\
+							if(_TRIGGER2)															\
+								_DEBUG_(_DBG_SYS_MSG,"trigger 2 disabled");				\
+								GPIO_SetBits(_TRIGGER2_PORT,_TRIGGER2_BIT);		  	\
+							} while(0)
+#define _TRIGGER3_ON	do {															\
+							if(!_TRIGGER3)														\
+								_DEBUG_(_DBG_SYS_MSG,"trigger 2 enabled");				\
+								GPIO_ResetBits(_TRIGGER3_PORT,_TRIGGER3_BIT);			\
+							} while(0)
+#define _TRIGGER3_OFF	do {															\
+							if(_TRIGGER3)															\
+								_DEBUG_(_DBG_SYS_MSG,"trigger 2 disabled");				\
+								GPIO_SetBits(_TRIGGER3_PORT,_TRIGGER3_BIT);		  	\
+							} while(0)
+							      
+#define	_CRITICAL_ERR_MASK		(PFM_ERR_DRVERR | PFM_ERR_PULSEENABLE | PFM_ADCWDG_ERR | PFM_ERR_PSRDYN | PFM_ERR_LNG | PFM_HV2_ERR)
+#define	_PFM_CWBAR_STAT				PFM_ERR_PULSEENABLE
 				        
 enum	err_parse	{
 								_PARSE_OK=0,
@@ -761,6 +769,16 @@ static __inline void dbg_6(int n,char *s, int arg1, int arg2, int arg3, int arg4
 #define	GET_MAC(_1,_2,_3,_4,_5,_6,NAME,...) NAME
 #define	_DEBUG_(...) GET_MAC(__VA_ARGS__,dbg_6,dbg_5,dbg_4,dbg_3,dbg_2)(__VA_ARGS__)
 
+#if defined __PFM8__
+	#define _PWM_LOW			TIM_OCPolarity_High
+	#define _PWM_HIGH			TIM_OCPolarity_Low
+	#define _PWM_3STATE		GPIO_PuPd_UP
+#else
+	#define _PWM_LOW			TIM_OCPolarity_Low
+	#define _PWM_HIGH			TIM_OCPolarity_High
+	#define _PWM_3STATE		GPIO_PuPd_DOWN
+#endif
+
 static __inline void _TIMERS_HALT(void) {
 #if defined __PFM8__
 			TIM_Cmd(TIM4,DISABLE);			
@@ -789,6 +807,28 @@ static __inline void _TIMERS_PRELOAD_ON(void) {
 			TIM_OC3PreloadConfig(TIM4, TIM_OCPreload_Enable);
 			TIM_OC4PreloadConfig(TIM4, TIM_OCPreload_Enable);
 #endif				
+}
+
+/*******************************************************************************/
+static __inline void	_ENABLE_PWM_OUT(void) {
+			GPIOE->MODER |= ((2<<(2*9))  | (2<<(2*11)) | (2<<(2*13)) | (2<<(2*14))); 							//tim1, PE 9,11,13,14		00101000100010000000000000000000
+			GPIOC->MODER |= ((2<<(2*6))  | (2<<(2*7))  | (2<<(2*8))  | (2<<(2*9)));	  						//tim8, PC 6,7,8,9			
+#if defined __PFM8__
+			GPIOA->MODER |= ((2<<(2*0))  | (2<<(2*1)));																						//tim2,	PA 0,1
+			GPIOB->MODER |= ((2<<(2*10)) | (2<<(2*11)));																					//PB 8,9
+			GPIOD->MODER |= ((2<<(2*12)) | (2<<(2*13)) | (2<<(2*14)) | ((uint32_t)2<<(2*15)));		//tim4	PD 12,13,14,15
+			_IGBT_RESET;
+#endif
+}
+/*******************************************************************************/
+static __inline void	_DISABLE_PWM_OUT(void) {
+			GPIOE->MODER &= ~((3<<(2*9)) | (3<<(2*11)) | (3<<(2*13)) | (3<<(2*14))); 							//tim1, PE 9,11,13,14
+			GPIOC->MODER &= ~((3<<(2*6)) | (3<<(2*7))  | (3<<(2*8))  | (3<<(2*9)));								//tim8, PC 6,7,8,9
+#if defined __PFM8__
+			GPIOA->MODER &= ~((3<<(2*0)) | (3<<(2*1)));																						//tim2,	PA 0,1
+			GPIOB->MODER &= ~((3<<(2*10))| (3<<(2*11)));																					//PB 8,9
+			GPIOD->MODER &= ~((3<<(2*12))| (3<<(2*13)) | (3<<(2*14)) | ((uint32_t)3<<(2*15)));		//tim4	PD 12,13,14,15
+#endif	
 }
 
 static __inline void _TIMERS_PRELOAD_OFF(void) {
@@ -835,11 +875,3 @@ static __inline void _TIMERS_ARR_SET(int simmrate) {
 			TIM_SetAutoreload(TIM4,simmrate/2);
 #endif
 }
-
-//u 200
-//>p 200,100
-//>+D 3
-//>s3
-//>:4640 E1=9.3J, E2=3.2J
-//>:0700 E1=9.3J, E2=3.2J
-//>

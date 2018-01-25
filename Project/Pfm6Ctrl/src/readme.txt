@@ -635,3 +635,16 @@ PFM8, dodan task F2V, na CAN rx pretvarja freq, v napetost za pfm->burst in tx s
 tandem:
 	-urediti izpis za debug
 	-šmafu ukrog regul. zakasnitve v alternate režimu
+	
+25.1.18 pfm8 cfg.ini
+
+-l d0,d1,d2,d3,,d4,d5,d6,d7
+-l
+-r
+-i
+u 700
+p 100,500
+b 3,1000,200
+-E ffffff
+-f
+

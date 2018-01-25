@@ -12,7 +12,7 @@
 */
 #include	"pfm.h"
 #include	<math.h>
-struct _TIM _TIM;
+struct 		_TIM _TIM;
 // ________________________________________________________________________________
 // ________________________________________________________________________________
 // ________________________________________________________________________________
@@ -27,9 +27,9 @@ struct _TIM _TIM;
 //
 /**********************************************************************************
 * Function Name	: Timer_Init
-* Description		: Configure timer pins as output open drain
-* Output				: TIM1, TIM8
-* Return				: None
+* Description		: 
+* Output				: 
+* Return				:
 **********************************************************************************/
 void 		Initialize_TIM() {
 TIM_TimeBaseInitTypeDef		TIM_TimeBaseStructure;
@@ -87,23 +87,28 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		GPIO_InitStructure.GPIO_Pin = _BOOT_ENABLE_BIT;
 		GPIO_Init(_BOOT_ENABLE_PORT, &GPIO_InitStructure);
 #endif
-// ________________________________________________________________________________
-// USB isolator PIN, PDEN signals, PFM8 only
-//
+#if defined (_USB_PIN_BIT) && defined (_USB_DIR_BIT)
 		GPIO_InitStructure.GPIO_Pin = _USB_PIN_BIT;
 		GPIO_Init(_USB_PIN_PORT, &GPIO_InitStructure);
 		GPIO_SetBits(_USB_PIN_PORT,_USB_PIN_BIT);
 		
-		GPIO_InitStructure.GPIO_Pin = _USB_PDEN_BIT;
-		GPIO_Init(_USB_PDEN_PORT, &GPIO_InitStructure);
-		GPIO_SetBits(_USB_PDEN_PORT,_USB_PDEN_BIT);
+		GPIO_InitStructure.GPIO_Pin = _USB_DIR_BIT;
+		GPIO_Init(_USB_DIR_PORT, &GPIO_InitStructure);
+		GPIO_ResetBits(_USB_DIR_PORT,_USB_DIR_BIT);
+#endif
+#if defined (_USB_SENSE_BIT)
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+		GPIO_InitStructure.GPIO_Pin = _USB_SENSE_BIT;
+		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+		GPIO_Init(_USB_SENSE_PORT, &GPIO_InitStructure);
+#endif
 // ________________________________________________________________________________	
-//  CROWBAR port && interrupt
+#if defined (_CWBAR_INT_pin)
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
 		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
 		GPIO_InitStructure.GPIO_Pin = _CWBAR_BIT;					
 		GPIO_Init(_CWBAR_PORT, &GPIO_InitStructure);
-
+		
 		RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
 		SYSCFG_EXTILineConfig(_CWBAR_INT_port, _CWBAR_INT_pin);
 		EXTI_ClearITPendingBit(_CWBAR_INT_line);
@@ -112,6 +117,7 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;  
 		EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 		EXTI_Init(&EXTI_InitStructure);
+#endif
 // ________________________________________________________________________________		
 // 	FAULT port && interrupt, IGBT Ready (PFM8 only)
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
@@ -132,7 +138,7 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 // ________________________________________________________________________________
 // TIM1, TIM8 IGBT pwm outputs
 		GPIO_StructInit(&GPIO_InitStructure);
-		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+		GPIO_InitStructure.GPIO_PuPd = _PWM_3STATE;
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
 		GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
@@ -176,7 +182,6 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 // TIMebase setup
 		TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
 		TIM_OCStructInit(&TIM_OCInitStructure);
-
 		TIM_TimeBaseStructure.TIM_Prescaler = 0;
 		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_CenterAligned1;
 //		TIM_TimeBaseStructure.TIM_RepetitionCounter=1;
@@ -218,7 +223,7 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
 		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 		TIM_OCInitStructure.TIM_Pulse=0;
-		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+		TIM_OCInitStructure.TIM_OCPolarity = _PWM_HIGH;
 
 		TIM_OC1Init(TIM1, &TIM_OCInitStructure);
 		TIM_OC1Init(TIM8, &TIM_OCInitStructure);
@@ -231,7 +236,7 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		TIM_OC3Init(TIM4, &TIM_OCInitStructure);
 #endif
 		TIM_OCInitStructure.TIM_Pulse=_PWM_RATE_HI;
-		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
+		TIM_OCInitStructure.TIM_OCPolarity = _PWM_LOW;
 
 		TIM_OC2Init(TIM1, &TIM_OCInitStructure);
 		TIM_OC2Init(TIM8, &TIM_OCInitStructure);
@@ -297,24 +302,25 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 * Output         : None
 * Return         : 
 *******************************************************************************/
-void 		*Initialize_F2V(PFM *p) {
+void 		*Initialize_F2V(_proc *p) {
 TIM_TimeBaseInitTypeDef	TIM_TimeBaseStructure;
 GPIO_InitTypeDef				GPIO_InitStructure;
 TIM_ICInitTypeDef				TIM_ICInitStructure;
 	
-	if(p) {
+	if(!p) {
 		GPIO_StructInit(&GPIO_InitStructure);
 		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 		GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
-		GPIO_Init(GPIOB, &GPIO_InitStructure);
-		GPIO_ResetBits(GPIOB,GPIO_Pin_13);
+		GPIO_InitStructure.GPIO_Pin = _ERROR_OW_BIT;
+		GPIO_Init(_ERROR_OW_PORT, &GPIO_InitStructure);
+		GPIO_ResetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);
 
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
-		GPIO_Init(GPIOB, &GPIO_InitStructure);
-		GPIO_PinAFConfig(GPIOB, GPIO_PinSource5, GPIO_AF_TIM3);
+		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+		GPIO_InitStructure.GPIO_Pin = _F2V_OW_BIT;
+		GPIO_Init(_F2V_OW_PORT, &GPIO_InitStructure);
+		GPIO_PinAFConfig(_F2V_OW_PORT, _F2V_OW_AF, GPIO_AF_TIM3);
 
 		TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
 		TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
@@ -341,12 +347,17 @@ TIM_ICInitTypeDef				TIM_ICInitStructure;
 		_proc_add((func *)Initialize_F2V,NULL,"F2V",1);
 	} else {
 		if(pfm->Burst && TIM_GetCapture2(TIM3)) {
-			pfm->Burst->Pmax=600000*_PWM_RATE_HI/(TIM_GetCapture1(TIM3) + TIM_GetCapture2(TIM3)/2)/_AD2HV(pfm->HVref);
+//			pfm->Burst->Pmax=600000*_PWM_RATE_HI/(TIM_GetCapture1(TIM3) + TIM_GetCapture2(TIM3)/2)/_AD2HV(pfm->HVref);
+			pfm->Burst->Pmax=600000*_PWM_RATE_HI/TIM_GetCapture2(TIM3)/_AD2HV(pfm->HVref);
 			if(pfm->Trigger.timeout && __time__ >= pfm->Trigger.timeout) {
 				SetPwmTab(pfm);
 				pfm->Trigger.timeout=0;
 			}
 		}
+		if(pfm->Error)
+			GPIO_SetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);
+		else
+			GPIO_ResetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);
 	}
 	return Initialize_F2V;
 }
@@ -587,7 +598,7 @@ void 		__EXTI_IRQHandler(void)
 				if(EXTI_GetITStatus(_CWBAR_INT_line) == SET) {
 					EXTI_ClearITPendingBit(_CWBAR_INT_line);
 					if(_MODE(pfm,_F2V)) {
-						if(_PFM_CWBAR) {
+						if(!_PFM_CWBAR && !pfm->Trigger.timeout) {
 							_SET_EVENT(pfm,_TRIGGER);
 						}	else {
 							pfm->Trigger.timeout=__time__+2;
@@ -596,7 +607,7 @@ void 		__EXTI_IRQHandler(void)
 						if(_PFM_CWBAR) {
 							_SET_STATUS(pfm,_PFM_CWBAR_STAT);
 							_CLEAR_ERROR(pfm, _CRITICAL_ERR_MASK);
-							EnableIgbtOut();
+							_ENABLE_PWM_OUT();
 						}	else {
 							_CLEAR_STATUS(pfm,_PFM_CWBAR_STAT);
 							_SET_ERROR(pfm,PFM_ERR_PULSEENABLE);
@@ -622,11 +633,11 @@ void		Trigger(PFM *p) {
 				if(!_MODE(p,_PULSE_INPROC)) {
 					if(_MODE(p,_ENM_NOTIFY)) {
 						CanTxMsg tx = {_ID_SYS_TRIGG,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
-						while(CAN_TransmitStatus(__CAN__, 0) == CAN_TxStatus_Pending &&
-							CAN_TransmitStatus(__CAN__, 1) == CAN_TxStatus_Pending &&
-								CAN_TransmitStatus(__CAN__, 2) == CAN_TxStatus_Pending) {
-									_proc_loop();
-								}
+//						while(CAN_TransmitStatus(__CAN__, 0) == CAN_TxStatus_Pending &&
+//							CAN_TransmitStatus(__CAN__, 1) == CAN_TxStatus_Pending &&
+//								CAN_TransmitStatus(__CAN__, 2) == CAN_TxStatus_Pending) {
+//									_proc_loop();
+//								}
 						_YELLOW1(50);
 						CAN_Transmit(__CAN__,&tx);
 					}

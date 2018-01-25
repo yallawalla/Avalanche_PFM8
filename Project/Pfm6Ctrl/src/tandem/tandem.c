@@ -197,10 +197,6 @@ static
 								break;
 						}
 }
-	
-//									_SET_MODE(pfm,_ENM_NOTIFY);
-//									CanReply("wwwwX",0xC101,pfm->Simmer.active,40000,pfm->Burst->Length,_ID_SYS2ENRG);
-
 //______________________________________________________________________________________
 int				Tandem() {
 int				i,cnt=0,timeout=0;

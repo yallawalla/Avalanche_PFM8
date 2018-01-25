@@ -1,7 +1,7 @@
 #ifndef		_PROC_H
 #define		_PROC_H
 #include	"io.h"
-#define		_PROC_BUFFER_SIZE 16
+#define		_PROC_BUFFER_SIZE 20
 
 typedef		void *func(void *);
 extern volatile int __time__;
