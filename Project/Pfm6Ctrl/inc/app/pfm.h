@@ -358,6 +358,7 @@ int							USBH_Iap(int);
 #define					_CtrlV								0x16
 #define					_CtrlZ								0x1a
 #define					_CtrlY								0x19
+#define					_CtrlT								0x14
 					                            
 #define	 				_f1										0x001B4F50
 #define	 				_f2										0x001B4F51

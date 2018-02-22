@@ -66,6 +66,11 @@ int				i=pfm->burst[0].Period+pfm->burst[1].Period;
 						case _NdSetup:							
 							__print("\rNd     : %5du,%5dV, n=%3d,%5du",pfm->Burst->Time,pfm->Burst->Pmax*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length);
 							break;
+						case _LASER:
+							__dbug=__stdin.io;
+							_SET_DBG(pfm,_DBG_PULSE_MSG);
+							_SET_DBG(pfm,_DBG_ENM_MSG);
+							return;
 						default:				
 							switch(triggerMode) {
 								case _BOTH:
@@ -89,13 +94,6 @@ int				i=pfm->burst[0].Period+pfm->burst[1].Period;
 								__print(", STDBY");
 							if(state==_READY)
 								__print(", READY");
-							if(state==_LASER) {
-								__print(", LASER\r\n");
-								__dbug=__stdin.io;
-								_SET_DBG(pfm,_DBG_PULSE_MSG);
-								_SET_DBG(pfm,_DBG_ENM_MSG);
-								return;
-							}
 							break;
 					}
 					for(i=7*(3-idx)+1; i--; __print("\b"));
@@ -165,8 +163,12 @@ static
 									CanReply("wwwwX",0xC101,pfm->Simmer.active,40000,pfm->Burst->Length,_ID_SYS2ENRG);
 									break;
 								case _LASER:
-								_SET_MODE(pfm,_TRIGGER_PERIODIC);
-								_SET_EVENT(pfm,_TRIGGER);	
+									if(!_MODE(pfm,_TRIGGER_PERIODIC)) {
+										__print("\r\n>");
+										_wait(5,_proc_loop);
+										_SET_MODE(pfm,_TRIGGER_PERIODIC);
+										_SET_EVENT(pfm,_TRIGGER);	
+									}
 								break;
 							default:
 								break;

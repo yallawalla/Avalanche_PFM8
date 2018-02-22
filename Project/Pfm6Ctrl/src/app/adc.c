@@ -360,21 +360,21 @@ void 	Initialize_ADC(void)
 * Output         : None
 * Return         : None
 *******************************************************************************/
-void ADC_IRQHandler(void)	{
-		if(ADC_GetITStatus(ADC1, ADC_IT_AWD) != RESET) {
-			ADC_ClearITPendingBit(ADC1, ADC_IT_AWD);
-			_SET_ERROR(pfm,PFM_ADCWDG_ERR);
-			ADC_ITConfig(ADC1,ADC_IT_AWD,DISABLE);
-		}
-		if(ADC_GetITStatus(ADC2, ADC_IT_AWD) != RESET) {
-			ADC_ClearITPendingBit(ADC2, ADC_IT_AWD);
-			_SET_ERROR(pfm,PFM_ADCWDG_ERR);
-			ADC_ITConfig(ADC2,ADC_IT_AWD,DISABLE);
-		}
-		if(ADC_GetITStatus(ADC3, ADC_IT_AWD) != RESET) {
-			ADC_ClearITPendingBit(ADC3, ADC_IT_AWD);
-			_SET_ERROR(pfm,PFM_ADCWDG_ERR);
-		}
+void	ADC_IRQHandler(void)	{
+			if(ADC_GetITStatus(ADC1, ADC_IT_AWD) != RESET) {
+				ADC_ClearITPendingBit(ADC1, ADC_IT_AWD);
+				_SET_ERROR(pfm,PFM_ADCWDG_ERR);
+				ADC_ITConfig(ADC1,ADC_IT_AWD,DISABLE);
+			}
+			if(ADC_GetITStatus(ADC2, ADC_IT_AWD) != RESET) {
+				ADC_ClearITPendingBit(ADC2, ADC_IT_AWD);
+				_SET_ERROR(pfm,PFM_ADCWDG_ERR);
+				ADC_ITConfig(ADC2,ADC_IT_AWD,DISABLE);
+			}
+			if(ADC_GetITStatus(ADC3, ADC_IT_AWD) != RESET) {
+				ADC_ClearITPendingBit(ADC3, ADC_IT_AWD);
+				_SET_ERROR(pfm,PFM_ADCWDG_ERR);
+			}
 }
 
 /**

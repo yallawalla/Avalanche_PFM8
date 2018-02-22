@@ -410,6 +410,7 @@ int		cc,t=__max( __max(__fit(ADC3_buf[0].IgbtT[0],Rtab,Ttab),
 									__max(__fit(ADC3_buf[0].IgbtT[2],Rtab,Ttab),
 												__fit(ADC3_buf[0].IgbtT[3],Rtab,Ttab)));
 #else
+
 const	int Rtab[]={
 			(4096.0*_Rdiv(47000.0,22000.0)),	// tabela vhodnih toèk za
 			(4096.0*_Rdiv(18045.0,22000.0)),	// interpolacijo (readout iz ADC !!!)
@@ -479,8 +480,7 @@ short	__f2lin(float u, short exp) {
 * Return        :
 *******************************************************************************/
 int		SetChargerVoltage(int u) {
-struct	
-			{signed int e:3;} 
+struct	{ signed int e:3; } 
 e3;
 int		i=_VOUT_MODE;
 
@@ -527,7 +527,7 @@ char	c[128];
 int		i,j;
 			__dbug=__stdin.io;
 			_SET_MODE(pfm,_CAN_2_COM);
-			printf("\r\n remote console open... \r\n>");
+			__print("\r\n remote console open... \r\n>");
 			sprintf(c,">%03X %02X %02X",_ID_SYS2PFMcom,'v','\r');
 			DecodeCom(c);
 			do {
@@ -545,7 +545,7 @@ int		i,j;
 			DecodeCom(c);
 			_CLEAR_MODE(pfm,_CAN_2_COM);
 			__dbug=NULL;
-			printf("\r\n ....remote console closed\r\n>");
+			__print("\r\n ....remote console closed\r\n>");
 }
 /*******************************************************************************
 * Function Name : batch

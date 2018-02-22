@@ -648,3 +648,12 @@ b 3,1000,200
 -E ffffff
 -f
 
+
+22.2.2018
+
+tandem, drugi prototip
+- jeba z napovedjo strela na can protokolu. Problem je poplava msgov na CAN konzoli; rešitev z izklopom izpisa v TRIGGER_PERIODIC modu
+- za prototip mora cfg.ini  vsebovati -r(ni reseta s crowbarom) in	-E 8 (trigerske impedance ne ustrezajo)
+
+	
+

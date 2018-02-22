@@ -21,7 +21,7 @@ _proc	*p=NULL;
 			if(_proc_buf && _buffer_pull(_proc_buf,&p,sizeof(_proc *)) && p) {
 				if(__time__ >= p->t) {
 					p->to = __time__ - p->t;
-					p->f(p); // (p->arg);
+					p->f(p);
 					p->t = __time__ + p->dt;
 				}
 				_buffer_push(_proc_buf,&p,sizeof(_proc *));
@@ -56,10 +56,10 @@ int		i=_buffer_count(_proc_buf)/sizeof(_proc *);
 void	_proc_list(void) {
 _proc	*p;	
 int		i	=_buffer_count(_proc_buf)/sizeof(_proc *);
-			printf("...\r\n");
+			__print("...\r\n");
 			while(i--) {
 				_buffer_pull(_proc_buf,&p,sizeof(_proc *));
-				printf("%08X,%08X,%s,%d\r\n",(int)p->f,(int)p->arg,p->name,p->to);
+				__print("%08X,%08X,%s,%d\r\n",(int)p->f,(int)p->arg,p->name,p->to);
 				_buffer_push(_proc_buf,&p,sizeof(_proc *));
 			}
 }

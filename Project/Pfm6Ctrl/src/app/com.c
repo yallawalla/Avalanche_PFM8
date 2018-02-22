@@ -80,10 +80,12 @@ int			DecodeMinus(char *c) {
 					}
 				break;
 //__________________________________________________Pfm8, V to F ___________
+#if defined __PFM8__
 				case 'f':
 					Initialize_F2V(NULL);
 					_SET_MODE(pfm,_F2V);
 				break;
+#endif
 //__________________________________________________soft crowbar reset______
 				case 'r':
 					_SET_STATUS(pfm,_PFM_CWBAR_STAT);
@@ -310,12 +312,12 @@ int			DecodeEq(char *c) {
 //______________________________________________________________________________________
 				case 'C':
 					_TIM.Caps=__max(100,1000.0*atof(++c));	// scale fakt. za C v mF pri 880V/1100A full scale, 100kHz sample rate in _AVG3 = 4 pride 20... ni placa za izpeljavo
-					printf(" ... bank capacity set to %6.1lf mF",(double)_TIM.Caps/1000.0);
+					__print(" ... bank capacity set to %6.1lf mF",(double)_TIM.Caps/1000.0);
 					break;
 //______________________________________________________________________________________
 				case 'I':					
 					_TIM.Icaps=__max(10,1000.0*atof(++c));
-					printf(" ... charge current set to %5.1lf A",(double)_TIM.Icaps/1000.0);
+					__print(" ... charge current set to %5.1lf A",(double)_TIM.Icaps/1000.0);
 					break;
 //______________________________________________________________________________________
 				case 'E':
@@ -388,11 +390,11 @@ int			DecodeWhat(char *c) {
 				case 'B':
 #if defined (_NRST_DISABLE_BIT) && defined (_BOOT_ENABLE_BIT)
 					if(GPIO_ReadOutputDataBit(_BOOT_ENABLE_PORT,_BOOT_ENABLE_BIT)==SET)
-						printf (" ..boot enabled");
+						__print (" ..boot enabled");
 					else
-						printf (" ..boot disabled");
+						__print (" ..boot disabled");
 					if(pfm->boot_timeout)
-						printf(", timeout=%d ms",pfm->boot_timeout - __time__);
+						__print(", timeout=%d ms",pfm->boot_timeout - __time__);
 #endif
 					break;
 //______________________________________________________________________________________
@@ -404,17 +406,17 @@ int			DecodeWhat(char *c) {
 							break;
 						free(v);
 						++k;
-						printf(".");
+						__print(".");
 					}
 					m=(int)__heap_limit;
 					n=(int)__heap_base;
-					printf("\r\n%d of %dk heap left, ",k,(m - n)/0x400);
+					__print("\r\n%d of %dk heap left, ",k,(m - n)/0x400);
 					m=(int)__initial_sp;
 					n=(int)__heap_limit;
 					for(k=0; k<(m - n)/sizeof(int); ++k)
 						if(__heap_limit[k])
 							break;
-					printf("\r\n%d of %dk stack clean",k*sizeof(int)/0x400,(m-n)/0x400);					
+					__print("\r\n%d of %dk stack clean",k*sizeof(int)/0x400,(m-n)/0x400);					
 					break;
 //				case 'e':
 //					for(pfm->Burst->Pmax=0; pfm->Burst->Pmax<600; ++pfm->Burst->Pmax) {
@@ -1091,7 +1093,7 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 				case 'I':							
 					switch(strscan(++c,cc,',')) {
 						case 0:
-							printf("\r>i(DAC)   i1,i2         ... %d%c,%d%c",(DAC_GetDataOutputValue(DAC_Channel_1)*100+0x7ff)/0xfff,'%',(DAC_GetDataOutputValue(DAC_Channel_2)*100+0x7ff)/0xfff,'%');
+							__print("\r>i(DAC)   i1,i2         ... %d%c,%d%c",(DAC_GetDataOutputValue(DAC_Channel_1)*100+0x7ff)/0xfff,'%',(DAC_GetDataOutputValue(DAC_Channel_2)*100+0x7ff)/0xfff,'%');
 							break;
 						case 2:
 							DAC_SetDualChannelData(DAC_Align_12b_R,(atoi(cc[1])*0xfff+50)/100,(atoi(cc[0])*0xfff+50)/100);
@@ -1182,9 +1184,9 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 						else if(_MODE(pfm,_CHANNEL2_DISABLE))		
 							__print("\r>f(an)   Tl,Th,min,max,T... %d,%3d,%3d%c,%3d%c,%5.1f, -- ",fanTL/100,fanTH/100,fanPmin,'%',fanPmax,'%',(double)IgbtTemp(TH1)/100.0);
 						else	
-#ifdef __PFM6__
+#ifdef	__PFM6__
 							__print("\r>f(an)   Tl,Th,min,max,T... %d,%3d,%3d%c,%3d%c,%5.1f,%5.1f",fanTL/100,fanTH/100,fanPmin,'%',fanPmax,'%',(double)IgbtTemp(TH1)/100.0,(double)IgbtTemp(TH2)/100.0);
-#elif __PFM8__
+#elif		__PFM8__
 							__print("\r>f(an)   Tl,Th,min,max,T... %d,%3d,%3d%c,%3d%c,%5.1f,%5.1f,%5.1f,%5.1f",fanTL/100,fanTH/100,fanPmin,'%',fanPmax,'%',
 								(double)IgbtTemp(TL1)/100.0,(double)IgbtTemp(TH1)/100.0,(double)IgbtTemp(TL2)/100.0,(double)IgbtTemp(TH2)/100.0);
 #else
@@ -1207,7 +1209,7 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 int			u=0,umax=0,umin=0;
 					switch(numscan(++c,cc,',')) {
 						case 0:
-#if	defined (__PFM8__)
+#ifdef	__PFM8__
 							__print("(bank) HV,HV/2,Vc1,Vc2... %.0fV,%5.0fV,%5.0fV,%5.0fV\r\n",_AD2V(ADC3_buf[0].HV,2000,6.2),
 																																								_AD2V(ADC3_buf[0].HV2,2000,6.2),
 																																								_AD2V(ADC3_buf[0].VCAP1,2000,6.2),
@@ -1215,7 +1217,7 @@ int			u=0,umax=0,umin=0;
 							__print("         V12,V5,V3      ... %.1fV,%5.1fV,%5.1fV",				_AD2V(ADC3_buf[0].Up12,62,10),
 																																								_AD2V(ADC3_buf[0].Up5,10,10),
 																																								_AD2V(ADC3_buf[0].Up3,10,10));
-#elif	defined (__PFM6__)
+#elif 	__PFM6__
 							__print("(bank)  Uc,Uc/2,20,-5 ... %.0fV,%5.0fV,%5.1fV,%5.1fV",	_AD2V(ADC3_buf[0].HV,2000,7.5),
 																																								_AD2V(ADC3_buf[0].HV2,1000,7.5),
 																																								_AD2V(ADC3_buf[0].Up20,68,12),
@@ -1510,38 +1512,38 @@ FRESULT			iapRemote(char * filename) {
 							if(AckWait(&tx,100) != 0)
 								return FR_NOT_READY;
 						}
-						printf("\r\niap ping received...");
+						__print("\r\niap ping received...");
 						
-						printf("\r\nerasing");
+						__print("\r\nerasing");
 						for(k=FLASH_Sector_1; k<FLASH_Sector_6; k+=FLASH_Sector_1) {
 							tx.StdId=_ID_IAP_ERASE;
 							tx.DLC=sizeof(int);
 							*(int *)tx.Data=k;
 							if(AckWait(&tx,2000) != 0)
 								return FR_NOT_READY;
-							printf(".");
+							__print(".");
 						}
 						
 						err= f_open(&f,filename,FA_READ);
-						printf("\r\nprogramming");
+						__print("\r\nprogramming");
 						for(k=0; (!f_eof(&f)); ++k) {
 							f_gets(l,sizeof(l),&f);
 							if(CanHexProg(l) == 0)
 								return FR_NOT_READY;
 							if((k % (n/20)) == 0)
-								printf(".%3d%c%c%c%c%c",100*k/n,'%','\x8','\x8','\x8','\x8');
+								__print(".%3d%c%c%c%c%c",100*k/n,'%','\x8','\x8','\x8','\x8');
 						}
 						
 						tx.StdId=_ID_IAP_SIGN;
 						tx.DLC=0;
 						if(AckWait(&tx,300) != 0)
 							return FR_NOT_READY;
-						printf("\r\nsign ...");
+						__print("\r\nsign ...");
 						tx.StdId=_ID_IAP_GO;
 						tx.DLC=0;
 						AckWait(&tx,0);
 						f_close(&f);
-						printf("and RUN :)");
+						__print("and RUN :)");
 						return FR_OK;
 }
 /*******************************************************************************

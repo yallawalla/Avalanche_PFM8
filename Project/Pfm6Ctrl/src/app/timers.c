@@ -294,7 +294,7 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		_TIM.Caps=2000;																								// 2000 u
 		_TIM.Icaps=1000;																							// 1A
 		}
-
+#if defined __PFM8__
 /*******************************************************************************
 * Function Name  : Initialize_F2V()
 * Description    : reconfigures the CAN rx tx to pfm8 functionality
@@ -347,7 +347,6 @@ TIM_ICInitTypeDef				TIM_ICInitStructure;
 		_proc_add((func *)Initialize_F2V,NULL,"F2V",1);
 	} else {
 		if(pfm->Burst && TIM_GetCapture2(TIM3)) {
-//			pfm->Burst->Pmax=600000*_PWM_RATE_HI/(TIM_GetCapture1(TIM3) + TIM_GetCapture2(TIM3)/2)/_AD2HV(pfm->HVref);
 			pfm->Burst->Pmax=600000*_PWM_RATE_HI/TIM_GetCapture2(TIM3)/_AD2HV(pfm->HVref);
 			if(pfm->Trigger.timeout && __time__ >= pfm->Trigger.timeout) {
 				SetPwmTab(pfm);
@@ -361,6 +360,7 @@ TIM_ICInitTypeDef				TIM_ICInitStructure;
 	}
 	return Initialize_F2V;
 }
+#endif
 /**
   ******************************************************************************
   * @file			timers.c
@@ -588,35 +588,35 @@ void		TIM8_TRG_COM_TIM14_IRQHandler(void) {
 }
 /*******************************************************************************/
 /**
-  * @brief  Crowbar error interrupt
-	* sets PFM_ERR_PULSEENABLE error event
+  * @brief  - main crowbar interrupt
+	*					- IGBT fault driver interrupt
   * @param  None
   * @retval None
   */
 void 		__EXTI_IRQHandler(void)
 {
-				if(EXTI_GetITStatus(_CWBAR_INT_line) == SET) {
-					EXTI_ClearITPendingBit(_CWBAR_INT_line);
-					if(_MODE(pfm,_F2V)) {
-						if(!_PFM_CWBAR && !pfm->Trigger.timeout) {
+				if(EXTI_GetITStatus(_CWBAR_INT_line) == SET) { 						// CROWBAR
+					EXTI_ClearITPendingBit(_CWBAR_INT_line);								// clear flag
+					if(_MODE(pfm,_F2V)) {																		// F2V mode, pfm8
+						if(!_PFM_CWBAR && !pfm->Trigger.timeout) {						// rising edge, trigger
 							_SET_EVENT(pfm,_TRIGGER);
-						}	else {
+						}	else {																							// falling edge, pulse rearm
 							pfm->Trigger.timeout=__time__+2;
 						}							
-					} else {
-						if(_PFM_CWBAR) {
+					} else {																								// pfm6 mode
+						if(_PFM_CWBAR) {																			// rising edge, main error reset & restart
 							_SET_STATUS(pfm,_PFM_CWBAR_STAT);
 							_CLEAR_ERROR(pfm, _CRITICAL_ERR_MASK);
 							_ENABLE_PWM_OUT();
-						}	else {
+						}	else {																							// falling edge, crowbar fired error
 							_CLEAR_STATUS(pfm,_PFM_CWBAR_STAT);
 							_SET_ERROR(pfm,PFM_ERR_PULSEENABLE);
 						}
 					}
 				}
 
-				if(EXTI_GetITStatus(_FAULT_INT_line) == SET) {
-					EXTI_ClearITPendingBit(_FAULT_INT_line);
+				if(EXTI_GetITStatus(_FAULT_INT_line) == SET) { 						// IGBT FAULT					
+					EXTI_ClearITPendingBit(_FAULT_INT_line);								// clear flag
 					if(_PFM_CWBAR)
 						_SET_ERROR(pfm,PFM_ERR_DRVERR);
 				}
@@ -633,11 +633,11 @@ void		Trigger(PFM *p) {
 				if(!_MODE(p,_PULSE_INPROC)) {
 					if(_MODE(p,_ENM_NOTIFY)) {
 						CanTxMsg tx = {_ID_SYS_TRIGG,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
-//						while(CAN_TransmitStatus(__CAN__, 0) == CAN_TxStatus_Pending &&
-//							CAN_TransmitStatus(__CAN__, 1) == CAN_TxStatus_Pending &&
-//								CAN_TransmitStatus(__CAN__, 2) == CAN_TxStatus_Pending) {
-//									_proc_loop();
-//								}
+						while(CAN_TransmitStatus(__CAN__, 0) == CAN_TxStatus_Pending &&
+							CAN_TransmitStatus(__CAN__, 1) == CAN_TxStatus_Pending &&
+								CAN_TransmitStatus(__CAN__, 2) == CAN_TxStatus_Pending) {
+									_proc_loop();
+								}
 						_YELLOW1(50);
 						CAN_Transmit(__CAN__,&tx);
 					}

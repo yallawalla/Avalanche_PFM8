@@ -7,10 +7,10 @@ typedef		void *func(void *);
 extern volatile int __time__;
 
 typedef	struct {
-func			*f;
-void			*arg;
-char			*name;
-int				t,dt,to;
+	func	*f;
+	void	*arg;
+	char	*name;
+	int		t,dt,to;
 } _proc;
 
 extern		_buffer 	*_proc_buf;
