@@ -397,7 +397,7 @@ int		cc,t=__max( __fit(ADC3_buf[0].IgbtT[0],Rtab,Ttab),
 									__fit(ADC3_buf[0].IgbtT[1],Rtab,Ttab));
 
 #elif	defined (__PFM8__)
-
+																				// IgbtTemp()
 const	int Rtab[]={
 			(4096.0*_Rdiv(3000.0,10000.0)),		// tabela vhodnih toèk za
 			(4096.0*_Rdiv(3000.0,3598.7)),		// interpolacijo (readout iz ADC !!!)
@@ -419,20 +419,21 @@ const	int Rtab[]={
 			};
 int		cc,t=(_FAN_PWM_RATE*fanPmin)/200;
 #endif
-
-			if(t<fanTL)
-				cc=(_FAN_PWM_RATE*fanPmin)/200;
-			else {
-				if (t>fanTH)
-					cc=(_FAN_PWM_RATE*fanPmax)/200;
+			if(__time__ > 5000) {
+				if(t<fanTL)
+					cc=(_FAN_PWM_RATE*fanPmin)/200;
+				else {
+					if (t>fanTH)
+						cc=(_FAN_PWM_RATE*fanPmax)/200;
+					else
+						cc=(_FAN_PWM_RATE*(((t-fanTL)*(fanPmax-fanPmin))/(fanTH-fanTL)+fanPmin	))/200;
+				}
+				cc=__min(_FAN_PWM_RATE/2-5,__max(5,cc));
+				if(TIM_GetCapture1(TIM13) < cc)
+					TIM_SetCompare1(TIM13,TIM_GetCapture1(TIM13)+1);
 				else
-					cc=(_FAN_PWM_RATE*(((t-fanTL)*(fanPmax-fanPmin))/(fanTH-fanTL)+fanPmin	))/200;
+					TIM_SetCompare1(TIM13,TIM_GetCapture1(TIM13)-1);
 			}
-			cc=__min(_FAN_PWM_RATE/2-5,__max(5,cc));
-			if(TIM_GetCapture1(TIM13) < cc)
-				TIM_SetCompare1(TIM13,TIM_GetCapture1(TIM13)+1);
-			else
-				TIM_SetCompare1(TIM13,TIM_GetCapture1(TIM13)-1);
 			if(n==T_MIN)
 				return(t);
 			else

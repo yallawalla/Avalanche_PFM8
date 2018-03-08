@@ -128,7 +128,7 @@ typedef					enum
 {								_XLAP_SINGLE,							//0
 								_XLAP_DOUBLE,							//1
 								_XLAP_QUAD,								//2
-								__DUMMY1,									//3
+								_SIMMER_KEEP,							//3
 								_SIMULATOR,								//4
 								_PULSE_INPROC,						//5
 								_LONG_INTERVAL,						//6
@@ -138,11 +138,13 @@ typedef					enum
 								_P_LOOP,									//10
 								_CHANNEL1_DISABLE,				//11
 								_CHANNEL2_DISABLE,				//12
-								_CHANNEL1_SINGLE_TRIGGER,	//13
-								_CHANNEL2_SINGLE_TRIGGER,	//14
-								_ALTERNATE_TRIGGER,				//15
-								_F2V,											//16
-								_ENM_NOTIFY,							//17
+								_CH1_SINGLE_TRIGGER,			//13
+								_CH2_SINGLE_TRIGGER,			//14
+								_CH1_COMMON_TRIGGER,			//15
+								_CH2_COMMON_TRIGGER,			//16
+								_ALTERNATE_TRIGGER,				//17
+								_F2V,											//18
+								_ENM_NOTIFY,							//19
 								__TEST__									=29,
 								_CAN_2_COM								//30
 } 							mode;

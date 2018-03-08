@@ -250,7 +250,7 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 #endif
 // ________________________________________________________________________________
 // Output Compares, CH1	TIM13
-		TIM_OCInitStructure.TIM_Pulse=1;
+		TIM_OCInitStructure.TIM_Pulse=_FAN_PWM_RATE/2-5;
 		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 		TIM_OC1Init(TIM13, &TIM_OCInitStructure);
 

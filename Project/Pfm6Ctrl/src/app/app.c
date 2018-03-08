@@ -811,17 +811,17 @@ PFM				*p=proc->arg;
 												else
 													_SET_MODE(p,_CHANNEL1_DISABLE);
 												if(*q & 2)
-													_CLEAR_MODE(p,_CHANNEL1_SINGLE_TRIGGER);
+													_CLEAR_MODE(p,_CH1_SINGLE_TRIGGER);
 												else
-													_SET_MODE(p,_CHANNEL1_SINGLE_TRIGGER);
+													_SET_MODE(p,_CH1_SINGLE_TRIGGER);
 												if(*q & 4)
 													_CLEAR_MODE(p,_CHANNEL2_DISABLE);
 												else
 													_SET_MODE(p,_CHANNEL2_DISABLE);
 												if(*q & 8)
-													_CLEAR_MODE(p,_CHANNEL2_SINGLE_TRIGGER);
+													_CLEAR_MODE(p,_CH2_SINGLE_TRIGGER);
 												else
-													_SET_MODE(p,_CHANNEL2_SINGLE_TRIGGER);
+													_SET_MODE(p,_CH2_SINGLE_TRIGGER);
 											}
 										} else
 											_SET_ERROR(p,PFM_ERR_UB);
@@ -999,8 +999,8 @@ int				PFM_status_send(PFM *p) {
 					else
 						CanReply("cwiP",_PFM_status_req,
 							(p->Status & ~(PFM_STAT_SIMM1 | PFM_STAT_SIMM2)) | p->Simmer.active,
-							p->Error);		
-				return p->Simmer.active;
+								p->Error);		
+					return p->Simmer.active;
 }
 /*______________________________________________________________________________
   * @brief  Interprets the PFM command message
@@ -1021,9 +1021,10 @@ void			PFM_command(PFM *p, int n) {
 						SetSimmerRate(p, _SIMMER_LOW); 																	// kill both simmers
 						p->Simmer.active=n & (PFM_STAT_SIMM1 | PFM_STAT_SIMM2);					// mask filter command
 						_wait(100,_proc_loop);																					// wait 100 msecs	
+
 						if(!_MODE(p,_CHANNEL1_DISABLE)) {																// if not Erbium  single channel
 int						u=p->HV/7;
-							if(_MODE(p,_CHANNEL1_SINGLE_TRIGGER))													// single trigger config.. as from V1.11
+							if(_MODE(p,_CH1_SINGLE_TRIGGER))															// single trigger config.. as from V1.11
 								u=2*p->HV/7;
 							_TIM.I1off=ADC1_simmer.I;																			// get current sensor offset
 							_TIM.U1off=ADC1_simmer.U;																			// check idle voltage
@@ -1031,9 +1032,10 @@ int						u=p->HV/7;
 								_SET_ERROR(p,PFM_ERR_LNG);																	// if not, PFM_STAT_UBHIGH error 
 							}
 						}
+
 						if(!_MODE(p,_CHANNEL2_DISABLE)) {																// same for NdYAG channel
 int						u=p->HV/7;
-							if(_MODE(p,_CHANNEL2_SINGLE_TRIGGER))													// single trigger config.. as from V1.11
+							if(_MODE(p,_CH2_SINGLE_TRIGGER))															// single trigger config.. as from V1.11
 								u=2*p->HV/7;
 							_TIM.I2off=ADC2_simmer.I;
 							_TIM.U2off=ADC2_simmer.U;
@@ -1053,16 +1055,21 @@ int						u=p->HV/7;
 					if(!_STATUS(p,_PFM_CWBAR_STAT))																		// crowbar not cleared
 						_SET_ERROR(p,PFM_ERR_PULSEENABLE);
 //__________________________________________________________________________________________________________
-//					if((p->Simmer.active & PFM_STAT_SIMM1) && !_MODE(p,_CHANNEL2_SINGLE_TRIGGER))
-					if(p->Simmer.active & PFM_STAT_SIMM1)
+					if(p->Simmer.active && _MODE(p,_CH1_COMMON_TRIGGER))
 						_TRIGGER1_ON;
-//					if((p->Simmer.active & PFM_STAT_SIMM2) && !_MODE(p,_CHANNEL1_SINGLE_TRIGGER))
-					if(p->Simmer.active & PFM_STAT_SIMM2)
+					else if(p->Simmer.active && _MODE(p,_CH2_COMMON_TRIGGER))
 						_TRIGGER2_ON;
-					
+					else {
+						if(p->Simmer.active & PFM_STAT_SIMM1)
+							_TRIGGER1_ON;
+						if(p->Simmer.active & PFM_STAT_SIMM2)
+							_TRIGGER2_ON;
+					}
+//__________________________________________________________________________________________________________
 					SetSimmerRate(p,_SIMMER_LOW);																			// set low simmer
-					p->Simmer.timeout=__time__+1000;																	// set trigger burst timeout
-					
+					p->Simmer.timeout=__time__+500;																		// set trigger burst timeout
+//__________________________________________________________________________________________________________
+
 					if(_STATUS(p,PFM_STAT_SIMM1 | PFM_STAT_SIMM2) == PFM_STAT_SIMM1)	// preklopi na aktivni objekt samo, ce je eksplicitno dolocen
 						p->Burst = &p->burst[0];																				// ce je simm. 0 oz. 3 se uporabi burst 1 na SetPwmTab00
 					if(_STATUS(p,PFM_STAT_SIMM1 | PFM_STAT_SIMM2) == PFM_STAT_SIMM2)

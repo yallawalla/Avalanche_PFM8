@@ -592,7 +592,7 @@ PFM8 rekonfiguracija
 			- rekonf. PFM_command.... brez staticnih spremenljivk, 
 			  prestavljene so v simmer objekt
 			- modif. PFM_command....  zaenkrat. je predvideno, da v pfm8 vedno delata oba simmerja/fleša hkrati (>s 3). 
-			  Laser oz. trigger je možnno tako izbrati sam z _CHANNEL1_SINGLE_TRIGGER, ki se doslej uporablja v ST konfiguraciji
+			  Laser oz. trigger je možnno tako izbrati sam z _CH1_SINGLE_TRIGGER, ki se doslej uporablja v ST konfiguraciji
 //----------------------------
 27.1.2017	- sprememba PFM_status_send, pri wklopljenih obeh fleših (s 3), je v primeru napake enega fleša javljal oba
 >v 2.15 Jan 27 2017, <4865DE99>
@@ -655,5 +655,20 @@ tandem, drugi prototip
 - jeba z napovedjo strela na can protokolu. Problem je poplava msgov na CAN konzoli; rešitev z izklopom izpisa v TRIGGER_PERIODIC modu
 - za prototip mora cfg.ini  vsebovati -r(ni reseta s crowbarom) in	-E 8 (trigerske impedance ne ustrezajo)
 
-	
+8.3.2018
+tandem, pfm8
+- reenum mode registra
+- dodatek common trigger mode
+- apl. fan startupa iz LW,SW
+
+za avalanche polovicni simmer start
+
++m 12,15
+s3
+-d 1000
+-m 12,15
++m 11,16
+s3
+-m 11,16
+
 
