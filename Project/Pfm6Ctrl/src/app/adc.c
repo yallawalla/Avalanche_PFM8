@@ -80,8 +80,6 @@ void	TriggerADC(PFM *p) {
 /*******************************************************************************/
 void	DMA2_Stream4_IRQHandler(void) {
 			TriggerADC(NULL);
-//			_SET_EVENT(pfm,_PULSE_FINISHED);
-//			_CLEAR_MODE(pfm,_PULSE_INPROC);
 }
 /*******************************************************************************/
 /**

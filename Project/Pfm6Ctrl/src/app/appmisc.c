@@ -501,17 +501,11 @@ int		i=_VOUT_MODE;
 * Return        :
 *******************************************************************************/
 int		batch(char *filename) {
-FIL		f;
-FATFS	fs;
-
-			if(f_chdrive(FS_CPU)==FR_OK && f_mount(&fs,FS_CPU,1)==FR_OK && f_open(&f,filename,FA_READ)==FR_OK) {
-				__print("\r\n>");
-				do {
-					ungetch(fgetc((FILE *)&f));
-					ParseCom(NULL);
-				} while(!f_eof(&f));
+			FIL		f;
+			if(f_open(&f,filename,FA_READ)==FR_OK) {
+				while(!f_eof(&f))
+					ParseFile(&f);
 				f_close(&f);
-				f_mount(NULL,FS_CPU,1);
 				return _PARSE_OK;
 			} else
 				return _PARSE_ERR_OPENFILE;

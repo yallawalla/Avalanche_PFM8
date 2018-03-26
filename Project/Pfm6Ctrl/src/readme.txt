@@ -671,4 +671,10 @@ s3
 s3
 -m 11,16
 
+22.1.2018
+- popravki na +/-E, ?E
+- dodatek ?W
+- F2V error ugaša samo na critical error
+- simmer error se aktivira šele po padcu triggerja
+
 

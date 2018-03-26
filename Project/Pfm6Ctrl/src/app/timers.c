@@ -353,7 +353,7 @@ TIM_ICInitTypeDef				TIM_ICInitStructure;
 				pfm->Trigger.timeout=0;
 			}
 		}
-		if(pfm->Error)
+		if(pfm->Error & ~pfm->Errmask & _CRITICAL_ERR_MASK)
 			GPIO_SetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);
 		else
 			GPIO_ResetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);

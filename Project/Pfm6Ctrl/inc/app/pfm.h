@@ -166,6 +166,7 @@ typedef					enum
 #define 				PFM_ERR_PSRDYN						0x0100					// pwm threshold error
 #define 				PFM_ERR_48V  							0x0200					// 20V igbt supply error
 #define 				PFM_ERR_15V 							0x0400					// -5V igbt supply error
+
 #define					PFM_ADCWDG_ERR						0x1000					// adc watchdog fired
 #define					PFM_FAN_ERR								0x2000					// igbt fan error
 #define					PFM_HV2_ERR								0x4000					// center cap voltaghe out of range
@@ -213,23 +214,19 @@ extern const char *_errStr[];
 #define					_SET_STATUS(p,a)		(p->Status |= (a))
 #define					_CLEAR_STATUS(p,a)	(p->Status &= ~(a))
 
-
 #define					_ERROR(p,a)					(p->Error & (a))
-#define					_CLEAR_ERROR(p,a)	do {																																				\
-									if(p->Error & (a)) {																																				\
-/*										_DEBUG_(_DBG_ERR_MSG,"error %04X,clear from %04X, status=%04X",a,p->Error,p->Status);	*/		\
-										p->Error &= ~(a);																																					\
-									} 																																													\
+#define					_CLEAR_ERROR(p,a)	do {																	\
+									if(p->Error & (a)) {																	\
+										p->Error &= ~(a);																		\
+									}																											\
 								} while(0)
 
-#define					_SET_ERROR(p,a)	do {																																					\
-									if(!(p->Errmask & (a)) && !(p->Error & (a))) {																							\
-										if(a & _CRITICAL_ERR_MASK) {																															\
-											_DISABLE_PWM_OUT();																																				\
-										}																																													\
-/*										_DEBUG_(_DBG_ERR_MSG,"error %04X,  set from %04X, status=%04X",a,p->Error,p->Status);	*/		\
-										p->Error |= a;																																						\
-									}																																														\
+#define					_SET_ERROR(p,a)	do {																		\
+									if(!(p->Errmask & (a)) && !(p->Error & (a))) {				\
+										if(a & _CRITICAL_ERR_MASK)													\
+											_DISABLE_PWM_OUT();																\
+										p->Error |= a;																			\
+									}																											\
 								} while(0)	
 //________________________________________________________________________
 #define 				_AVG3									1
@@ -461,6 +458,7 @@ struct {
 								width,
 								trigger;
 } Pockels;
+FATFS						*fatfs;
 } PFM;				  
 //________________________________________________________________________
 extern					PFM										*pfm;
@@ -514,6 +512,7 @@ int							FLASH_Erase(uint32_t);
 void 						ParseCanRx(_proc *),
 								ParseCanTx(_proc *),
 								ParseCom(_proc *),
+								ParseFile(FIL *f),
 								ProcessingEvents(_proc *),
 								ProcessingCharger(_proc *),
 								ProcessingStatus(_proc *),
@@ -665,9 +664,6 @@ int			SetChargerVoltage(int);
 #define _VBUS_PORT GPIOC
 #endif
 
-#define _TRIGGER1			(!GPIO_ReadOutputDataBit(_TRIGGER1_PORT,_TRIGGER1_BIT))				        
-#define _TRIGGER2			(!GPIO_ReadOutputDataBit(_TRIGGER2_PORT,_TRIGGER2_BIT))			        
-#define _TRIGGER3			(!GPIO_ReadOutputDataBit(_TRIGGER3_PORT,_TRIGGER3_BIT))				        		        
 #define _IGBT_READY		(GPIO_ReadInputDataBit(_IGBT_READY_PORT,_IGBT_READY_BIT)== Bit_SET)				        		        
 #define	_PFM_CWBAR		(GPIO_ReadInputDataBit(_CWBAR_PORT, _CWBAR_BIT)== Bit_RESET)
 
@@ -677,6 +673,7 @@ int			SetChargerVoltage(int);
 											}																											\
 											GPIO_SetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT);				
 
+#define _TRIGGER1			(!GPIO_ReadOutputDataBit(_TRIGGER1_PORT,_TRIGGER1_BIT))				        
 #define _TRIGGER1_ON	do {															\
 							if(!_TRIGGER1)														\
 								_DEBUG_(_DBG_SYS_MSG,"trigger 1 enabled");				\
@@ -687,6 +684,8 @@ int			SetChargerVoltage(int);
 								_DEBUG_(_DBG_SYS_MSG,"trigger 1 disabled");				\
 								GPIO_SetBits(_TRIGGER1_PORT,_TRIGGER1_BIT);	  		\
 							} while(0)
+
+#define _TRIGGER2			(!GPIO_ReadOutputDataBit(_TRIGGER2_PORT,_TRIGGER2_BIT))			        
 #define _TRIGGER2_ON	do {															\
 							if(!_TRIGGER2)														\
 								_DEBUG_(_DBG_SYS_MSG,"trigger 2 enabled");				\
@@ -697,6 +696,8 @@ int			SetChargerVoltage(int);
 								_DEBUG_(_DBG_SYS_MSG,"trigger 2 disabled");				\
 								GPIO_SetBits(_TRIGGER2_PORT,_TRIGGER2_BIT);		  	\
 							} while(0)
+
+#define _TRIGGER3			(!GPIO_ReadOutputDataBit(_TRIGGER3_PORT,_TRIGGER3_BIT))				        		        
 #define _TRIGGER3_ON	do {															\
 							if(!_TRIGGER3)														\
 								_DEBUG_(_DBG_SYS_MSG,"trigger 2 enabled");				\

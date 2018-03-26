@@ -38,7 +38,7 @@ const char *_errStr[]={
 					"unspecified....",
 					"unspecified....",
 #endif
-					"unspecified....",
+					"CMD not allowed",
 					"HV out of range",
 					"IGBT fan error",
 					"HV mid voltage out of range",
@@ -107,7 +107,8 @@ void 			App_Init(void) {
 #if		!defined (__DISC4__) && !defined (__DISC7__)
 					__charger6=Initialize_I2C(0x58,50000);
 #endif
-
+					pfm->fatfs=calloc(1,sizeof(FATFS));
+		
 #define noise (rand()%100 - 50)
 #if defined (__PFM6__) && ( defined  (__DISC4__) || defined  (__DISC7__) )
 {
@@ -160,7 +161,7 @@ int				i,j;
 					SysTick_init();
 					SetSimmerRate(pfm,_SIMMER_LOW);
 					SetPwmTab(pfm);
-//					Watchdog_init(300);	
+					Watchdog_init(300);	
 					Initialize_DAC();
 //---------------------------------------------------------------------------------
 					_stdio(__com1);
@@ -175,7 +176,8 @@ int				i,j;
 					else if(RCC_GetFlagStatus(RCC_FLAG_PINRST) == SET)
 					{} else
 						{}
-					RCC_ClearFlag();   	
+					RCC_ClearFlag(); 
+					f_mount(pfm->fatfs,FS_CPU,1);
 					ungets("@cfg.ini\r");
 					_stdio(NULL);
 }
@@ -260,6 +262,22 @@ PFM				*p=proc->arg;
 					}
 }
 /*______________________________________________________________________________
+  *
+  *
+* @brief		:debug print
+  * @param  : current PFM object
+  * @retval : None
+  *
+______________________________________________________________________________*/
+void			PFM_debug(int err) {
+					int i;
+					for(i=0; i<32 && _errStr[i]; ++i)
+						if(err & (1<<i))
+							_DEBUG_(_DBG_ERR_MSG,"error %06X: %s",1<<i,(int)_errStr[i]);
+}						
+/*______________________________________________________________________________
+  *
+  *
   * @brief	periodic status/error  polling, main loop call from 1 msec event flag
   * @param  : current PFM object
   * @retval : None
@@ -269,7 +287,7 @@ void			ProcessingStatus(_proc *proc) {
 PFM				*p=proc->arg;
 int 			i,j,k;
 static		short	status_image=0; 
-static		int		error_image=0,error_debug=0;
+static		int		error_image=0;
 static		int		bounce=0;
 					
 					for(i=j=k=0; i<_AVG3; ++i) {
@@ -359,7 +377,8 @@ static		int		bounce=0;
 //				get current active channel....
 //				razlika med HV in napetostjo na flesu mora  biti najmanj 12%, sicer simmer error
 //
-					if(TIM_GetITStatus(TIM1, TIM_IT_Update)==RESET) { 
+//					if(TIM_GetITStatus(TIM1, TIM_IT_Update)==RESET) { 
+					if(!_MODE(p,_PULSE_INPROC) && !_TRIGGER1 && !_TRIGGER2) { 
 //-------------------------------------------------------------------------------
 						if(_STATUS(p,PFM_STAT_SIMM1) && abs(ADC3_buf[0].HV - ADC1_simmer.U) < ADC3_buf[0].HV/8)
 							_SET_ERROR(p,PFM_ERR_SIMM1);
@@ -379,30 +398,18 @@ static		int		bounce=0;
 					}
 //-------------------------------------------------------------------------------
 					if((status_image != p->Status) || (error_image != p->Error)) {
-						error_debug |= (error_image ^ p->Error) & p->Error;
 						error_image = p->Error;	
 						status_image = p->Status;
 						bounce=25;
-					} else if(bounce && !--bounce)
+					} else if(bounce && !--bounce) {
 						PFM_status_send(p);
+					}
 //-------------------------------------------------------------------------------
 					if(_MODE(p,__TEST__) && !_MODE(p,_PULSE_INPROC) && !(__time__ % 100))
 						if(_TIM.Hvref < p->HVref - p->HVref/15) {
 							_TIM.Hvref = __min(p->HVref,_TIM.Hvref + _TIM.Icaps*400*4096/880/_TIM.Caps);
 							_YELLOW2(20);
 						}
-//-------------------------------------------------------------------------------
-					if(_BIT(pfm->debug, _DBG_ERR_MSG)) {
-						_io *io=_stdio(__dbug);
-						for(i=0; i<32 && _errStr[i]; ++i) {
-							if(_BIT(error_debug, i)) {
-								__print("error %06X: %s\r\n>",1<<i,(int)_errStr[i]);
-								_CLEAR_BIT(error_debug, i);
-								break;
-							}
-						}
-						_stdio(io);
-					}
 }
 /*______________________________________________________________________________
   * @brief	Charger6 control procedure; Disables Charger6 if PFM_ERR_DRVERR,PFM_ERR_PULSEENABLE or 
@@ -436,6 +443,10 @@ int						i=_STATUS_WORD;
 //	critical PFM error handling
 //
 					if(p->Error  & _CRITICAL_ERR_MASK) {
+						if(p->Simmer.active)	{													// on error = simmer off
+							PFM_command(p,0);
+							PFM_debug(p->Error);
+							}
 						if(!terr--) {																		// elapsed ?
 							int i=_PFC_OFF;																// PFC off
 							writeI2C(__charger6,(char *)&i,2);	
@@ -443,8 +454,6 @@ int						i=_STATUS_WORD;
 							terr=500;																			// nest handler delay
 							ton=300;																			// recovery delay
 							_RED2(100);																		// indicator !!!
-							if(p->Simmer.active)													// on error = simmer off
-								PFM_command(p,0);
 						}
 						return;
 					}
@@ -519,14 +528,8 @@ int				i=getchar();
 					return EOF;
 }
 //______________________________________________________________________________________
-void			ParseCom(_proc *p) {
+void			Parse(int i) {
 char 			*c;
-int 			i;
-_io				*io;
-
-					if(p)
-						io=_stdio(p->arg);															// recursion lock
-					i=Escape();
 					switch(i) {
 						case EOF:																				// empty usart
 							break;				
@@ -541,7 +544,7 @@ _io				*io;
 						case _F12:																			// can console - maintenance only
 							Tandem();
 							break;						
-//__________________________________________________single interger read/write__________
+//______________________________________________________________________________________
 						case _CtrlT:
 						{
 							#include "tetris.h"
@@ -561,15 +564,28 @@ _io				*io;
 									i=DecodeCom(c);
 								if(*c && i)				
 									__print("... WTF(%d)",i);									// error message
-								if(stdin->io->arg.parse)														// call newline
+								if(stdin->io->arg.parse)										// call newline
 									i=stdin->io->arg.parse(NULL);
 								else
 									i=DecodeCom(NULL);
 							}
 						}
-						if(p)
-							_stdio(io);
-
+}
+//______________________________________________________________________________________
+void			ParseCom(_proc *p) {
+_io				*io;
+					if(p)
+						io=_stdio(p->arg);															// recursion lock
+					Parse(Escape());
+					if(p)
+						_stdio(io);
+}
+//______________________________________________________________________________________
+void			ParseFile(FIL *f) {
+_io				*io=stdout->io;
+					stdout->io=NULL;
+					Parse(f_getc(f));
+					stdout->io=io;
 }
 /*______________________________________________________________________________
   * @brief  CAN transmit parser
@@ -878,7 +894,6 @@ PFM				*p=proc->arg;
 										break;
 								}
 								break;
-//______________________________________________________________________________________
 							}
 						}
 }
@@ -1000,6 +1015,7 @@ int				PFM_status_send(PFM *p) {
 						CanReply("cwiP",_PFM_status_req,
 							(p->Status & ~(PFM_STAT_SIMM1 | PFM_STAT_SIMM2)) | p->Simmer.active,
 								p->Error);		
+					
 					return p->Simmer.active;
 }
 /*______________________________________________________________________________
@@ -1019,8 +1035,9 @@ void			PFM_command(PFM *p, int n) {
 						_CLEAR_STATUS(p,PFM_STAT_SIMM1);																// clear status
 						_CLEAR_STATUS(p,PFM_STAT_SIMM2);
 						SetSimmerRate(p, _SIMMER_LOW); 																	// kill both simmers
-						p->Simmer.active=n & (PFM_STAT_SIMM1 | PFM_STAT_SIMM2);					// mask filter command
+
 						_wait(100,_proc_loop);																					// wait 100 msecs	
+						p->Simmer.active=n & (PFM_STAT_SIMM1 | PFM_STAT_SIMM2);					// mask filter command
 
 						if(!_MODE(p,_CHANNEL1_DISABLE)) {																// if not Erbium  single channel
 int						u=p->HV/7;
@@ -1051,9 +1068,6 @@ int						u=p->HV/7;
 						_SET_STATUS(p, PFM_STAT_SIMM1);
 					else
 						_SET_STATUS(p, p->Simmer.active);																// else set status as requested
-//__________________________________________________________________________________________________________
-					if(!_STATUS(p,_PFM_CWBAR_STAT))																		// crowbar not cleared
-						_SET_ERROR(p,PFM_ERR_PULSEENABLE);
 //__________________________________________________________________________________________________________
 					if(p->Simmer.active && _MODE(p,_CH1_COMMON_TRIGGER))
 						_TRIGGER1_ON;

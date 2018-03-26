@@ -3,6 +3,8 @@
 
 void			*_proc_loop(void);
 void			_wait(int,void *(*)(void));
+int				__print(char *format, ...);
+
 
 struct tetris;
 

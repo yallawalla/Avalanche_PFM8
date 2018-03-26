@@ -147,26 +147,26 @@ tetris_clean(struct tetris *t) {
 void
 tetris_print(struct tetris *t) {
     int x,y;
-    printf("%c[H",0x1b);
-    printf("[LEVEL: %d | SCORE: %d]\r\n", t->level, t->score);
+    __print("%c[H",0x1b);
+    __print("[LEVEL: %d | SCORE: %d]\r\n", t->level, t->score);
     for (x=0; x<2*t->w+2; x++)
-        printf("~");
-    printf("\r\n");
+        __print("~");
+    __print("\r\n");
     for (y=0; y<t->h; y++) {
-        printf ("!");
+        __print ("!");
         for (x=0; x<t->w; x++) {
             if (x>=t->x && y>=t->y 
                     && x<(t->x+t->current.w) && y<(t->y+t->current.h) 
                     && t->current.data[y-t->y][x-t->x]!=' ')
-                printf("%c ", t->current.data[y-t->y][x-t->x]);
+                __print("%c ", t->current.data[y-t->y][x-t->x]);
             else
-                printf("%c ", t->game[x][y]);
+                __print("%c ", t->game[x][y]);
         }
-        printf ("!\r\n");
+        __print ("!\r\n");
     }
     for (x=0; x<2*t->w+2; x++)
-        printf("~");
-    printf("\r\n");
+        __print("~");
+    __print("\r\n");
 }
 
 void
@@ -338,7 +338,7 @@ void tetris_run(int w, int h) {
     }
 
     tetris_print(&t);
-    printf("*** GAME OVER ***\r\n");
+    __print("*** GAME OVER ***\r\n");
 
     tetris_clean(&t);
     tetris_cleanup_io();

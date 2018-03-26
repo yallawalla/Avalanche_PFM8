@@ -122,7 +122,6 @@ int			DecodeMinus(char *c) {
 					if(strscan(c,cc,' ')<2)
 						return _PARSE_ERR_MISSING;
 					switch(*cc[1]) {
-FATFS				fs_usb;	
 						case 'u':
 							__print("\rFormat usb ...[y/n]");
 							do {
@@ -131,9 +130,9 @@ FATFS				fs_usb;
 							} while(m==-1);
 							if(m == 'y') {
 int							wbuf[SECTOR_SIZE];
-								f_mount(&fs_usb,FS_USB,1);
+								f_mount(pfm->fatfs,FS_USB,1);
 								f_mkfs(FS_USB,FM_ANY,0,wbuf,SECTOR_SIZE*sizeof(int));
-								f_mount(NULL,FS_USB,1);
+//								f_mount(NULL,FS_USB,1);
 							}
 							break;
 
@@ -155,7 +154,7 @@ FATFS						fs_cpu;
 										__print("?");
 								f_mount(&fs_cpu,FS_CPU,1);
 								f_mkfs(FS_CPU,FM_ANY,0,wbuf,SECTOR_SIZE*sizeof(int));
-								f_mount(NULL,FS_CPU,1);
+//								f_mount(NULL,FS_CPU,1);
 							}
 							break;
 							
@@ -321,7 +320,7 @@ int			DecodeEq(char *c) {
 					break;
 //______________________________________________________________________________________
 				case 'E':
-					n=numscan(++c,cc,',');
+					n=strscan(++c,cc,',');
 					while(n--)
 						_SET_ERROR(pfm,getHEX(cc[n],-1));
 					break;
@@ -380,7 +379,19 @@ int			DecodeWhat(char *c) {
 					break;
 //______________________________________________________________________________________
 				case 'E':
-					__print(" error=%08X,mask=%08X",pfm->Error,pfm->Errmask);
+					__print(" mask=%08X",pfm->Errmask);
+					k=pfm->Error & ~pfm->Errmask & _CRITICAL_ERR_MASK;
+					for(n=0; k; k >>= 1, ++n)
+						if(_BIT(k,0))
+							__print("\r\nerror %06X: %s",1<<n,_errStr[n]);
+					break;
+//______________________________________________________________________________________
+				case 'W':
+					__print(" mask=%08X",pfm->Errmask);
+					k=pfm->Error & ~pfm->Errmask & ~_CRITICAL_ERR_MASK;
+					for(n=0; k; k >>= 1, ++n)
+						if(_BIT(k,0))
+							__print("\r\nwarn  %06X: %s",1<<n,_errStr[n]);
 					break;
 //______________________________________________________________________________________
 				case 'P':
@@ -527,7 +538,6 @@ int				DecodeFs(char *c) {
 					char	*p,*sc[8];
 
 static 		DIR		dir;
-static 		FATFS	fatfs;
 FILINFO		fno;
 TCHAR			buf[128];
 
@@ -547,7 +557,7 @@ TCHAR			buf[128];
 //______________________________________________________________________________________
 						if(!(strncmp("0:",sc[0],len) && strncmp("1:",sc[0],len))) {
 							if(f_chdrive(c)!=FR_OK ||
-								f_mount(&fatfs,c,1)!=FR_OK ||
+								f_mount(pfm->fatfs,c,1)!=FR_OK ||
 									f_getcwd(buf,_MAX_LFN)!=FR_OK ||
 										f_opendir(&dir,buf)!=FR_OK)
 											return _PARSE_ERR_SYNTAX;
@@ -693,12 +703,12 @@ TCHAR			buf[128];
 							return iapRemote(sc[1]);
 						}
 //______________________________________________________________________________________
-						else if(!strncmp(">",sc[0],len)) {
+						else if(*sc[0]=='>') {
 							__stdin.io->arg.parse=DecodeCom;
 							return(DecodeCom(NULL));
-						} else 
-						return _PARSE_ERR_ILLEGAL;		
-							
+						}
+//______________________________________________________________________________________
+						else return _PARSE_ERR_ILLEGAL;						
 		}
 		return _PARSE_OK;
 }
@@ -1601,8 +1611,8 @@ int					state=0;
 													f_close(&f0);																				// close both files
 													f_close(&f1);	
 												}
-							f_mount(NULL,FS_USB,1);																					// dismount both drives
-							f_mount(NULL,FS_CPU,1);
+//							f_mount(NULL,FS_USB,1);																					// dismount both drives
+//							f_mount(NULL,FS_CPU,1);
 							}
 							if(state>1) {
 								_GREEN1(3000);
