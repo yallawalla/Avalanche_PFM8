@@ -377,7 +377,7 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>Pfm6Application</GroupName>
+          <GroupName>Application</GroupName>
           <Files>
             <File>
               <FileName>main.c</FileName>
@@ -407,7 +407,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Setup</GroupName>
+          <GroupName>Setup</GroupName>
           <Files>
             <File>
               <FileName>adc.c</FileName>
@@ -457,7 +457,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Misc</GroupName>
+          <GroupName>Misc</GroupName>
           <Files>
             <File>
               <FileName>io.c</FileName>
@@ -1729,7 +1729,7 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>Pfm6Application</GroupName>
+          <GroupName>Application</GroupName>
           <Files>
             <File>
               <FileName>main.c</FileName>
@@ -1809,7 +1809,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Setup</GroupName>
+          <GroupName>Setup</GroupName>
           <Files>
             <File>
               <FileName>adc.c</FileName>
@@ -1909,7 +1909,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Misc</GroupName>
+          <GroupName>Misc</GroupName>
           <GroupOption>
             <CommonProperty>
               <UseCPPCompiler>0</UseCPPCompiler>
@@ -3638,7 +3638,7 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>Pfm6Application</GroupName>
+          <GroupName>Application</GroupName>
           <Files>
             <File>
               <FileName>main.c</FileName>
@@ -3668,7 +3668,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Setup</GroupName>
+          <GroupName>Setup</GroupName>
           <Files>
             <File>
               <FileName>adc.c</FileName>
@@ -3718,7 +3718,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Misc</GroupName>
+          <GroupName>Misc</GroupName>
           <Files>
             <File>
               <FileName>io.c</FileName>
@@ -4990,7 +4990,7 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>Pfm6Application</GroupName>
+          <GroupName>Application</GroupName>
           <Files>
             <File>
               <FileName>main.c</FileName>
@@ -5070,7 +5070,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Setup</GroupName>
+          <GroupName>Setup</GroupName>
           <Files>
             <File>
               <FileName>adc.c</FileName>
@@ -5170,7 +5170,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Misc</GroupName>
+          <GroupName>Misc</GroupName>
           <GroupOption>
             <CommonProperty>
               <UseCPPCompiler>0</UseCPPCompiler>
@@ -6880,7 +6880,7 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>Pfm6Application</GroupName>
+          <GroupName>Application</GroupName>
           <Files>
             <File>
               <FileName>main.c</FileName>
@@ -6910,7 +6910,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Setup</GroupName>
+          <GroupName>Setup</GroupName>
           <Files>
             <File>
               <FileName>adc.c</FileName>
@@ -6960,7 +6960,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Misc</GroupName>
+          <GroupName>Misc</GroupName>
           <Files>
             <File>
               <FileName>io.c</FileName>
@@ -8232,7 +8232,7 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>Pfm6Application</GroupName>
+          <GroupName>Application</GroupName>
           <Files>
             <File>
               <FileName>main.c</FileName>
@@ -8312,7 +8312,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Setup</GroupName>
+          <GroupName>Setup</GroupName>
           <Files>
             <File>
               <FileName>adc.c</FileName>
@@ -8412,7 +8412,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Misc</GroupName>
+          <GroupName>Misc</GroupName>
           <GroupOption>
             <CommonProperty>
               <UseCPPCompiler>0</UseCPPCompiler>
@@ -10141,7 +10141,7 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>Pfm6Application</GroupName>
+          <GroupName>Application</GroupName>
           <Files>
             <File>
               <FileName>main.c</FileName>
@@ -10221,7 +10221,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Setup</GroupName>
+          <GroupName>Setup</GroupName>
           <Files>
             <File>
               <FileName>adc.c</FileName>
@@ -10321,7 +10321,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Pfm6Misc</GroupName>
+          <GroupName>Misc</GroupName>
           <GroupOption>
             <CommonProperty>
               <UseCPPCompiler>0</UseCPPCompiler>

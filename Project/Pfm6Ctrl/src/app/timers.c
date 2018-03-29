@@ -294,7 +294,6 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		_TIM.Caps=2000;																								// 2000 u
 		_TIM.Icaps=1000;																							// 1A
 		}
-#if defined __PFM8__
 /*******************************************************************************
 * Function Name  : Initialize_F2V()
 * Description    : reconfigures the CAN rx tx to pfm8 functionality
@@ -360,7 +359,56 @@ TIM_ICInitTypeDef				TIM_ICInitStructure;
 	}
 	return Initialize_F2V;
 }
+/*******************************************************************************/
+/**
+  * @brief  - main crowbar interrupt
+	*					- IGBT fault driver interrupt
+  * @param  None
+  * @retval None
+  */
+void 		__EXTI_IRQHandler(void)
+{
+				if(EXTI_GetITStatus(_CWBAR_INT_line) == SET) { 						// CROWBAR
+					EXTI_ClearITPendingBit(_CWBAR_INT_line);								// clear flag
+					if(_MODE(pfm,_F2V)) {																		// F2V mode, pfm8
+#ifdef __PFM8__
+						if(!_PFM_CWBAR)																				// rising edge, trigger 
+#else
+						if(_PFM_CWBAR)																				// rising edge, trigger 
 #endif
+							_SET_EVENT(pfm,_TRIGGER);
+						pfm->Trigger.timeout=__time__+5;											// pulse rearm in 5 ms					
+					} else {																								// pfm6 mode
+						if(_PFM_CWBAR) {																			// rising edge, main error reset & restart
+							_SET_STATUS(pfm,_PFM_CWBAR_STAT);
+							_CLEAR_ERROR(pfm, _CRITICAL_ERR_MASK);
+							_ENABLE_PWM_OUT();
+						}	else {																							// falling edge, crowbar fired error
+							_CLEAR_STATUS(pfm,_PFM_CWBAR_STAT);
+							_SET_ERROR(pfm,PFM_ERR_PULSEENABLE);
+						}
+					}
+				}
+
+				if(EXTI_GetITStatus(_FAULT_INT_line) == SET) { 						// IGBT FAULT					
+					EXTI_ClearITPendingBit(_FAULT_INT_line);								// clear flag
+					if(_PFM_CWBAR)
+						_SET_ERROR(pfm,PFM_ERR_DRVERR);
+				}
+}
+/*******************************************************************************/
+/**
+	* @brief	TIM13,14 IC2 ISR
+	* @param	: None
+	* @retval : None
+	*/
+/*******************************************************************************/
+void		TIM8_TRG_COM_TIM14_IRQHandler(void) {
+				if(TIM_GetITStatus(TIM14,TIM_IT_CC1)==SET) {
+					TIM_ClearITPendingBit(TIM14, TIM_IT_CC1);
+					_SET_EVENT(pfm,_FAN_TACHO);
+				}
+}
 /**
   ******************************************************************************
   * @file			timers.c
@@ -575,54 +623,6 @@ int 		hv,j,k,ki=30,kp=0;
 }
 /*******************************************************************************/
 /**
-	* @brief	TIM13,14 IC2 ISR
-	* @param	: None
-	* @retval : None
-	*/
-/*******************************************************************************/
-void		TIM8_TRG_COM_TIM14_IRQHandler(void) {
-				if(TIM_GetITStatus(TIM14,TIM_IT_CC1)==SET) {
-					TIM_ClearITPendingBit(TIM14, TIM_IT_CC1);
-					_SET_EVENT(pfm,_FAN_TACHO);
-				}
-}
-/*******************************************************************************/
-/**
-  * @brief  - main crowbar interrupt
-	*					- IGBT fault driver interrupt
-  * @param  None
-  * @retval None
-  */
-void 		__EXTI_IRQHandler(void)
-{
-				if(EXTI_GetITStatus(_CWBAR_INT_line) == SET) { 						// CROWBAR
-					EXTI_ClearITPendingBit(_CWBAR_INT_line);								// clear flag
-					if(_MODE(pfm,_F2V)) {																		// F2V mode, pfm8
-						if(!_PFM_CWBAR && !pfm->Trigger.timeout) {						// rising edge, trigger
-							_SET_EVENT(pfm,_TRIGGER);
-						}	else {																							// falling edge, pulse rearm
-							pfm->Trigger.timeout=__time__+2;
-						}							
-					} else {																								// pfm6 mode
-						if(_PFM_CWBAR) {																			// rising edge, main error reset & restart
-							_SET_STATUS(pfm,_PFM_CWBAR_STAT);
-							_CLEAR_ERROR(pfm, _CRITICAL_ERR_MASK);
-							_ENABLE_PWM_OUT();
-						}	else {																							// falling edge, crowbar fired error
-							_CLEAR_STATUS(pfm,_PFM_CWBAR_STAT);
-							_SET_ERROR(pfm,PFM_ERR_PULSEENABLE);
-						}
-					}
-				}
-
-				if(EXTI_GetITStatus(_FAULT_INT_line) == SET) { 						// IGBT FAULT					
-					EXTI_ClearITPendingBit(_FAULT_INT_line);								// clear flag
-					if(_PFM_CWBAR)
-						_SET_ERROR(pfm,PFM_ERR_DRVERR);
-				}
-}
-/*******************************************************************************/
-/**
 	* @brief	Trigger call
 	* @param	: None
 	* @retval : None
@@ -698,13 +698,14 @@ void		Trigger(PFM *p) {
 							_TIM.eint=__max(_TIM.eint1,_TIM.eint2);
 						}
 					}					
-					
+				
 					ADC_DMARequestAfterLastTransferCmd(ADC1, DISABLE);			// at least ADC conv. time before ADC/DMA change 
 					ADC_DMARequestAfterLastTransferCmd(ADC2, DISABLE);
 					_SET_MODE(p,_PULSE_INPROC);
 					SetSimmerRate(p,_SIMMER_HIGH);
-				} else					
+				} else {					
 					_DEBUG_(_DBG_SYS_MSG,"trigger aborted...");
+				}
 }
 /**
 * @}

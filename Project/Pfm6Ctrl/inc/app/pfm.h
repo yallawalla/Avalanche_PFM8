@@ -473,6 +473,7 @@ void						App_Init(void),
 								Trigger(PFM *),
 								TriggerADC(PFM *),
 								CanReply(char *, ...);
+void						PFM_debug(PFM *);
 				        
 typedef	enum 		{T_MIN=0,TH1,TH2,TL1,TL2} temp_ch;
 int							IgbtTemp(temp_ch);
@@ -612,44 +613,48 @@ int			SetChargerVoltage(int);
 #define _USB_DIR_PORT	 		GPIOD
 #define _USB_SENSE_BIT 		GPIO_Pin_10
 #define _USB_SENSE_PORT	 	GPIOD
-
+//_________________________________________________________________________________
 #if defined (__PFM6__)
 #define _TRIGGER1_BIT GPIO_Pin_12
 #define _TRIGGER1_PORT GPIOD
 #define _TRIGGER2_BIT GPIO_Pin_13
 #define _TRIGGER2_PORT GPIOD
 
-#define _CWBAR_BIT GPIO_Pin_14
-#define _CWBAR_PORT GPIOD
-#define _CWBAR_INT_port EXTI_PortSourceGPIOD
-#define _CWBAR_INT_pin	EXTI_PinSource14
-#define _CWBAR_INT_line	EXTI_Line14
-
-#elif defined (__PFM8__)
-#define _TRIGGER1_BIT GPIO_Pin_4
-#define _TRIGGER1_PORT GPIOE
-
-#define _TRIGGER2_BIT GPIO_Pin_5
-#define _TRIGGER2_PORT GPIOE
-
-#define	_NRST_DISABLE_BIT 			GPIO_Pin_13
-#define _NRST_DISABLE_PORT			GPIOF
-#define	_BOOT_ENABLE_BIT				GPIO_Pin_14
-#define _BOOT_ENABLE_PORT				GPIOF			        
-
-#define _CWBAR_BIT							GPIO_Pin_6								//	GPIO_Pin_7
-#define _CWBAR_PORT							GPIOE
-#define _CWBAR_INT_port					EXTI_PortSourceGPIOE
-#define _CWBAR_INT_pin					EXTI_PinSource6						//	EXTI_PinSource7
-#define _CWBAR_INT_line					EXTI_Line6								//	EXTI_Line7
-#define _CWBAR_HANDLER					EXTI9_5_IRQHandler
+#define _CWBAR_BIT 							GPIO_Pin_14
+#define _CWBAR_PORT 						GPIOD
+#define _CWBAR_INT_port 				EXTI_PortSourceGPIOD
+#define _CWBAR_INT_pin					EXTI_PinSource14
+#define _CWBAR_INT_line					EXTI_Line14
 
 #define	_ERROR_OW_BIT						GPIO_Pin_13
 #define	_ERROR_OW_PORT					GPIOB
 #define	_F2V_OW_BIT							GPIO_Pin_5
 #define	_F2V_OW_AF							GPIO_PinSource5
 #define	_F2V_OW_PORT						GPIOB
+//_________________________________________________________________________________
+#elif defined (__PFM8__)
+#define _TRIGGER1_BIT GPIO_Pin_4
+#define _TRIGGER1_PORT GPIOE
+#define _TRIGGER2_BIT GPIO_Pin_5
+#define _TRIGGER2_PORT GPIOE
 
+#define _CWBAR_BIT							GPIO_Pin_6
+#define _CWBAR_PORT							GPIOE
+#define _CWBAR_INT_port					EXTI_PortSourceGPIOE
+#define _CWBAR_INT_pin					EXTI_PinSource6
+#define _CWBAR_INT_line					EXTI_Line6
+
+#define	_ERROR_OW_BIT						GPIO_Pin_13
+#define	_ERROR_OW_PORT					GPIOB
+#define	_F2V_OW_BIT							GPIO_Pin_5
+#define	_F2V_OW_AF							GPIO_PinSource5
+#define	_F2V_OW_PORT						GPIOB
+//_________________________________________________________________________________
+#define	_NRST_DISABLE_BIT 			GPIO_Pin_13
+#define _NRST_DISABLE_PORT			GPIOF
+#define	_BOOT_ENABLE_BIT				GPIO_Pin_14
+#define _BOOT_ENABLE_PORT				GPIOF			        
+//_________________________________________________________________________________
 #else
 *** error, define platform
 #endif

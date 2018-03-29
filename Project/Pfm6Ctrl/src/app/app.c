@@ -149,8 +149,8 @@ int				i,j;
 					
 					_proc_add((func *)ParseCanTx,pfm,								"CAN tx",0);
 					_proc_add((func *)ParseCanRx,pfm,								"CAN rx",0);
-					_proc_add((func *)ProcessingEvents,pfm,					"events",0);
 					_proc_add((func *)ProcessingStatus,pfm,					"status",1);
+					_proc_add((func *)ProcessingEvents,pfm,					"events",0);
 					_proc_add((func *)ProcessingCharger,pfm,				"charger6",1);
 
 #if		defined (__PFM6__) || defined (__PFM8__)
@@ -195,11 +195,11 @@ PFM				*p=proc->arg;
 //______________________________________________________________________________
 					if(_EVENT(p,_FAN_TACHO)) {															// fan timeout counter reset
 						_CLEAR_EVENT(p,_FAN_TACHO);
-						p->fan_rate = __time__;
+						p->fan_rate = __time__ + 500;
 						_BLUE2(20);
 					}
-					if((__time__ - p->fan_rate > 500) && (__time__ > 10000))
-						_SET_ERROR(p,PFM_FAN_ERR);		
+					if(__time__ > 10000 &&__time__ > p->fan_rate)
+						_SET_ERROR(p,PFM_FAN_ERR);				
 					else
 						_CLEAR_ERROR(p,PFM_FAN_ERR);
 //______________________________________________________________________________
@@ -209,7 +209,9 @@ PFM				*p=proc->arg;
 //______________________________________________________________________________
 //______________________________________________________________________________
 //________Processing timed trigger______________________________________________
-//
+//______________________________________________________________________________
+//______________________________________________________________________________
+//______________________________________________________________________________
 					if(_EVENT(p,_TRIGGER)) {																// trigger request
 						_CLEAR_EVENT(p,_TRIGGER);
 						if((p->Error & _CRITICAL_ERR_MASK) || p->Trigger.time)// if periodic active or error, disarm count...
@@ -224,15 +226,6 @@ PFM				*p=proc->arg;
 								++p->Trigger.time;																// rearm counters, rounded to next milliseconds to avoid 1ms jitter !!!
 						}
 					}
-//______________________________________________________________________________
-//______________________________________________________________________________
-//					if(_EVENT(p,_TRIGGER1)) {																// trigger request
-//						_CLEAR_EVENT(p,_TRIGGER1);
-//						p->Trigger.counter=0;																	// 
-//						p->Trigger.count=1;
-//						p->Trigger.time = __time__;														// rearm counters, rounded to next milliseconds to avoid 1ms jitter !!!
-//					}
-//______________________________________________________________________________
 //______________________________________________________________________________
 //______________________________________________________________________________
 					if(p->Trigger.time  && __time__ >= p->Trigger.time ) {
@@ -264,17 +257,24 @@ PFM				*p=proc->arg;
 /*______________________________________________________________________________
   *
   *
-* @brief		:debug print
+  * @brief	periodic status/error  polling, main loop call from 1 msec event flag
   * @param  : current PFM object
   * @retval : None
   *
 ______________________________________________________________________________*/
-void			PFM_debug(int err) {
-					int i;
-					for(i=0; i<32 && _errStr[i]; ++i)
-						if(err & (1<<i))
-							_DEBUG_(_DBG_ERR_MSG,"error %06X: %s",1<<i,(int)_errStr[i]);
-}						
+void			PFM_debug(PFM *p) {
+	static	int i,img=0;
+					if(!p)
+						img = 0;
+					else 
+						img = (p->Error ^ img) & p->Error;
+					if(img) {
+						for(i=0; i<32 && _errStr[i]; ++i)
+							if(img & (1<<i))
+								_DEBUG_(_DBG_ERR_MSG,"error %06X: %s",1<<i,(int)_errStr[i]);
+					}
+					img=p->Error;
+}
 /*______________________________________________________________________________
   *
   *
@@ -410,6 +410,8 @@ static		int		bounce=0;
 							_TIM.Hvref = __min(p->HVref,_TIM.Hvref + _TIM.Icaps*400*4096/880/_TIM.Caps);
 							_YELLOW2(20);
 						}
+						
+					PFM_debug(p);
 }
 /*______________________________________________________________________________
   * @brief	Charger6 control procedure; Disables Charger6 if PFM_ERR_DRVERR,PFM_ERR_PULSEENABLE or 
@@ -445,7 +447,6 @@ int						i=_STATUS_WORD;
 					if(p->Error  & _CRITICAL_ERR_MASK) {
 						if(p->Simmer.active)	{													// on error = simmer off
 							PFM_command(p,0);
-							PFM_debug(p->Error);
 							}
 						if(!terr--) {																		// elapsed ?
 							int i=_PFC_OFF;																// PFC off
@@ -573,12 +574,15 @@ char 			*c;
 }
 //______________________________________________________________________________________
 void			ParseCom(_proc *p) {
-_io				*io;
-					if(p)
-						io=_stdio(p->arg);															// recursion lock
-					Parse(Escape());
-					if(p)
-						_stdio(io);
+					if(p) {
+						_io *in=stdin->io;
+						_io *out=stdout->io;
+						_stdio(p->arg);																// recursion lock
+						Parse(Escape());
+						stdin->io=in;
+						stdout->io=out;
+					} else
+						Parse(Escape());
 }
 //______________________________________________________________________________________
 void			ParseFile(FIL *f) {

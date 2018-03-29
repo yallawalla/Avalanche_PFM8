@@ -648,7 +648,6 @@ b 3,1000,200
 -E ffffff
 -f
 
-
 22.2.2018
 
 tandem, drugi prototip
@@ -663,6 +662,9 @@ tandem, pfm8
 
 za avalanche polovicni simmer start
 
+f tandem
+s0
+-m 15,16
 +m 12,15
 s3
 -d 1000
@@ -670,6 +672,18 @@ s3
 +m 11,16
 s3
 -m 11,16
+
+f alex
+s0
+-m 16
++m 15
+s3
+
+f ndyag
+s0
+-m 15
++m 16
+s3
 
 22.1.2018
 - popravki na +/-E, ?E
