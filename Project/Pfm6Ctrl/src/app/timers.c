@@ -452,10 +452,6 @@ int 		hv,j,k,ki=30,kp=0;
 #endif
 				}
 
-#if defined __DISC4__ && defined __PFM8__
-				DAC_SetDualChannelData(DAC_Align_12b_R,5*y,5*x);
-				DAC_DualSoftwareTriggerCmd(ENABLE);		
-#endif
 				if(_TIM.active & PFM_STAT_SIMM1)
 					x=pfm->Simmer.pw[0];
 				else
@@ -482,6 +478,10 @@ int 		hv,j,k,ki=30,kp=0;
 																																	// --- on first entry, compute DMA index 
 				k = _TIM.eint*_uS/_MAX_ADC_RATE;
 				k-= DMA_GetCurrDataCounter(DMA2_Stream4) / sizeof(_ADCDMA)*sizeof(short);
+#if defined __DISC4__ && defined __PFM8__
+				DAC_SetDualChannelData(DAC_Align_12b_R,k,k);
+				DAC_DualSoftwareTriggerCmd(ENABLE);		
+#endif
 
 				if(!_MODE(pfm,__TEST__))																	// ---  on __TEST__ mode, leave virt. reference for HV
 					_TIM.Hvref=pfm->HVref;

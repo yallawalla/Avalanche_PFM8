@@ -243,10 +243,18 @@ PFM				*p=proc->arg;
 					if(_EVENT(p,_PULSE_FINISHED)) {	
 						_CLEAR_EVENT(p,_PULSE_FINISHED);											// end of pulse
 						SetSimmerRate(p,_SIMMER_LOW);													// reduce simmer
+#if defined __DISC4__ && defined __PFM8__
+				DAC_SetDualChannelData(DAC_Align_12b_R,0,0);
+				DAC_DualSoftwareTriggerCmd(ENABLE);		
+#endif
 						if(Eack(p)) {																					// Energ. integrator finished
 							_TIM.cref1=_TIM.cref2=0;
 							ScopeDumpBinary(NULL,0);														// scope printout, for testing(if enabled ?)
 						}
+#if defined __DISC4__ && defined __PFM8__
+				DAC_SetDualChannelData(DAC_Align_12b_R,2000,2000);
+				DAC_DualSoftwareTriggerCmd(ENABLE);		
+#endif
 					}
 //______________________________________________________________________________
 					if(_EVENT(p,_REBOOT)) {	

@@ -679,7 +679,7 @@ s0
 +m 15
 s3
 
-f ndyag
+f nd
 s0
 -m 15
 +m 16
