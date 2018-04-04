@@ -230,8 +230,10 @@ FATFS						fs_cpu;
 					return _PARSE_ERR_SYNTAX;
 //__________________________________________________ disable error ___________
 				case 'E':
-					for(c=strchr(c,' '); c && *c;)
+					for(c=strchr(c,' '); c && *c;) {
 						pfm->Errmask |= strtoul(++c,&c,16);
+						_CLEAR_ERROR(pfm, pfm->Errmask);
+					}
 					break;
 //__________________________________________________ mode setup _____________
 				case 'm':
@@ -462,7 +464,7 @@ int			DecodeWhat(char *c) {
 						__print("\r\nerror mask=%08X",pfm->Errmask);
 						__print("\r\ncritical  =%08X",pfm->Errmask & _CRITICAL_ERR_MASK);
 					} else {
-						k=pfm->Error & ~pfm->Errmask & _CRITICAL_ERR_MASK;
+						k=pfm->Error & ~pfm->Errmask  & _CRITICAL_ERR_MASK;
 						for(n=0; k; k >>= 1, ++n)
 							if(_BIT(k,0))
 								__print("\r\n%06X: %s",1<<n,_errStr[n]);
@@ -723,7 +725,7 @@ TCHAR			buf[128];
 								return _PARSE_ERR_OPENFILE;
 							}
 							while(!f_eof(&f1))
-								if(fputc(fgetc((FILE *)&f1),(FILE *)&f2)==EOF)
+								if(f_putc(f_getc(&f1),&f2)==EOF)
 									break;
 							if(!f_eof(&f1)) {
 								f_close(&f1);
@@ -944,6 +946,8 @@ int				n;
 				case '<': {
 CanRxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 					buf.StdId=strtol(++c,&c,16);
+					if(!buf.StdId)
+						return(_PARSE_ERR_MISSING); 
 					do {
 						while(*c == ' ') ++c;
 						for(buf.DLC=0; *c && buf.DLC < 8; ++buf.DLC)
@@ -958,6 +962,8 @@ CanRxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 				case '>': {
 CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};			
 					buf.StdId=strtol(++c,&c,16);
+					if(!buf.StdId)
+						return(_PARSE_ERR_MISSING); 
 					do {
 						while(*c == ' ') ++c;
 						for(buf.DLC=0; *c && buf.DLC < 8; ++buf.DLC)
@@ -1370,7 +1376,7 @@ int			u=0,umax=0,umin=0;
 					int i=0,U=0,I=0;
 					CanReply("I",NULL);
 					__print(",%d\r\n",_TIM.eint);		
-					while(i<__min(_TIM.eint*_uS/_MAX_ADC_RATE-1,_MAX_BURST/_uS-1)) {
+					while(i < __min(_TIM.eint*_uS/_MAX_ADC_RATE-1,_MAX_BURST/_uS-1)) {
 						if(n==1) {
 							U+=ADC1_buf[i].U;
 							I+=ADC1_buf[i].I;

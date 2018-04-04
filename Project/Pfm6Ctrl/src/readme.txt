@@ -635,18 +635,6 @@ PFM8, dodan task F2V, na CAN rx pretvarja freq, v napetost za pfm->burst in tx s
 tandem:
 	-urediti izpis za debug
 	-šmafu ukrog regul. zakasnitve v alternate režimu
-	
-25.1.18 pfm8 cfg.ini
-
--l d0,d1,d2,d3,,d4,d5,d6,d7
--l
--r
--i
-u 700
-p 100,500
-b 3,1000,200
--E ffffff
--f
 
 22.2.2018
 
@@ -662,7 +650,18 @@ tandem, pfm8
 
 za avalanche polovicni simmer start
 
-f tandem
+file cfg.ini
+-l d0,d1,d2,d3,,d4,d5,d6,d7
+-l
+-r
+-i
+u 700
+-u h
+-E ffffff
+-f
+
+
+file tandem
 s0
 -m 15,16
 +m 12,15
@@ -673,13 +672,17 @@ s3
 s3
 -m 11,16
 
-f alex
+
+
+file alex
 s0
 -m 16
 +m 15
 s3
 
-f nd
+
+
+file nd
 s0
 -m 15
 +m 16
@@ -690,5 +693,11 @@ s3
 - dodatek ?W
 - F2V error ugaša samo na critical error
 - simmer error se aktivira šele po padcu triggerja
+
+3.5.2018
+- prenos stack/heap v CCC RAM
+- izklopi bit banding (!!!), implementacij enaka kot pri F7
+- povecanje MAX_BURST na 13 ms
+- Eack integrator v DSP 
 
 

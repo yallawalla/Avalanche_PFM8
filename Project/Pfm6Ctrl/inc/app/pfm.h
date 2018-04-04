@@ -22,31 +22,32 @@
 #include				"usbh_core.h"
 //________SW version string_____________________________	
 
-
 // TIM1_polarity TIM_OCPolarity_High);
 
 #if		defined		(__PFM6__)
-	#define 				SW_version			215		
+	#define 				SW_version	215		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version			315		
+	#define 				SW_version	315		
 #else
 *** error, define HW platform
 #endif
 //________global platform dependencies	________________			
 #if		defined (__F2__)
-	#define					_uS							60
-	#define 				ADC_SampleTime 	ADC_SampleTime_3Cycles
+	#define					_uS					60
+	#define 				ADC_Ts			ADC_SampleTime_3Cycles
+	#define					_MAX_BURST	(10*_mS)
 #elif	defined (__F4__)
-	#define					_uS							60
-	#define ADC_SampleTime 					ADC_SampleTime_3Cycles
+	#define					_uS					60
+	#define 				ADC_Ts			ADC_SampleTime_3Cycles
+	#define					_MAX_BURST	(13*_mS)
 #elif	defined (__F7__)
-	#define					_uS							108
-	#define ADC_SampleTime 					ADC_SampleTime_15Cycles
+	#define					_uS					108
+	#define 				ADC_Ts			ADC_SampleTime_15Cycles
+	#define					_MAX_BURST	(13*_mS)
 #else
 *** error, define CPU
 #endif
-//______________________________________________________
-#define					_MAX_BURST		(10*_mS)
+//______________________________________________________	
 #define					__CAN__				CAN2
 #define					__FILT_BASE__	14
 //______________________________________________________
@@ -176,11 +177,11 @@ typedef					enum
 
 extern const char *_errStr[];
 
-#if		defined		(__F2__) || defined		(__F4__)
-	#define					_BIT(p,n)					(bool)(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n))
-	#define					_SET_BIT(p,n)			(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n)) = 1
-	#define					_CLEAR_BIT(p,n)		(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n)) = 0
-#elif defined		(__F7__)
+//#if		defined		(__F2__) || defined		(__F4__)
+//	#define					_BIT(p,n)					(bool)(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n))
+//	#define					_SET_BIT(p,n)			(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n)) = 1
+//	#define					_CLEAR_BIT(p,n)		(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n)) = 0
+//#elif defined		(__F7__)
 	#define					_BIT(p,n)					((p) & (1<<(n)))
 	#define					_SET_BIT(p,a)			do {					\
 										int primask=__get_PRIMASK();	\
@@ -194,9 +195,9 @@ extern const char *_errStr[];
 										(p) &= ~(1<<(a));							\
 										__set_PRIMASK(primask);				\
 									} while(0)
-#else
-	*** error, undefined HW
-#endif					
+//#else
+//	*** error, undefined HW
+//#endif					
 	
 #define					_MODE(p,a)					_BIT(p->mode,a)
 #define					_SET_MODE(p,a)			_SET_BIT(p->mode,a)
@@ -561,13 +562,10 @@ int							Escape(void);
 int							ScopeDumpBinary(_ADCDMA *, int);
 							
 int							getHEX(char *, int);
-void						putHEX(unsigned int,int);
 int							hex2asc(int);
-void						putHEX(unsigned int,int);
 int							strscan(char *,char *[],int),
 								numscan(char *,char *[],int);
 int							hex2asc(int);
-void						putHEX(unsigned int,int);
 int							sLoad(char *);
 int							iDump(int *,int);
 int							sDump(char *,int);

@@ -598,7 +598,7 @@ void ADC_TempSensorVrefintCmd(FunctionalState NewState);
 void ADC_VBATCmd(FunctionalState NewState);
 
 /* Regular Channels Configuration functions ***********************************/
-void ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime);
+void ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_Ts);
 void ADC_SoftwareStartConv(ADC_TypeDef* ADCx);
 FlagStatus ADC_GetSoftwareStartConvStatus(ADC_TypeDef* ADCx);
 void ADC_EOCOnEachRegularChannelCmd(ADC_TypeDef* ADCx, FunctionalState NewState);
@@ -614,7 +614,7 @@ void ADC_DMARequestAfterLastTransferCmd(ADC_TypeDef* ADCx, FunctionalState NewSt
 void ADC_MultiModeDMARequestAfterLastTransferCmd(FunctionalState NewState);
 
 /* Injected channels Configuration functions **********************************/
-void ADC_InjectedChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime);
+void ADC_InjectedChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_Ts);
 void ADC_InjectedSequencerLengthConfig(ADC_TypeDef* ADCx, uint8_t Length);
 void ADC_SetInjectedOffset(ADC_TypeDef* ADCx, uint8_t ADC_InjectedChannel, uint16_t Offset);
 void ADC_ExternalTrigInjectedConvConfig(ADC_TypeDef* ADCx, uint32_t ADC_ExternalTrigInjecConv);

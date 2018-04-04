@@ -243,18 +243,10 @@ PFM				*p=proc->arg;
 					if(_EVENT(p,_PULSE_FINISHED)) {	
 						_CLEAR_EVENT(p,_PULSE_FINISHED);											// end of pulse
 						SetSimmerRate(p,_SIMMER_LOW);													// reduce simmer
-#if defined __DISC4__ && defined __PFM8__
-				DAC_SetDualChannelData(DAC_Align_12b_R,0,0);
-				DAC_DualSoftwareTriggerCmd(ENABLE);		
-#endif
 						if(Eack(p)) {																					// Energ. integrator finished
 							_TIM.cref1=_TIM.cref2=0;
 							ScopeDumpBinary(NULL,0);														// scope printout, for testing(if enabled ?)
 						}
-#if defined __DISC4__ && defined __PFM8__
-				DAC_SetDualChannelData(DAC_Align_12b_R,2000,2000);
-				DAC_DualSoftwareTriggerCmd(ENABLE);		
-#endif
 					}
 //______________________________________________________________________________
 					if(_EVENT(p,_REBOOT)) {	
@@ -687,7 +679,7 @@ PFM				*p=proc->arg;
 								if(_MODE(p,_CAN_2_COM))	{
 									_io *io=_stdio(__dbug);
 									for(n=0;n<rx.DLC;++n)
-										fputc(rx.Data[n],&__stdout);
+										__print("%c",rx.Data[n]);
 									_stdio(io);
 								}
 								break;
@@ -965,22 +957,26 @@ int				i;
   * @retval : None
   *
   */
+uint64_t	eMac(_ADCDMA *,int, int);
+
 int				Eack(PFM *p) {
 
-static		uint64_t	e1=0,
-										e2=0;
+static		uint64_t	e1=0,e2=0;
 static		int				n=0;
-
-int				i;
+					int				i=__min(_TIM.eint*_uS/_MAX_ADC_RATE,_MAX_BURST/_uS);
 
 					if(p) {
-						for(i=__min(_TIM.eint*_uS/_MAX_ADC_RATE-1,_MAX_BURST/_uS-1); i>=0; --i) {
+#ifdef __F2__
+						while(i--) {
 							if(ADC1_buf[i].I > _I2AD(20.0))
 								e1+=(short)(ADC1_buf[i].U) * (short)(ADC1_buf[i].I-_TIM.I1off);	
 							if(ADC2_buf[i].I > _I2AD(20.0))
 								e2+=(short)(ADC2_buf[i].U) * (short)(ADC2_buf[i].I-_TIM.I2off);							
-						}
-
+						}			
+#else
+						e1+=eMac(ADC1_buf, i, _TIM.I1off);
+						e2+=eMac(ADC2_buf, i, _TIM.I2off);
+#endif
 						if(n++ == p->Trigger.erpt) {
 							e1/=(_kmJ*_uS/p->ADCRate);
 							e2/=(_kmJ*_uS/p->ADCRate);

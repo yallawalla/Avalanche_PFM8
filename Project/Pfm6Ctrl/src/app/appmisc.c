@@ -550,7 +550,6 @@ int		i,j;
 * Return        :
 *******************************************************************************/
 int		__print(char *format, ...) {
-
 			char 		buf[128],*p;
 			va_list	aptr;
 			int			ret;
@@ -667,13 +666,13 @@ _buffer		*p=__stdin.io->gets;
 					else  {
 						*p->_push=c;
 						if(mode)
-							fputc('\b',&__stdout);
+							__print("%c",'\b');
 					}
 					if(mode) {
 						if(c < ' ' || c > 127)
 							__print("%c%02X%c",'<',c,'>');
 						else
-							fputc(c,&__stdout);
+							__print("%c",c);
 					}
 					break;
 			}
@@ -735,13 +734,6 @@ int		getHEX(char *p, int n)
 				i=(i<<4) | asc2hex(*p++);
 			return(i);
 }
-//______________________________________________________________________________________
-void	putHEX(unsigned int i,int n)
-{
-			if(n>1)
-				putHEX(i>>4,n-1);
-			fputc(hex2asc(i & 0x0f),&__stdout);
-}
 //_____________________________________________________________________________________
 char	*endstr(char *p)
 {
@@ -792,9 +784,9 @@ int		sDump(char *p,int n)
 			while(j--)
 			{
 				i += *p;
-				putHEX(*p++,2);
+				__print("%02X",*p++ & 0xff);
 			}
-			putHEX(~i,2);
+			__print("%02X",~i & 0xff);
 			if(n)
 				sDump(p,n);
 			return(-1);
@@ -844,10 +836,10 @@ int		iDump(int *p,int n)
 				for(k=0; k<sizeof(int); ++k)
 				{
 					i += u.c[k]; 
-					putHEX(u.c[k] ,2);
+					__print("%02X",u.c[k]);
 				}
 			}
-			putHEX(~i,2);
+			__print("%02X",~i & 0xff);
 			if(n)
 				iDump(p,n);
 			return(-1);
