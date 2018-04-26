@@ -92,9 +92,9 @@ static
 int	__getDMA(_buffer *rx) {
 int	i=0;
 	if(DMA2_Stream2->NDTR)
-		rx->_push=&(rx->_buf[rx->size - DMA2_Stream2->NDTR]);
+		rx->_push = &(rx->_buf[rx->size - DMA2_Stream2->NDTR]);
 	else
-		rx->_push=rx->_buf;
+		rx->_push = rx->_buf;
 	if(_buffer_pull(rx,&i,1))
 		return i;
 	else
@@ -168,7 +168,6 @@ _io 										*io;
 }
 //______________________________________________________________________________________
 extern _io* __com3;
-
 int	putCOM3(_buffer *p, int	c) {
 	if(_buffer_push(__com3->tx,&c,1)==1)
 		USART_ITConfig(USART3, USART_IT_TXE, ENABLE);

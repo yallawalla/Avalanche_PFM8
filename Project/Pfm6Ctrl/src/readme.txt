@@ -656,7 +656,7 @@ file cfg.ini
 -r
 -i
 u 700
--u h
+-u s
 -E ffffff
 -f
 
@@ -700,4 +700,8 @@ s3
 - povecanje MAX_BURST na 13 ms
 - Eack integrator v DSP 
 
+26.4.2018
+- CCM ram je jeba, DMA ne dela
+- skrajsanje int. na 10ms, stach in heap nazaj v main RAM
+- eMac ostane ...
 

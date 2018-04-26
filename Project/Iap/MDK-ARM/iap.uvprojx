@@ -1034,7 +1034,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,USE_USB_OTG_FS,__PFM8__,HSE_VALUE=25000000,WITH_COM_PORT</Define>
+              <Define>USE_STDPERIPH_DRIVER,USE_USB_OTG_FS,__PFM8__,HSE_VALUE=8000000,WITH_COM_PORT</Define>
               <Undefine></Undefine>
               <IncludePath>..\;..\Inc;..\..\..\Libraries\STM32F2xx_StdPeriph_Driver\inc;..\..\..\Libraries\CMSIS\Device\ST\STM32F2xx\Include;..\..\Pfm6Ctrl\inc\app;..\..\Pfm6Ctrl\src\wifi;..\..\..\Utilities\FatFs_R0.09a</IncludePath>
             </VariousControls>

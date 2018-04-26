@@ -39,7 +39,7 @@
 #elif	defined (__F4__)
 	#define					_uS					60
 	#define 				ADC_Ts			ADC_SampleTime_3Cycles
-	#define					_MAX_BURST	(13*_mS)
+	#define					_MAX_BURST	(10*_mS)
 #elif	defined (__F7__)
 	#define					_uS					108
 	#define 				ADC_Ts			ADC_SampleTime_15Cycles
@@ -177,11 +177,11 @@ typedef					enum
 
 extern const char *_errStr[];
 
-//#if		defined		(__F2__) || defined		(__F4__)
-//	#define					_BIT(p,n)					(bool)(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n))
-//	#define					_SET_BIT(p,n)			(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n)) = 1
-//	#define					_CLEAR_BIT(p,n)		(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n)) = 0
-//#elif defined		(__F7__)
+#if		defined		(__F2__) || defined		(__F4__)
+	#define					_BIT(p,n)					(bool)(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n))
+	#define					_SET_BIT(p,n)			(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n)) = 1
+	#define					_CLEAR_BIT(p,n)		(*(char *)(0x22000000 + ((int)(&p) - 0x20000000) * 32 + 4*n)) = 0
+#elif defined		(__F7__)
 	#define					_BIT(p,n)					((p) & (1<<(n)))
 	#define					_SET_BIT(p,a)			do {					\
 										int primask=__get_PRIMASK();	\
@@ -195,9 +195,9 @@ extern const char *_errStr[];
 										(p) &= ~(1<<(a));							\
 										__set_PRIMASK(primask);				\
 									} while(0)
-//#else
-//	*** error, undefined HW
-//#endif					
+#else
+	*** error, undefined HW
+#endif					
 	
 #define					_MODE(p,a)					_BIT(p->mode,a)
 #define					_SET_MODE(p,a)			_SET_BIT(p->mode,a)
@@ -586,7 +586,11 @@ short		__f2lin(float, short);
 int			batch(char *);	        
 void		CAN_console(void);
 
-extern	uint32_t	__Vectors[],__heap_base[],__heap_limit[],__initial_sp[];
+extern	uint32_t	__Vectors[],
+									__heap_base[],
+									__heap_limit[],
+									__initial_sp[];
+
 extern	int				_PWM_RATE_LO;
 
 void		SectorQuery(void);

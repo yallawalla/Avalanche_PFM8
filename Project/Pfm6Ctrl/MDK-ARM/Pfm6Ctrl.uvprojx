@@ -1063,6 +1063,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</FilePath>
             </File>
+            <File>
+              <FileName>eMac.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\src\dsp\eMac.s</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -3059,6 +3064,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</FilePath>
             </File>
+            <File>
+              <FileName>eMac.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\src\dsp\eMac.s</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -3443,7 +3453,7 @@
             <hadIRAM>1</hadIRAM>
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
-            <RvdsVP>1</RvdsVP>
+            <RvdsVP>2</RvdsVP>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -3594,7 +3604,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F2XX,USE_USB_OTG_FS,__PFM8__,__F4__,HSE_VALUE=25000000</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F2XX,USE_USB_OTG_FS,__PFM8__,__F4__,HSE_VALUE=8000000</Define>
               <Undefine></Undefine>
               <IncludePath>..\inc;..\inc\app;..\inc\usbd_msc;..\inc\usbd_cdc;..\inc\usbh_msc;..\src\wifi;..\..\..\Libraries\CMSIS\Include;..\..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Include;..\..\..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\..\..\Libraries\STM32_USB_OTG_Driver\inc;..\..\..\Libraries\STM32_USB_Device_Library\Core\inc;..\..\..\Libraries\STM32_USB_HOST_Library\Core\inc;..\..\..\Libraries\STM32_USB_Host_Library\Class\msc\inc;..\..\..\Libraries\STM32_USB_Device_Library\Class\msc\inc;..\..\..\Libraries\STM32_USB_Device_Library\Class\cdc\inc;..\..\..\Utilities\FatFs_R0.12b\src;..\src\tetris</IncludePath>
             </VariousControls>
@@ -4391,6 +4401,11 @@
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>eMac.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\src\dsp\eMac.s</FilePath>
             </File>
           </Files>
         </Group>
@@ -6320,6 +6335,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</FilePath>
             </File>
+            <File>
+              <FileName>eMac.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\src\dsp\eMac.s</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -7633,6 +7653,11 @@
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>eMac.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\src\dsp\eMac.s</FilePath>
             </File>
           </Files>
         </Group>
@@ -9562,6 +9587,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</FilePath>
             </File>
+            <File>
+              <FileName>eMac.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\src\dsp\eMac.s</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -11470,6 +11500,11 @@
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>eMac.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\src\dsp\eMac.s</FilePath>
             </File>
           </Files>
         </Group>
