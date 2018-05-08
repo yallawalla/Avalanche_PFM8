@@ -22,6 +22,19 @@
 * Output         : None
 * Return         : None
 *******************************************************************************/
+#ifdef	__DISC4__
+#define	USART3_TX_PIN		GPIO_Pin_8
+#define	USART3_RX_PIN		GPIO_Pin_9
+#define	USART3_PORT			GPIOD
+#define	USART3_TXSRC		GPIO_PinSource8
+#define	USART3_RXSRC		GPIO_PinSource9
+#else
+#define	USART3_RX_PIN		GPIO_Pin_11
+#define	USART3_TX_PIN		GPIO_Pin_10
+#define	USART3_PORT			GPIOC
+#define	USART3_TXSRC		GPIO_PinSource10
+#define	USART3_RXSRC		GPIO_PinSource11
+#endif
 #define RxBufferSize		128
 #define TxBufferSize		128
 /* Private variables ---------------------------------------------------------*/
@@ -168,6 +181,7 @@ _io 										*io;
 }
 //______________________________________________________________________________________
 extern _io* __com3;
+//______________________________________________________________________________________
 int	putCOM3(_buffer *p, int	c) {
 	if(_buffer_push(__com3->tx,&c,1)==1)
 		USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
@@ -186,15 +200,15 @@ GPIO_InitTypeDef				GPIO_InitStructure;
 	GPIO_StructInit(&GPIO_InitStructure);
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
  	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
+	GPIO_InitStructure.GPIO_Pin = USART3_TX_PIN;
+	GPIO_Init(USART3_PORT, &GPIO_InitStructure);
+	
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
- 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
+ 	GPIO_InitStructure.GPIO_Pin = USART3_RX_PIN;
+	GPIO_Init(USART3_PORT, &GPIO_InitStructure);
 
- 	GPIO_PinAFConfig(GPIOC, GPIO_PinSource10, GPIO_AF_USART3);		
- 	GPIO_PinAFConfig(GPIOC, GPIO_PinSource11, GPIO_AF_USART3);		
+ 	GPIO_PinAFConfig(USART3_PORT, USART3_TXSRC, GPIO_AF_USART3);		
+ 	GPIO_PinAFConfig(USART3_PORT, USART3_RXSRC, GPIO_AF_USART3);		
 	
 	io=_io_init(RxBufferSize,TxBufferSize);
 	io->put = putCOM3;

@@ -891,10 +891,10 @@ extern 	USBD_Class_cb_TypeDef  	USBD_MSC_cb,	USBD_CDC_cb;
 extern 	USBH_HOST								USB_Host;
 extern 	USB_OTG_CORE_HANDLE  		USB_OTG_Core;
 typedef enum {off, on} vbus;
-
 void	 	Vbus(vbus on) {
-#ifdef _VBUS_BIT
-GPIO_InitTypeDef					GPIO_InitStructure;
+	
+#if defined (_VBUS_BIT) && defined (_VBUS_PORT)
+				GPIO_InitTypeDef					GPIO_InitStructure;
 				GPIO_StructInit(&GPIO_InitStructure);
 				GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 				GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
@@ -906,19 +906,25 @@ GPIO_InitTypeDef					GPIO_InitStructure;
 					GPIO_SetBits(_VBUS_PORT,_VBUS_BIT);
 #endif
 }
-#endif // __DISC7__
-
-#if defined (__F2__) ||  defined (__F4__)
+#endif
 
 void	 	USB_MSC_device(void) {
+#ifdef _VBUS_BIT
 				Vbus(off);
+#endif
+#if defined (_USB_DIR_BIT) && defined (_USB_DIR_PORT)
 				GPIO_SetBits(_USB_DIR_PORT,_USB_DIR_BIT);
+#endif
 				USBD_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USR_MSC_desc, &USBD_MSC_cb, &USR_MSC_cb);
 }
 
 void		USB_VCP_device(void) {
+#ifdef _VBUS_BIT
 				Vbus(off);
+#endif
+#if defined (_USB_DIR_BIT) && defined (_USB_DIR_PORT)
 				GPIO_SetBits(_USB_DIR_PORT,_USB_DIR_BIT);
+#endif
 				USBD_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USR_VCP_desc, &USBD_CDC_cb, &USR_CDC_cb);
 }
 
@@ -927,15 +933,18 @@ void		USBHost (_proc *p) {
 }
 
 void		USB_MSC_host(void) {
+#if defined (_USB_DIR_BIT) && defined (_USB_DIR_PORT)
 				GPIO_ResetBits(_USB_DIR_PORT,_USB_DIR_BIT);
+#endif
+#ifdef _VBUS_BIT
 				Vbus(on);
+#endif
 	
 				USBH_App=USBH_Iap;
 				USBH_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USB_Host, &USBH_MSC_cb, &USR_USBH_MSC_cb);
 				if(!_proc_find((func *)USBHost,&USB_Host))
 					_proc_add((func *)USBHost,&USB_Host,"host USB",0);
 }
-#endif	// (__F4__)
 
 /*						VBUS
 PFM6 F4					N

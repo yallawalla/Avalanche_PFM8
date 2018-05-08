@@ -60,7 +60,7 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		GPIO_PinAFConfig(GPIOA, GPIO_PinSource7, GPIO_AF_TIM14);	
 // ________________________________________________________________________________
 // TRIGGER 1, TRIGGER 2, 
-// TRIGGER 3, IGBT Reset, PFM8 only
+// IGBT Reset, PFM8 only
 //
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 		GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -70,9 +70,6 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		GPIO_InitStructure.GPIO_Pin = _TRIGGER2_BIT;
 		GPIO_Init(_TRIGGER2_PORT, &GPIO_InitStructure);
 		_TRIGGER2_OFF;
-		GPIO_InitStructure.GPIO_Pin = _TRIGGER3_BIT;
-		GPIO_Init(_TRIGGER3_PORT, &GPIO_InitStructure);
-		_TRIGGER3_OFF;
 		GPIO_InitStructure.GPIO_Pin = _IGBT_RESET_BIT;
 		GPIO_Init(_IGBT_RESET_PORT, &GPIO_InitStructure);
 		_IGBT_RESET;
@@ -80,8 +77,8 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 // NRST, BOOT
 //
 #if defined (_NRST_DISABLE_BIT) && defined (_BOOT_ENABLE_BIT)
-		GPIO_ResetBits(_NRST_DISABLE_PORT,_NRST_DISABLE_BIT);
-		GPIO_SetBits(_BOOT_ENABLE_PORT,_BOOT_ENABLE_BIT);
+		GPIO_SetBits(_NRST_DISABLE_PORT,_NRST_DISABLE_BIT);
+		GPIO_ResetBits(_BOOT_ENABLE_PORT,_BOOT_ENABLE_BIT);
 		GPIO_InitStructure.GPIO_Pin = _NRST_DISABLE_BIT;
 		GPIO_Init(_NRST_DISABLE_PORT, &GPIO_InitStructure);	
 		GPIO_InitStructure.GPIO_Pin = _BOOT_ENABLE_BIT;

@@ -597,24 +597,25 @@ void		SectorQuery(void);
 int 		Defragment(int);
 int			SetChargerVoltage(int);
 
-#define _FAULT_BIT GPIO_Pin_8
-#define _FAULT_PORT GPIOE
+#define _FAULT_BIT				GPIO_Pin_8
+#define _FAULT_PORT				GPIOE
 #define _FAULT_INT_port 	EXTI_PortSourceGPIOE
 #define _FAULT_INT_pin		EXTI_PinSource8
 #define _FAULT_INT_line		EXTI_Line8
-
-#define _TRIGGER3_BIT 		GPIO_Pin_6
-#define _TRIGGER3_PORT 		GPIOE
 #define _IGBT_READY_BIT 	GPIO_Pin_2
 #define _IGBT_READY_PORT 	GPIOE
 #define _IGBT_RESET_BIT 	GPIO_Pin_3
 #define _IGBT_RESET_PORT 	GPIOE
+
+#define _USB_SENSE_BIT 		GPIO_Pin_10
+#define _USB_SENSE_PORT	 	GPIOD
+//_________________________________________________________________________________
+#ifndef __DISC4_
 #define _USB_PIN_BIT 			GPIO_Pin_8
 #define _USB_PIN_PORT 		GPIOD
 #define _USB_DIR_BIT 			GPIO_Pin_9
 #define _USB_DIR_PORT	 		GPIOD
-#define _USB_SENSE_BIT 		GPIO_Pin_10
-#define _USB_SENSE_PORT	 	GPIOD
+#endif
 //_________________________________________________________________________________
 #if defined (__PFM6__)
 #define _TRIGGER1_BIT GPIO_Pin_12
@@ -622,17 +623,17 @@ int			SetChargerVoltage(int);
 #define _TRIGGER2_BIT GPIO_Pin_13
 #define _TRIGGER2_PORT GPIOD
 
-#define _CWBAR_BIT 							GPIO_Pin_14
-#define _CWBAR_PORT 						GPIOD
-#define _CWBAR_INT_port 				EXTI_PortSourceGPIOD
-#define _CWBAR_INT_pin					EXTI_PinSource14
-#define _CWBAR_INT_line					EXTI_Line14
+#define _CWBAR_BIT 				GPIO_Pin_14
+#define _CWBAR_PORT 			GPIOD
+#define _CWBAR_INT_port 	EXTI_PortSourceGPIOD
+#define _CWBAR_INT_pin		EXTI_PinSource14
+#define _CWBAR_INT_line		EXTI_Line14
 
-#define	_ERROR_OW_BIT						GPIO_Pin_13
-#define	_ERROR_OW_PORT					GPIOB
-#define	_F2V_OW_BIT							GPIO_Pin_5
-#define	_F2V_OW_AF							GPIO_PinSource5
-#define	_F2V_OW_PORT						GPIOB
+#define	_ERROR_OW_BIT			GPIO_Pin_13
+#define	_ERROR_OW_PORT		GPIOB
+#define	_F2V_OW_BIT				GPIO_Pin_5
+#define	_F2V_OW_AF				GPIO_PinSource5
+#define	_F2V_OW_PORT			GPIOB
 //_________________________________________________________________________________
 #elif defined (__PFM8__)
 #define _TRIGGER1_BIT GPIO_Pin_4
@@ -702,18 +703,6 @@ int			SetChargerVoltage(int);
 							if(_TRIGGER2)															\
 								_DEBUG_(_DBG_SYS_MSG,"trigger 2 disabled");				\
 								GPIO_SetBits(_TRIGGER2_PORT,_TRIGGER2_BIT);		  	\
-							} while(0)
-
-#define _TRIGGER3			(!GPIO_ReadOutputDataBit(_TRIGGER3_PORT,_TRIGGER3_BIT))				        		        
-#define _TRIGGER3_ON	do {															\
-							if(!_TRIGGER3)														\
-								_DEBUG_(_DBG_SYS_MSG,"trigger 2 enabled");				\
-								GPIO_ResetBits(_TRIGGER3_PORT,_TRIGGER3_BIT);			\
-							} while(0)
-#define _TRIGGER3_OFF	do {															\
-							if(_TRIGGER3)															\
-								_DEBUG_(_DBG_SYS_MSG,"trigger 2 disabled");				\
-								GPIO_SetBits(_TRIGGER3_PORT,_TRIGGER3_BIT);		  	\
 							} while(0)
 							      
 #define	_CRITICAL_ERR_MASK		(PFM_ERR_DRVERR | PFM_ERR_PULSEENABLE | PFM_ADCWDG_ERR | PFM_ERR_PSRDYN | PFM_ERR_LNG | PFM_HV2_ERR)
