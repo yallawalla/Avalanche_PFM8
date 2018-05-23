@@ -165,7 +165,7 @@ int				i,j;
 					Watchdog_init(300);	
 					Initialize_DAC();
 //---------------------------------------------------------------------------------
-					_stdio(__com3);
+					_stdio(__com1);
 					if(RCC_GetFlagStatus(RCC_FLAG_SFTRST) == SET)
 						__print("\r ... SWR reset, %dMHz\r\n>",SystemCoreClock/1000000);
 					else if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET)
@@ -212,6 +212,7 @@ PFM				*p=proc->arg;
 //______________________________________________________________________________
 //________Processing timed trigger______________________________________________
 					do {
+						int dt= _MODE(p,_ALTERNATE_TRIGGER) ? p->burst[p->Trigger.counter % 2].Period : p->Burst->Period;	
 						if(_EVENT(p,_TRIGGER)) {
 							_CLEAR_EVENT(p,_TRIGGER);
 							if(p->Trigger.time) {
@@ -219,8 +220,8 @@ PFM				*p=proc->arg;
 									_TRIGGER_RESET;
 									break;
 								}
-								else if(abs(__time__ - p->Trigger.time) > 2) {
-									_SET_ERROR(p,PFM_ERR_UB);
+								else if(_MODE(p,_CHECK_TRIGGER) && abs(__time__ - p->Trigger.time) > 1) {
+									_SET_ERROR(p,PFM_ERR_ETRIG);
 									_TRIGGER_RESET;
 									break;
 								}
@@ -230,10 +231,7 @@ PFM				*p=proc->arg;
 								break;
 							}
 							Trigger(p);
-							if(_MODE(p,_ALTERNATE_TRIGGER))
-								p->Trigger.time = __time__ + p->burst[p->Trigger.counter % 2].Period;
-							else
-								p->Trigger.time = __time__ + p->Burst->Period;	
+							p->Trigger.time = __time__ + dt;
 							if(++p->Trigger.counter==p->Trigger.count)	
 								_TRIGGER_RESET;
 							break;
@@ -245,41 +243,11 @@ PFM				*p=proc->arg;
 								_SET_EVENT(p,_TRIGGER);
 								continue;
 							}
-							if(__time__ - p->Trigger.time > 10)
+							if(__time__ - p->Trigger.time > dt*3)
 								_TRIGGER_RESET;
 							break;								
 						}
 					} while(true);
-//______________________________________________________________________________
-//______________________________________________________________________________
-//______________________________________________________________________________
-//					if(_EVENT(p,_TRIGGER)) {																// trigger request
-//						_CLEAR_EVENT(p,_TRIGGER);
-//						if((p->Error & _CRITICAL_ERR_MASK) || p->Trigger.time)// if periodic active or error, disarm count...
-//							p->Trigger.time=p->Trigger.counter=0;								// if trigger time set (multiple triggers), switch it off
-//						else {
-//							if(_STATUS(p,PFM_STAT_SIMM1 | PFM_STAT_SIMM2) == PFM_STAT_SIMM2 && _MODE(pfm,_ALTERNATE_TRIGGER))
-//								p->Trigger.counter=1;															// ce je eksplicit zahteva za trigger 2, zacnemo z neparnim 
-//							else
-//								p->Trigger.counter=0;
-//							p->Trigger.time = __time__;
-//							if(p->Trigger.count > 1)
-//								++p->Trigger.time;																// rearm counters, rounded to next milliseconds to avoid 1ms jitter !!!
-//						}
-//					}
-////______________________________________________________________________________
-////______________________________________________________________________________
-//					if(p->Trigger.time  && __time__ >= p->Trigger.time ) {
-//						Trigger(p);
-//						if(_MODE(p,_ALTERNATE_TRIGGER))
-//							p->Trigger.time = __time__ + p->burst[p->Trigger.counter % 2].Period;
-//						else
-//							p->Trigger.time = __time__ + p->Burst->Period;	
-//						++(p->Trigger.counter);
-//						if(!_MODE(p,_AUTO_TRIGGER))
-//							if(p->Trigger.counter >= p->Trigger.count)
-//								p->Trigger.time=p->Trigger.counter=0;
-//					}
 //______________________________________________________________________________
 					if(_EVENT(p,_PULSE_FINISHED)) {	
 						_CLEAR_EVENT(p,_PULSE_FINISHED);											// end of pulse

@@ -368,12 +368,12 @@ void 		__EXTI_IRQHandler(void)
 				if(EXTI_GetITStatus(_CWBAR_INT_line) == SET) { 						// CROWBAR
 					EXTI_ClearITPendingBit(_CWBAR_INT_line);								// clear flag
 					if(_MODE(pfm,_F2V)) {																		// F2V mode, pfm8
-#ifdef __PFM8__
-						if(!_PFM_CWBAR)																				// rising edge, trigger 
-#else
-						if(_PFM_CWBAR)																				// rising edge, trigger 
-#endif
-							_SET_EVENT(pfm,_TRIGGER);
+						if(_PFM_CWBAR) {
+							if(!_MODE(pfm,_PULSE_INPROC))
+								_SET_EVENT(pfm,_TRIGGER);
+							else
+								_YELLOW1(50);
+						} else
 						pfm->Trigger.timeout=__time__+5;											// pulse rearm in 5 ms					
 					} else {																								// pfm6 mode
 						if(_PFM_CWBAR) {																			// rising edge, main error reset & restart

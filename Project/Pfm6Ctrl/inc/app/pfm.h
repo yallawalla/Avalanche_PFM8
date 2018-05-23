@@ -134,7 +134,7 @@ typedef					enum
 								_PULSE_INPROC,						//5
 								_LONG_INTERVAL,						//6
 								_AUTO_TRIGGER,						//7
-								__DUMMY2,									//8
+								_CHECK_TRIGGER,						//8
 								_U_LOOP,									//9
 								_P_LOOP,									//10
 								_CHANNEL1_DISABLE,				//11
@@ -674,7 +674,11 @@ int			SetChargerVoltage(int);
 #endif
 
 #define _IGBT_READY		(GPIO_ReadInputDataBit(_IGBT_READY_PORT,_IGBT_READY_BIT)== Bit_SET)				        		        
-#define	_PFM_CWBAR		(GPIO_ReadInputDataBit(_CWBAR_PORT, _CWBAR_BIT)== Bit_RESET)
+#ifdef __PFM8__
+	#define	_PFM_CWBAR		(GPIO_ReadInputDataBit(_CWBAR_PORT, _CWBAR_BIT)== Bit_SET)
+#else
+	#define	_PFM_CWBAR		(GPIO_ReadInputDataBit(_CWBAR_PORT, _CWBAR_BIT)== Bit_RESET)
+#endif
 
 #define	_IGBT_RESET		{ int i; 																							\
 												for(i=0; i<10; ++i)		 															\
