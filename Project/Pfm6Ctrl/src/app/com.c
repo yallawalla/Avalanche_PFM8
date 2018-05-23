@@ -1096,10 +1096,10 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 					}
 					if(n>3) {
 						pfm->Trigger.count=atoi(cc[3]);
-						_CLEAR_MODE(pfm,_TRIGGER_PERIODIC);
+						_CLEAR_MODE(pfm,_AUTO_TRIGGER);
 					}
 					else
-						pfm->Trigger.count=1;
+						pfm->Trigger.count=0;
 					SetPwmTab(pfm);
 					break;
 //______________________________________________________________________________________

@@ -142,7 +142,7 @@ static
 									simmerMode(_OFF);	
 									break;
 								case _READY:
-									_CLEAR_MODE(pfm,_TRIGGER_PERIODIC);
+									_CLEAR_MODE(pfm,_AUTO_TRIGGER);
 									simmerMode(_SIMM1);	
 									SetPwmTab(pfm);
 									simmerMode(_SIMM2);	
@@ -163,10 +163,10 @@ static
 									CanReply("wwwwX",0xC101,pfm->Simmer.active,40000,pfm->Burst->Length,_ID_SYS2ENRG);
 									break;
 								case _LASER:
-									if(!_MODE(pfm,_TRIGGER_PERIODIC)) {
+									if(!_MODE(pfm,_AUTO_TRIGGER)) {
 										__print("\r\n>");
 										_wait(5,_proc_loop);
-										_SET_MODE(pfm,_TRIGGER_PERIODIC);
+										_SET_MODE(pfm,_AUTO_TRIGGER);
 										_SET_EVENT(pfm,_TRIGGER);	
 									}
 								break;
@@ -280,7 +280,7 @@ int				i,cnt=0,timeout=0;
 								state=_STANDBY;
 								simmerMode(_OFF);
 								_CLEAR_MODE(pfm,_ENM_NOTIFY);
-								_CLEAR_MODE(pfm,_TRIGGER_PERIODIC);
+								_CLEAR_MODE(pfm,_AUTO_TRIGGER);
 								_CLEAR_DBG(pfm,_DBG_PULSE_MSG);
 								_CLEAR_DBG(pfm,_DBG_ENM_MSG);
 								__dbug=NULL;

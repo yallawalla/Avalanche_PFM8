@@ -129,11 +129,11 @@ typedef					enum
 {								_XLAP_SINGLE,							//0
 								_XLAP_DOUBLE,							//1
 								_XLAP_QUAD,								//2
-								_SIMMER_KEEP,							//3
-								_SIMULATOR,								//4
+								__DUMMY0,									//3
+								__DUMMY1,									//4
 								_PULSE_INPROC,						//5
 								_LONG_INTERVAL,						//6
-								_TRIGGER_PERIODIC,				//7
+								_AUTO_TRIGGER,						//7
 								__DUMMY2,									//8
 								_U_LOOP,									//9
 								_P_LOOP,									//10
@@ -174,6 +174,7 @@ typedef					enum
 #define					PFM_I2C_ERR								0x8000					// i2c comm. not responding
 #define					PFM_ERR_VCAP1							0x10000					//
 #define					PFM_ERR_VCAP2							0x20000					//
+#define					PFM_ERR_ETRIG							0x40000					//
 
 extern const char *_errStr[];
 
@@ -421,7 +422,7 @@ unsigned int		timeout;
 } simmer;
 //________________________________________________________________________
 typedef 				struct {
-unsigned int		erpt,									// send energy on every ....
+int							erpt,									// send energy on every ....
 								counter,							// counter for multiple  triggers sequence	
 								count,								// number of multiple  triggers
 								time,									// next trigger
@@ -705,7 +706,10 @@ int			SetChargerVoltage(int);
 								GPIO_SetBits(_TRIGGER2_PORT,_TRIGGER2_BIT);		  	\
 							} while(0)
 							      
-#define	_CRITICAL_ERR_MASK		(PFM_ERR_DRVERR | PFM_ERR_PULSEENABLE | PFM_ADCWDG_ERR | PFM_ERR_PSRDYN | PFM_ERR_LNG | PFM_HV2_ERR)
+#define	_CRITICAL_ERR_MASK		(PFM_ERR_DRVERR | PFM_ERR_PULSEENABLE | PFM_ADCWDG_ERR |							\
+																PFM_ERR_PSRDYN | PFM_ERR_LNG | PFM_HV2_ERR | 												\
+																	PFM_I2C_ERR | PFM_ERR_VCAP1 | PFM_ERR_VCAP2 | PFM_ERR_ETRIG )
+
 #define	_PFM_CWBAR_STAT				PFM_ERR_PULSEENABLE
 				        
 enum	err_parse	{
