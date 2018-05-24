@@ -220,11 +220,6 @@ PFM				*p=proc->arg;
 									_TRIGGER_RESET;
 									break;
 								}
-								if(_MODE(pfm,_PULSE_INPROC)) {
-									_SET_ERROR(p,PFM_ERR_ETRIG);
-									_YELLOW1(50);
-									break;
-								}
 								if(_MODE(p,_CHECK_TRIGGER) && abs(__time__ - p->Trigger.time) > 1) {
 									_SET_ERROR(p,PFM_ERR_ETRIG);
 									_TRIGGER_RESET;

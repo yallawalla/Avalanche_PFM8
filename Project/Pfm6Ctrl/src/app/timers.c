@@ -102,7 +102,7 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 // ________________________________________________________________________________	
 #if defined (_CWBAR_INT_pin)
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
 		GPIO_InitStructure.GPIO_Pin = _CWBAR_BIT;					
 		GPIO_Init(_CWBAR_PORT, &GPIO_InitStructure);
 		
@@ -368,6 +368,10 @@ void 		__EXTI_IRQHandler(void)
 				if(EXTI_GetITStatus(_CWBAR_INT_line) == SET) { 						// CROWBAR
 					EXTI_ClearITPendingBit(_CWBAR_INT_line);								// clear flag
 					if(_MODE(pfm,_F2V)) {																		// F2V mode, pfm8
+						if(_MODE(pfm,_PULSE_INPROC)) {
+							_SET_ERROR(pfm,PFM_ERR_ETRIG);
+							_YELLOW1(50);
+						}
 						if(_PFM_CWBAR)
 							_SET_EVENT(pfm,_TRIGGER);
 						else
