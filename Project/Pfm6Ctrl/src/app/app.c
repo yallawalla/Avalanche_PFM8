@@ -220,7 +220,12 @@ PFM				*p=proc->arg;
 									_TRIGGER_RESET;
 									break;
 								}
-								else if(_MODE(p,_CHECK_TRIGGER) && abs(__time__ - p->Trigger.time) > 1) {
+								if(_MODE(pfm,_PULSE_INPROC)) {
+									_SET_ERROR(p,PFM_ERR_ETRIG);
+									_YELLOW1(50);
+									break;
+								}
+								if(_MODE(p,_CHECK_TRIGGER) && abs(__time__ - p->Trigger.time) > 1) {
 									_SET_ERROR(p,PFM_ERR_ETRIG);
 									_TRIGGER_RESET;
 									break;
@@ -386,7 +391,6 @@ static		int		bounce=0;
 //				get current active channel....
 //				razlika med HV in napetostjo na flesu mora  biti najmanj 12%, sicer simmer error
 //
-//					if(TIM_GetITStatus(TIM1, TIM_IT_Update)==RESET) { 
 					if(!_MODE(p,_PULSE_INPROC) && !_TRIGGER1 && !_TRIGGER2) { 
 //-------------------------------------------------------------------------------
 						if(_STATUS(p,PFM_STAT_SIMM1) && abs(ADC3_buf[0].HV - ADC1_simmer.U) < ADC3_buf[0].HV/8)

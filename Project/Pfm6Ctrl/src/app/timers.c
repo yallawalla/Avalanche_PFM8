@@ -368,13 +368,10 @@ void 		__EXTI_IRQHandler(void)
 				if(EXTI_GetITStatus(_CWBAR_INT_line) == SET) { 						// CROWBAR
 					EXTI_ClearITPendingBit(_CWBAR_INT_line);								// clear flag
 					if(_MODE(pfm,_F2V)) {																		// F2V mode, pfm8
-						if(_PFM_CWBAR) {
-							if(!_MODE(pfm,_PULSE_INPROC))
-								_SET_EVENT(pfm,_TRIGGER);
-							else
-								_YELLOW1(50);
-						} else
-						pfm->Trigger.timeout=__time__+5;											// pulse rearm in 5 ms					
+						if(_PFM_CWBAR)
+							_SET_EVENT(pfm,_TRIGGER);
+						else
+							pfm->Trigger.timeout=__time__+5;											// pulse rearm in 5 ms					
 					} else {																								// pfm6 mode
 						if(_PFM_CWBAR) {																			// rising edge, main error reset & restart
 							_SET_STATUS(pfm,_PFM_CWBAR_STAT);
@@ -464,9 +461,9 @@ int 		hv,j,k,ki=30,kp=0;
 					y=0;
 				
 				if(!_TIM.p1 && !_TIM.p2) {																//----- end of burst, stop IT, notify main loop ---------------------------				
+					TIM_ClearITPendingBit(TIM1, TIM_IT_Update);		
 					TIM_ITConfig(TIM1,TIM_IT_Update,DISABLE);
 					_SET_EVENT(pfm,_PULSE_FINISHED);
-					_CLEAR_MODE(pfm,_PULSE_INPROC);
 #if !defined __PFM8__
 					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);				//----- Qswitch pasus
 #endif					
@@ -696,11 +693,11 @@ void		Trigger(PFM *p) {
 							_TIM.eint=__max(_TIM.eint1,_TIM.eint2);
 						}
 					}					
-				
-					ADC_DMARequestAfterLastTransferCmd(ADC1, DISABLE);			// at least ADC conv. time before ADC/DMA change 
-					ADC_DMARequestAfterLastTransferCmd(ADC2, DISABLE);
-					_SET_MODE(p,_PULSE_INPROC);
-					SetSimmerRate(p,_SIMMER_HIGH);
+					if(_TIM.p1 || _TIM.p2) {
+						ADC_DMARequestAfterLastTransferCmd(ADC1, DISABLE);		// at least ADC conv. time before ADC/DMA change 
+						ADC_DMARequestAfterLastTransferCmd(ADC2, DISABLE);
+						SetSimmerRate(p,_SIMMER_HIGH);
+					}
 				} else {					
 					_DEBUG_(_DBG_SYS_MSG,"trigger aborted...");
 				}

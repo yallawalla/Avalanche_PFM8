@@ -355,13 +355,15 @@ int		simmrate;
 				_TIMERS_PWM_SET(p,simmrate);			
 				_TIMERS_RESYNC(p,simmrate);
 			}
-			if(_MODE(p,_PULSE_INPROC)) {
+			if(type == _SIMMER_HIGH) {
+				_SET_MODE(pfm,_PULSE_INPROC);
 				TriggerADC(p);
 				TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
 				TIM_ITConfig(TIM1,TIM_IT_Update,ENABLE);
 			} else {
 				TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
 				TIM_ITConfig(TIM1,TIM_IT_Update,DISABLE);
+				_CLEAR_MODE(pfm,_PULSE_INPROC);
 			}
 			TIM_Cmd(TIM1,ENABLE);
 			_ENABLE_PWM_OUT();
