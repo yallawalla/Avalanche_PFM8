@@ -144,9 +144,9 @@ static
 								case _READY:
 									_CLEAR_MODE(pfm,_AUTO_TRIGGER);
 									simmerMode(_SIMM1);	
-									SetPwmTab(pfm);
+									SetPwmTab(pfm,pfm->Simmer.active);
 									simmerMode(_SIMM2);	
-									SetPwmTab(pfm);
+									SetPwmTab(pfm,pfm->Simmer.active);
 									switch(triggerMode) {
 										case _BOTH:
 										case _ALTER:

@@ -471,7 +471,7 @@ extern 					_ADC3DMA							ADC3_buf[];
 void						App_Init(void),
 				        
 								SetSimmerRate(PFM *, SimmerType),
-								SetPwmTab(PFM *),
+								SetPwmTab(PFM *, int),
 								Trigger(PFM *),
 								TriggerADC(PFM *),
 								CanReply(char *, ...);

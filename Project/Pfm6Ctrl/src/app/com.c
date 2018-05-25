@@ -364,7 +364,8 @@ int			DecodeEq(char *c) {
 				switch(*c) {
 //______________________________________________________________________________________
 				case 'C':
-					_TIM.Caps=__max(100,1000.0*atof(++c));	// scale fakt. za C v mF pri 880V/1100A full scale, 100kHz sample rate in _AVG3 = 4 pride 20... ni placa za izpeljavo
+// scale fakt. za C v mF pri 880V/1100A full scale, 100kHz sample rate in _AVG3 = 4 pride 20... ni placa za izpeljavo
+					_TIM.Caps=__max(100,1000.0*atof(++c));	
 					__print(" ... bank capacity set to %6.1lf mF",(double)_TIM.Caps/1000.0);
 					break;
 //______________________________________________________________________________________
@@ -423,7 +424,8 @@ int			DecodeWhat(char *c) {
 				case 't':
 				{
 					int p1=0,p2=0,t=0;
-					int n1=5*(_TIM.pwch1[p1].n+1),n2=5*(_TIM.pwch2[p2].n+1);
+					int n1=5*(_TIM.pwch1[p1].n+1),
+							n2=5*(_TIM.pwch2[p2].n+1);
 					while(_TIM.pwch1[p1].n || _TIM.pwch2[p2].n) {
 						int d=__min(n1,n2);
 						if(d==0)
@@ -1062,7 +1064,7 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 						PFM_pockels(pfm);
 					}
 //__________________________________
-					SetPwmTab(pfm);
+					SetPwmTab(pfm,pfm->Simmer.active);
 					break;
 //______________________________________________________________________________________
 				case 'd':
@@ -1076,7 +1078,7 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 						pfm->Burst->Delay=atoi(cc[0]);
 					if(n>1)
 						pfm->Burst->Pdelay=_PWM_RATE_HI*atof(cc[1]);
-					SetPwmTab(pfm);
+					SetPwmTab(pfm,pfm->Simmer.active);
 					break;
 //______________________________________________________________________________________
 				case 'b':
@@ -1100,7 +1102,7 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 					}
 					else
 						pfm->Trigger.count=0;
-					SetPwmTab(pfm);
+					SetPwmTab(pfm,pfm->Simmer.active);
 					break;
 //______________________________________________________________________________________
 				case 'q':

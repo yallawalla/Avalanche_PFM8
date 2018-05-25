@@ -48,12 +48,8 @@ void	TriggerADC(PFM *p) {
 			ADC_Cmd(ADC1, DISABLE);							ADC_Cmd(ADC2, DISABLE);
 			DMA_Cmd(DMA2_Stream4,DISABLE);			DMA_Cmd(DMA2_Stream3,DISABLE);
 
-			while(DMA_GetCmdStatus(DMA2_Stream4) != DISABLE) {
-				int i=5;
-			}
-			while(DMA_GetCmdStatus(DMA2_Stream3) != DISABLE) {
-				int j=10;
-			}
+			while(DMA_GetCmdStatus(DMA2_Stream4) != DISABLE) { }
+			while(DMA_GetCmdStatus(DMA2_Stream3) != DISABLE) { }
 
 			if(p) {
 				DMA_MemoryTargetConfig(DMA2_Stream3,(uint32_t)ADC2_buf,DMA_Memory_0);

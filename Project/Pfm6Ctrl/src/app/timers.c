@@ -345,7 +345,7 @@ TIM_ICInitTypeDef				TIM_ICInitStructure;
 		if(pfm->Burst && TIM_GetCapture2(TIM3)) {
 			pfm->Burst->Pmax=600000*_PWM_RATE_HI/TIM_GetCapture2(TIM3)/_AD2HV(pfm->HVref);
 			if(pfm->Trigger.timeout && __time__ >= pfm->Trigger.timeout) {
-				SetPwmTab(pfm);
+					SetPwmTab(pfm,pfm->Simmer.active);
 				pfm->Trigger.timeout=0;
 			}
 		}
@@ -455,11 +455,11 @@ int 		hv,j,k,ki=30,kp=0;
 				DAC_DualSoftwareTriggerCmd(ENABLE);		
 #endif
 
-				if(_TIM.active & PFM_STAT_SIMM1)
+				if((pfm->Status & PFM_STAT_SIMM1))
 					x=pfm->Simmer.pw[0];
 				else
 					x=0;
-				if(_TIM.active & PFM_STAT_SIMM2)
+				if((pfm->Status & PFM_STAT_SIMM2))
 					y=pfm->Simmer.pw[1];
 				else
 					y=0;
