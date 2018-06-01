@@ -656,10 +656,12 @@ file cfg.ini
 -r
 -i
 u 700
+s 200,200,30
 -u s
 -E ffffff
 -f
-
+-B
+-P
 
 file tandem
 s0
@@ -672,17 +674,13 @@ s3
 s3
 -m 11,16
 
-
-
-file alex
+file nd
 s0
 -m 16
 +m 15
 s3
 
-
-
-file nd
+file alex
 s0
 -m 15
 +m 16

@@ -129,9 +129,9 @@ typedef					enum
 {								_XLAP_SINGLE,							//0
 								_XLAP_DOUBLE,							//1
 								_XLAP_QUAD,								//2
-								__DUMMY0,									//3
+								_PULSE_INPROC,						//3
 								__DUMMY1,									//4
-								_PULSE_INPROC,						//5
+								__DUMMY2,									//5
 								_LONG_INTERVAL,						//6
 								_AUTO_TRIGGER,						//7
 								_CHECK_TRIGGER,						//8
@@ -144,8 +144,9 @@ typedef					enum
 								_CH1_COMMON_TRIGGER,			//15
 								_CH2_COMMON_TRIGGER,			//16
 								_ALTERNATE_TRIGGER,				//17
-								_F2V,											//18
-								_ENM_NOTIFY,							//19
+								_JOINT_CHANNELS,					//18
+								_F2V,											//19
+								_ENM_NOTIFY,							//20
 								__TEST__									=29,
 								_CAN_2_COM								//30
 } 							mode;

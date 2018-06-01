@@ -630,6 +630,7 @@ int 		hv,j,k,ki=30,kp=0;
 void		Trigger(PFM *p) {
 //_______________________________________________________________________________
 				if(!_MODE(p,_PULSE_INPROC)) {
+#if		!defined (__DISC4__) && !defined (__DISC7__)
 					if(_MODE(p,_ENM_NOTIFY)) {
 						CanTxMsg tx = {_ID_SYS_TRIGG,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 						while(CAN_TransmitStatus(__CAN__, 0) == CAN_TxStatus_Pending &&
@@ -640,6 +641,7 @@ void		Trigger(PFM *p) {
 						_YELLOW1(50);
 						CAN_Transmit(__CAN__,&tx);
 					}
+#endif
 //_______________________________________________________________________________
 					_TIM.active=p->Simmer.active;														// find active channel
 					if(_MODE(pfm,_CHANNEL1_DISABLE)) {											// single channel 2 mode
@@ -689,6 +691,13 @@ void		Trigger(PFM *p) {
 								if(_TIM.active & PFM_STAT_SIMM1)
 									_TIM.p1 = _TIM.pwch1;
 							}
+							if(_MODE(pfm,_JOINT_CHANNELS)) {
+								if(_TIM.p1 && (_TIM.active & PFM_STAT_SIMM2))
+									_TIM.p2 =_TIM.p1;
+								if(_TIM.p2 && (_TIM.active & PFM_STAT_SIMM1))
+									_TIM.p1 = _TIM.p2;
+							}
+							
 						} else {																							// simult. trigger
 							if(_TIM.active & PFM_STAT_SIMM1)
 								_TIM.p1 = _TIM.pwch1;

@@ -54,7 +54,7 @@ const char *_errStr[]={
 * Input         : None
 * Output        : None
 * Return        : None
-*/	
+*/
 void 			App_Init(void) {
 	
 					RCC_AHB1PeriphClockCmd(
