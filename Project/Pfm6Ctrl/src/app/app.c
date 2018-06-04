@@ -81,7 +81,10 @@ void 			App_Init(void) {
 					pfm->Burst->Mode=_XLAP_QUAD;
 					pfm->Burst->Pdelay=pfm->Burst->Pmax=_PWM_RATE_HI*0.02;
 					pfm->Burst->max[0]=pfm->Burst->max[1]=_I2AD(1000);
-					memcpy(&pfm->Burst[1],&pfm->Burst[0],sizeof(burst));
+					pfm->Burst->pockels.delay=0;
+					pfm->Burst->pockels.width=0;
+					pfm->Burst->pockels.trigger=0;
+					memcpy(&pfm->burst[1],&pfm->burst[0],sizeof(burst));
 	
 					pfm->Trigger.count=0;
 						
@@ -92,10 +95,6 @@ void 			App_Init(void) {
 
 					pfm->HVref=0;
 					pfm->ADCRate=_uS;
-
-					pfm->Pockels.delay=0;
-					pfm->Pockels.width=0;
-					pfm->Pockels.trigger=0;
 
 					Initialize_NVIC();
 					__com1=Initialize_USART1(921600);		
@@ -818,8 +817,8 @@ PFM				*p=proc->arg;
 //
 //___________________________________________________________________________________________________________								
 									case _PFM_POCKELS: 																					// 0x72, _PFM_POCKELS
-										p->Pockels.delay=	*(short *)q++;q++;											// 0.1uS delay , 0.1uS width	(short)
-										p->Pockels.width=	*(short *)q++;q++;
+										p->Burst->pockels.delay=	*(short *)q++;q++;							// 0.1uS delay , 0.1uS width	(short)
+										p->Burst->pockels.width=	*(short *)q++;q++;
 										p->Burst->Length=	*(short *)q++;q++;											// interval energije v uS			(short)
 										p->Burst->N=*q;																						// stevilo pulzov v intervalu	(byte)
 										PFM_pockels(p);																						// pockels timer setup
@@ -1137,11 +1136,10 @@ int				PFM_pockels(PFM *p) {
 															
 					TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
 					TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-					TIM_OCInitStructure.TIM_Pulse=p->Pockels.delay +1;
+					TIM_OCInitStructure.TIM_Pulse=p->Burst->pockels.delay +1;
 					TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 					TIM_OC1Init(TIM4, &TIM_OCInitStructure);		
-					
-					TIM_TimeBaseStructure.TIM_Period = p->Pockels.delay + p->Pockels.width;
+					TIM_TimeBaseStructure.TIM_Period = p->Burst->pockels.delay + p->Burst->pockels.width;
 					TIM_TimeBaseStructure.TIM_Prescaler = _uS/10-1;
 					TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 					TIM_TimeBaseInit(TIM4,&TIM_TimeBaseStructure);
@@ -1152,4 +1150,3 @@ int				PFM_pockels(PFM *p) {
 /**
 * @}
 */ 
-

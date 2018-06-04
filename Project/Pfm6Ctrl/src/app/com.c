@@ -1024,8 +1024,8 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 					n=numscan(++c,cc,',');
 					if(n==0) {
 						__print("\r>p(ulse)  T,U           ... %dus,%dV",pfm->Burst->Time,pfm->Burst->Pmax*_AD2HV(pfm->HVref)/_PWM_RATE_HI);
-						if(pfm->Pockels.delay || pfm->Pockels.width)
-							__print("\r\n>q(swch)  delay,width   ... %.1fus,%.1fus",(float)pfm->Pockels.delay/10,(float)pfm->Pockels.width/10);
+						if(pfm->Burst->pockels.delay || pfm->Burst->pockels.width)
+							__print("\r\n>q(swch)  delay,width   ... %.1fus,%.1fus",(float)pfm->Burst->pockels.delay/10,(float)pfm->Burst->pockels.width/10);
 						break;
 					}
 //__________________________________
@@ -1047,8 +1047,8 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 						pfm->Burst->Ereq=1;
 //__________________________________
 					if(n==4) {																		// dodatek za vnos pockelsa 
-						pfm->Pockels.delay=10*atof(cc[2]);					// ndc673476iopj
-						pfm->Pockels.width=10*atof(cc[3]);
+						pfm->Burst->pockels.delay=10*atof(cc[2]);					// ndc673476iopj
+						pfm->Burst->pockels.width=10*atof(cc[3]);
 						PFM_pockels(pfm);
 					}
 //__________________________________

@@ -487,9 +487,19 @@ int 		hv,j,k,ki=30,kp=0;
 				
 				if(_TIM.p1) {																							//----- channel 1 -----------
 					x=_TIM.p1->T;
+#ifndef __PFM8__
+				if(_TIM.p1->T > pfm->Burst->Pdelay && 										//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
+					(_TIM.p1->n == _TIM.pockels[0].trigger || 
+						_TIM.p1->n == 255)) {
+					TIM_SetAutoreload(TIM4,_TIM.pockels[0].delay + _TIM.pockels[0].width);
+					TIM_SetCompare1(TIM4,_TIM.pockels[0].delay +1);
 
+					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
+					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
+				} else
+					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);				// single pulse, timer se disabla po izteku		
+#endif				
 //----- mode 9, forward voltage stab. ---------------------------------------------------	
-
 					if(_MODE(pfm,_U_LOOP)) {
 						x = (x * _TIM.Hvref + hv/2)/hv;
 
@@ -546,6 +556,18 @@ int 		hv,j,k,ki=30,kp=0;
 				}
 				if(_TIM.p2) {																							//----- channel 2 -----------
 					y=_TIM.p2->T;
+#ifndef __PFM8__
+				if(_TIM.p2->T > pfm->Burst->Pdelay && 										//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
+					(_TIM.p2->n == _TIM.pockels[1].trigger || 
+						_TIM.p2->n == 255)) {
+					TIM_SetAutoreload(TIM4,_TIM.pockels[1].delay + _TIM.pockels[1].width);
+					TIM_SetCompare1(TIM4,_TIM.pockels[1].delay +1);
+
+					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
+					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
+				} else
+					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);				// single pulse, timer se disabla po izteku		
+#endif				
 //----- mode 9, forward voltage stab. ---------------------------------------------------	
 					if(_MODE(pfm,_U_LOOP)) {
 						y = (y * _TIM.Hvref + hv/2)/hv;
@@ -607,16 +629,7 @@ int 		hv,j,k,ki=30,kp=0;
 					_SET_MODE(pfm,_U_LOOP);																	// obveze U stab. ker modificiramo HV referenco
 					if(k>5)																									// scale fakt. za C v uF pri 880V/1100A full scale, 100kHz sample rate pride ~80... ni placa za izpeljavo		
 						_TIM.Hvref -= (ADC1_buf[k-5].I+ADC2_buf[k-5].I)/80*1000/_TIM.Caps;	
-				}
-#if !defined __PFM8__
-				if(_TIM.p1 && _TIM.p1->T > pfm->Burst->Pdelay && 					//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
-					(_TIM.p1->n == pfm->Pockels.trigger || 
-						_TIM.p1->n == 255)) {																	// #jhw9847duhd		dodatek za qswitch	
-					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
-					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
-				} else
-					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);				// single pulse, timer se disabla po izteku				
-#endif									
+				}			
 				if(TIM1->CCR1==_MAX_PWM_RATE || TIM1->CCR3==_MAX_PWM_RATE)// duty cycle 100% = PSRDYN error
  					_SET_ERROR(pfm,PFM_ERR_PSRDYN);
 }

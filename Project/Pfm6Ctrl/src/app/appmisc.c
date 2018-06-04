@@ -178,7 +178,7 @@ float	P2V = (float)_AD2HV(p->HVref)/_PWM_RATE_HI;
 							t->T=Uo+dUo+p->Burst->Pdelay;					
 						}
 						
-						(n > 255) ? (t->n=255) : (t->n=p->Pockels.trigger=n);
+						(n > 255) ? (t->n=255) : (t->n=p->Burst->pockels.trigger=n);
 					}
 //-------PAUSE----------------------			
 					for(n=2*((tpause*_uS)/_PWM_RATE_HI)-1;n>0;n -= 256,++t)	{
@@ -210,15 +210,18 @@ void	SetPwmTab(PFM *p) {
 			while(_MODE(p,_PULSE_INPROC))											// wait the prev setup to finish !!!
 				_wait(2,_proc_loop);
 			if(ch == PFM_STAT_SIMM1) {				
+				_TIM.pockels[0]=p->burst[0].pockels;
 				_TIM_DMA *t=SetPwmTab00(p,_TIM.pwch1);
 				for(n=0; t-- != _TIM.pwch1; n+= t->n);
 				_TIM.eint1 = (n)*(_PWM_RATE_HI/_uS/2);
 			}
 			else if(ch == PFM_STAT_SIMM2) {
+				_TIM.pockels[1]=p->burst[1].pockels;
 				_TIM_DMA *t=SetPwmTab00(p,_TIM.pwch2);
 				for(n=0; t-- != _TIM.pwch2; n+= t->n);
 				_TIM.eint2 = (n)*(_PWM_RATE_HI/_uS/2);
 			} else {
+				_TIM.pockels[0]=p->burst[0].pockels;
 				_TIM_DMA *t = SetPwmTab00(p,_TIM.pwch1);
 				memcpy(_TIM.pwch2,_TIM.pwch1,sizeof(_TIM_DMA)*_MAX_BURST/_PWM_RATE_HI);
 				memcpy(&pfm->burst[1],&pfm->burst[0],sizeof(burst));

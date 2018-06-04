@@ -251,6 +251,8 @@ typedef struct	{	unsigned short			addr,speed,ntx,nrx;
 									unsigned char				txbuf[4],rxbuf[4];	} _i2c;
 typedef struct	{					 short			q0,q1,q2,q3,qref;		}	_QSHAPE;
 typedef struct	{					 short			T,U;								}	_USER_SHAPE;
+typedef struct	{ unsigned short			delay,width,trigger;} _POCKELS;
+//________________________________________________________________________
 extern					_QSHAPE 		qshape[_MAX_QSHAPE];			
 extern					_USER_SHAPE ushape[_MAX_USER_SHAPE];
 //________________________________________________________________________
@@ -269,6 +271,8 @@ extern  struct _TIM {																			// realtime structure, used with timer s
 		cref1,cref2,																					// current loop reference (after 200usec)
 		ci1,ci2,																							// current loop gain
 		Hvref,Caps,Icaps;																			// test mode parameters
+	_POCKELS	
+		pockels[2];
 } _TIM;
 typedef struct _TIM_DMA _TIM_DMA; 
 //________________________________________________________________________
@@ -394,10 +398,11 @@ int							USBH_Iap(int);
 #define	 				_Delete								0x1B5B337E
 #define	 				_PageDown							0x1B5B367E
 #define	 				_Up										0x001B5B41
-#define	 				_Left									0x001B5B44
 #define	 				_Down									0x001B5B42
+#define	 				_ShiftUp							0x001B4F41
+#define	 				_ShiftDown						0x001B4F42
+#define	 				_Left									0x001B5B44
 #define	 				_Right								0x001B5B43
-
 //________________________________________________________________________
 typedef 				struct {
 short						N,										// burst pulse count 
@@ -410,6 +415,7 @@ short						Pmax,
 								Pdelay,								// burst interval	pwm
 								Delay,								// -"- delay
 								max[2];								// burst time current limit
+_POCKELS				pockels;
 mode						Mode;									// burst time mode
 } burst;
 //________________________________________________________________________
@@ -456,11 +462,6 @@ volatile unsigned int
 								mode,
 								fan_rate,
 								boot_timeout;
-struct {
-	short					delay,
-								width,
-								trigger;
-} Pockels;
 FATFS						*fatfs;
 } PFM;				  
 //________________________________________________________________________

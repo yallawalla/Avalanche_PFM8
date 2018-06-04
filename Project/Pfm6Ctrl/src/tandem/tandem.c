@@ -61,10 +61,14 @@ int				i=pfm->burst[0].Period+pfm->burst[1].Period;
 
 					switch(state) {
 						case _ErSetup:							
-							__print("\rEr     : %5du,%5dV, n=%3d,%5du",pfm->Burst->Time,pfm->Burst->Pmax*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length);
+							__print("\rEr     : %5du,%5dV, n=%3d,%5du,%5.1fu,%5.1fu",
+								pfm->Burst->Time,pfm->Burst->Pmax*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length,
+									(float)pfm->Burst->pockels.delay/10,(float)pfm->Burst->pockels.width/10);
 							break;
 						case _NdSetup:							
-							__print("\rNd     : %5du,%5dV, n=%3d,%5du",pfm->Burst->Time,pfm->Burst->Pmax*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length);
+							__print("\rNd     : %5du,%5dV, n=%3d,%5du,%5.1fu,%5.1fu",
+								pfm->Burst->Time,pfm->Burst->Pmax*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length,
+									(float)pfm->Burst->pockels.delay/10,(float)pfm->Burst->pockels.width/10);
 							break;
 						case _LASER:
 							__dbug=__stdin.io;
@@ -94,14 +98,18 @@ int				i=pfm->burst[0].Period+pfm->burst[1].Period;
 								__print(", STDBY");
 							if(state==_READY)
 								__print(", READY");
-							break;
+							for(i=7*(3-idx)+1; i--; __print("\b"));
+							return;
 					}
-					for(i=7*(3-idx)+1; i--; __print("\b"));
+					for(i=7*(5-idx)+1; i--; __print("\b"));
 }
 //______________________________________________________________________________________
 static 
 	void		IncrementTrigger(int a) {
 					switch(idx) {
+						case -1:
+							idx=0;
+							break;
 						case 0:
 							triggerMode += a;
 							triggerMode = __max(_BOTH,__min(_Nd, triggerMode));
@@ -169,11 +177,15 @@ static
 										_SET_MODE(pfm,_AUTO_TRIGGER);
 										_SET_EVENT(pfm,_TRIGGER);	
 									}
-								break;
-							default:
-								break;
+									break;
+								default:
+									break;
 							}
 							return;
+						default:
+							idx=3;
+							break;
+
 					}
 					state=_STANDBY;
 					simmerMode(_OFF);	
@@ -185,6 +197,9 @@ static
 						IncrementTrigger(a);
 					else
 						switch(idx) {
+							case -1:
+								idx=0;
+								break;
 							case 0:
 								pfm->Burst->Time		= __max(50,__min(2000,pfm->Burst->Time +10*a));
 								break;
@@ -197,6 +212,18 @@ static
 							case 3:
 								pfm->Burst->Length	= __max(pfm->Burst->Time,__min(5000,pfm->Burst->Length +100*a));
 								break;
+							case 4:
+								PFM_pockels(pfm);
+								pfm->Burst->pockels.delay	= __max(0,__min(9999,pfm->Burst->pockels.delay + a));
+								break;
+							case 5:
+								PFM_pockels(pfm);
+								pfm->Burst->pockels.width	= __max(0,__min(9999,pfm->Burst->pockels.width +a));
+								break;
+							default:
+								idx=5;
+								break;
+								
 						}
 }
 //______________________________________________________________________________________
@@ -241,6 +268,7 @@ int				i,cnt=0,timeout=0;
 									__print("\r\n");
 								state=_ErSetup;
 								simmerMode(_SIMM1);
+								Increment(0);
 								break;								
 							case _f2: 
 							case _F2:
@@ -248,6 +276,7 @@ int				i,cnt=0,timeout=0;
 									__print("\r\n");
 								state=_NdSetup;
 								simmerMode(_SIMM2);
+								Increment(0);
 								break;								
 							case _f3: 
 							case _F3:
@@ -255,6 +284,7 @@ int				i,cnt=0,timeout=0;
 									__print("\r\n");
 								state=_STANDBY;
 								simmerMode(_OFF);
+								Increment(0);
 								break;								
 							case _Up:
 								Increment(1);
@@ -262,13 +292,19 @@ int				i,cnt=0,timeout=0;
 							case _Down:
 								Increment(-1);
 								break;
+							case _ShiftUp:
+								Increment(10);
+								break;
+							case _ShiftDown:
+								Increment(-10);
+								break;
 							case _Left:
-								if(idx)	
 									--idx;
+								Increment(0);
 								break;
 							case _Right:
-								if(idx < 3)	
 									++idx;
+								Increment(0);
 								break;
 							case _f11: 
 							case _F11:
