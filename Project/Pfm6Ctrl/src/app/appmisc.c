@@ -205,28 +205,25 @@ float	P2V = (float)_AD2HV(p->HVref)/_PWM_RATE_HI;
 * Input         : *p, PFM object pointer
 * Return        :
 *******************************************************************************/
-void	SetPwmTab(PFM *p, int ch) {
-int 			n;
-_TIM_DMA	*t;
+void	SetPwmTab(PFM *p) {
+			int n,ch=p->Simmer.active;												// active channel
 			while(_MODE(p,_PULSE_INPROC))											// wait the prev setup to finish !!!
 				_wait(2,_proc_loop);
-			switch(ch) {
-				case PFM_STAT_SIMM1:
-					t=SetPwmTab00(p,_TIM.pwch1);
-					for(int n=0; t-- != _TIM.pwch1; n+= t->n);
-					_TIM.eint1 = _PWM_RATE_HI*n/_uS/2;
-				break;
-				case PFM_STAT_SIMM2:
-					t=SetPwmTab00(p,_TIM.pwch2);
-					for(n=0; t-- != _TIM.pwch2; n+= t->n);
-					_TIM.eint2 = _PWM_RATE_HI*n/_uS/2;
-				break;
-				default:
-					t = SetPwmTab00(p,_TIM.pwch1);
-					memcpy(_TIM.pwch2,_TIM.pwch1,sizeof(_TIM_DMA)*_MAX_BURST/_PWM_RATE_HI);
-					memcpy(&pfm->burst[1],&pfm->burst[0],sizeof(burst));
-					for(n=0; t-- != _TIM.pwch1; n+= t->n);
-					_TIM.eint1=_TIM.eint2 = _PWM_RATE_HI*n/_uS/2;	
+			if(ch == PFM_STAT_SIMM1) {				
+				_TIM_DMA *t=SetPwmTab00(p,_TIM.pwch1);
+				for(n=0; t-- != _TIM.pwch1; n+= t->n);
+				_TIM.eint1 = (n)*(_PWM_RATE_HI/_uS/2);
+			}
+			else if(ch == PFM_STAT_SIMM2) {
+				_TIM_DMA *t=SetPwmTab00(p,_TIM.pwch2);
+				for(n=0; t-- != _TIM.pwch2; n+= t->n);
+				_TIM.eint2 = (n)*(_PWM_RATE_HI/_uS/2);
+			} else {
+				_TIM_DMA *t = SetPwmTab00(p,_TIM.pwch1);
+				memcpy(_TIM.pwch2,_TIM.pwch1,sizeof(_TIM_DMA)*_MAX_BURST/_PWM_RATE_HI);
+				memcpy(&pfm->burst[1],&pfm->burst[0],sizeof(burst));
+				for(n=0; t-- != _TIM.pwch1; n+= t->n);
+				_TIM.eint1=_TIM.eint2 = (n)*(_PWM_RATE_HI/_uS/2);
 			}
 }
 /*______________________________________________________________________________

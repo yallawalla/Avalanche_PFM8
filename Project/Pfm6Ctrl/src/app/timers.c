@@ -345,7 +345,7 @@ TIM_ICInitTypeDef				TIM_ICInitStructure;
 		if(pfm->Burst && TIM_GetCapture2(TIM3)) {
 			pfm->Burst->Pmax=600000*_PWM_RATE_HI/TIM_GetCapture2(TIM3)/_AD2HV(pfm->HVref);
 			if(pfm->Trigger.timeout && __time__ >= pfm->Trigger.timeout) {
-					SetPwmTab(pfm,pfm->Simmer.active);
+					SetPwmTab(pfm);
 				pfm->Trigger.timeout=0;
 			}
 		}

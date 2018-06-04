@@ -162,7 +162,7 @@ int				i,j;
 //---------------------------------------------------------------------------------
 					SysTick_init();
 					SetSimmerRate(pfm,_SIMMER_LOW);
-					SetPwmTab(pfm,0);
+					SetPwmTab(pfm);
 					Watchdog_init(300);	
 					Initialize_DAC();
 //---------------------------------------------------------------------------------
@@ -680,7 +680,7 @@ PFM				*p=proc->arg;
 										p->burst[0].Length=	*(short *)q++;q++;
 										p->burst[0].N=			*(char *)q++;
 										p->burst[0].Ereq=		*(char *)q++;
-										SetPwmTab(p,1);
+										SetPwmTab(p);
 										Eack(NULL);	
 									break;
 //______________________________________________________________________________________
@@ -732,7 +732,7 @@ PFM				*p=proc->arg;
 // _______
 										if(p->Burst->Pmax > 0 && p->Burst->Pmax < _PWM_RATE_HI) {
 //											p->Burst->Imax=__min(4095,_I2AD(p->Burst->U/10 + p->Burst->U/2));
-											SetPwmTab(p,p->Simmer.active);														
+											SetPwmTab(p);														
 											Eack(NULL);
 										} else {
 											_SET_ERROR(p,PFM_ERR_PSRDYN);
@@ -770,7 +770,7 @@ PFM				*p=proc->arg;
 											}
 										}
 //________								
-										SetPwmTab(p,p->Simmer.active);
+										SetPwmTab(p);
 										Eack(NULL);
 										break;
 									case _PFM_simmer_set:
@@ -823,7 +823,7 @@ PFM				*p=proc->arg;
 										p->Burst->Length=	*(short *)q++;q++;											// interval energije v uS			(short)
 										p->Burst->N=*q;																						// stevilo pulzov v intervalu	(byte)
 										PFM_pockels(p);																						// pockels timer setup
-										SetPwmTab(p,p->Simmer.active);														// pulse buildup...
+										SetPwmTab(p);														// pulse buildup...
 										Eack(NULL);																								// reset integratorja energije
 									break;
 

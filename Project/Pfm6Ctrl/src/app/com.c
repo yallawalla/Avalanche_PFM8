@@ -515,18 +515,6 @@ int			DecodeWhat(char *c) {
 							break;
 					__print("\r\n%d of %dk stack clean",k*sizeof(int)/0x400,(m-n)/0x400);					
 					break;
-//				case 'e':
-//					for(pfm->Burst->Pmax=0; pfm->Burst->Pmax<600; ++pfm->Burst->Pmax) {
-//						SetPwmTab(pfm);
-//						for(k=m=n=0; TIM18_buf[k].n; ++k) {
-//							m+= pow((float)TIM18_buf[k].T1*7.0/6.0,3)/400.0*10.0*(float)(1+TIM18_buf[k].n)/2+0.5;
-//							n+= pow((float)TIM18_buf[k].T3*7.0/6.0,3)/400.0*10.0*(float)(1+TIM18_buf[k].n)/2+0.5;
-//						}
-//						Watchdog();
-//						__print("\r\n%d,%d,%d",pfm->Burst->Pmax*7/6,m/1000,n/1000);
-//					}
-//					__print("\r\n>");
-//					break;
 //______________________________________________________________________________________
 				default:
 					return _PARSE_ERR_SYNTAX;
@@ -1064,7 +1052,7 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 						PFM_pockels(pfm);
 					}
 //__________________________________
-					SetPwmTab(pfm,pfm->Simmer.active);
+					SetPwmTab(pfm);
 					break;
 //______________________________________________________________________________________
 				case 'd':
@@ -1078,7 +1066,7 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 						pfm->Burst->Delay=atoi(cc[0]);
 					if(n>1)
 						pfm->Burst->Pdelay=_PWM_RATE_HI*atof(cc[1]);
-					SetPwmTab(pfm,pfm->Simmer.active);
+					SetPwmTab(pfm);
 					break;
 //______________________________________________________________________________________
 				case 'b':
@@ -1102,7 +1090,7 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 					}
 					else
 						pfm->Trigger.count=0;
-					SetPwmTab(pfm,pfm->Simmer.active);
+					SetPwmTab(pfm);
 					break;
 //______________________________________________________________________________________
 				case 'q':

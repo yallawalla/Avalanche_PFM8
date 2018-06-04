@@ -20,6 +20,7 @@ struct tetris {
         char data[5][5];
         int w;
         int h;
+				int color; 
     } current;
     int x;
     int y;
@@ -29,25 +30,25 @@ struct tetris_block blocks[] =
 {
     {{"\xdf\xdf", 
       "\xdf\xdf"},
-    2, 2
+    2, 2, 33
     },
     {{" \xdf ",
       "\xdf\xdf\xdf"},
-    3, 2
+    3, 2, 35
     },
     {{"\xdf\xdf\xdf\xdf"},
-        4, 1},
+        4, 1, 34},
     {{"\xdf\xdf",
          "\xdf ",
          "\xdf "},
-    2, 3},
+    2, 3, 35},
     {{"\xdf\xdf",
          " \xdf",
          " \xdf"},
-    2, 3},
+    2, 3, 36},
     {{"\xdf\xdf ",
          " \xdf\xdf"},
-    3, 2}
+    3, 2, 32}
 };
 
 struct tetris_block blockss[] =
@@ -158,9 +159,13 @@ tetris_print(struct tetris *t) {
             if (x>=t->x && y>=t->y 
                     && x<(t->x+t->current.w) && y<(t->y+t->current.h) 
                     && t->current.data[y-t->y][x-t->x]!=' ')
+							{
                 __print("%c ", t->current.data[y-t->y][x-t->x]);
+							}
             else
-                __print("%c ", t->game[x][y]);
+						{
+               __print("%c ", t->game[x][y]);
+						}
         }
         __print ("!\r\n");
     }
@@ -288,7 +293,6 @@ tetris_level(struct tetris *t) {
 void tetris_run(int w, int h) {
 
     struct tetris t;
-    char cmd;
     int count=0;
     tetris_set_ioconfig();
     tetris_init(&t, w, h);
@@ -302,8 +306,7 @@ void tetris_run(int w, int h) {
 					tetris_print(&t);
         }
         count++;
-        while ((cmd=getchar())>0) {
-            switch (cmd) {
+            switch (getchar()) {
                 case 'D':
 										count=0;
                     t.x--;
@@ -334,7 +337,6 @@ void tetris_run(int w, int h) {
                     break;
 				
             }
-        }
     }
 
     tetris_print(&t);
