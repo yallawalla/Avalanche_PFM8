@@ -1136,10 +1136,11 @@ int				PFM_pockels(PFM *p) {
 															
 					TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
 					TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-					TIM_OCInitStructure.TIM_Pulse=p->Burst->pockels.delay +1;
+					TIM_OCInitStructure.TIM_Pulse=1;
 					TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-					TIM_OC1Init(TIM4, &TIM_OCInitStructure);		
-					TIM_TimeBaseStructure.TIM_Period = p->Burst->pockels.delay + p->Burst->pockels.width;
+					TIM_OC1Init(TIM4, &TIM_OCInitStructure);
+					
+					TIM_TimeBaseStructure.TIM_Period = 1000;
 					TIM_TimeBaseStructure.TIM_Prescaler = _uS/10-1;
 					TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 					TIM_TimeBaseInit(TIM4,&TIM_TimeBaseStructure);
