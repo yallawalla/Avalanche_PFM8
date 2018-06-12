@@ -822,7 +822,7 @@ PFM				*p=proc->arg;
 										p->Burst->Length=	*(short *)q++;q++;											// interval energije v uS			(short)
 										p->Burst->N=*q;																						// stevilo pulzov v intervalu	(byte)
 										PFM_pockels(p);																						// pockels timer setup
-										SetPwmTab(p);														// pulse buildup...
+										SetPwmTab(p);																							// pulse buildup...
 										Eack(NULL);																								// reset integratorja energije
 									break;
 

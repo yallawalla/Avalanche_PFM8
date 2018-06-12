@@ -156,6 +156,8 @@ static
 									break;
 								case _READY:
 									_CLEAR_MODE(pfm,_AUTO_TRIGGER);
+									if(pfm->burst[0].pockels.width || pfm->burst[1].pockels.width)
+										PFM_pockels(pfm);
 									simmerMode(_SIMM1);	
 									SetPwmTab(pfm);
 									simmerMode(_SIMM2);	
@@ -218,7 +220,6 @@ static
 							idx=3;
 							break;	
 						}
-						PFM_pockels(pfm);
 }
 //______________________________________________________________________________________
 static 

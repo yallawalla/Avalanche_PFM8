@@ -65,7 +65,7 @@ int8_t	STORAGE_Read (uint8_t, uint8_t *, uint32_t, uint16_t);
 int8_t	STORAGE_Write (uint8_t, uint8_t *, uint32_t, uint16_t);
 int8_t	STORAGE_GetMaxLun (void);
 
-#define STORAGE_LUN_NBR                  2
+#define STORAGE_LUN_NBR                  1
 /**
   * @}
   */ 
