@@ -299,9 +299,9 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 * Return         : 
 *******************************************************************************/
 void 		*Initialize_F2V(_proc *p) {
-TIM_TimeBaseInitTypeDef	TIM_TimeBaseStructure;
-GPIO_InitTypeDef				GPIO_InitStructure;
-TIM_ICInitTypeDef				TIM_ICInitStructure;
+	TIM_TimeBaseInitTypeDef	TIM_TimeBaseStructure;
+	GPIO_InitTypeDef				GPIO_InitStructure;
+	TIM_ICInitTypeDef				TIM_ICInitStructure;
 	
 	if(!p) {
 		GPIO_StructInit(&GPIO_InitStructure);
@@ -343,9 +343,10 @@ TIM_ICInitTypeDef				TIM_ICInitStructure;
 		_proc_add((func *)Initialize_F2V,NULL,"F2V",1);
 	} else {
 		if(pfm->Burst && TIM_GetCapture2(TIM3)) {
-			pfm->Burst->Pmax=600000*_PWM_RATE_HI/TIM_GetCapture2(TIM3)/_AD2HV(pfm->HVref);
+			pfm->Burst->U=6000000/TIM_GetCapture2(TIM3);
+			pfm->Burst->PW = pfm->Burst->U *_PWM_RATE_HI/_AD2HV(10*pfm->HVref);
 			if(pfm->Trigger.timeout && __time__ >= pfm->Trigger.timeout) {
-					SetPwmTab(pfm);
+				SetPwmTab(pfm);
 				pfm->Trigger.timeout=0;
 			}
 		}
@@ -643,7 +644,7 @@ int 		hv,j,k,ki=30,kp=0;
 void		Trigger(PFM *p) {
 //_______________________________________________________________________________
 				if(!_MODE(p,_PULSE_INPROC)) {
-#if		!defined (__DISC4__) && !defined (__DISC7__)
+#if			!defined (__DISC4__) && !defined (__DISC7__)
 					if(_MODE(p,_ENM_NOTIFY)) {
 						CanTxMsg tx = {_ID_SYS_TRIGG,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 						while(CAN_TransmitStatus(__CAN__, 0) == CAN_TxStatus_Pending &&

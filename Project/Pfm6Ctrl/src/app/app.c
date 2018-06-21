@@ -21,7 +21,7 @@ _io				*__com1,*__com3;
 const char *_errStr[]={
 					"simmer 1 failed",
 					"simmer 2 failed",
-					"illegal CAN parameters",
+					"illegal parameter",
 					"illegal flash idle voltage",
 					"IGBT overheat",
 					"IGBT fault",
@@ -79,7 +79,7 @@ void 			App_Init(void) {
 					pfm->Burst->Period=1000;
 					pfm->Burst->Ereq=_SHPMOD_MAIN;
 					pfm->Burst->Mode=_XLAP_QUAD;
-					pfm->Burst->Pdelay=pfm->Burst->Pmax=_PWM_RATE_HI*0.02;
+					pfm->Burst->Pdelay=pfm->Burst->PW=_PWM_RATE_HI*0.02;
 					pfm->Burst->max[0]=pfm->Burst->max[1]=_I2AD(1000);
 					pfm->Burst->pockels.delay=0;
 					pfm->Burst->pockels.width=0;
@@ -178,8 +178,9 @@ int				i,j;
 					{} else
 						{}
 					RCC_ClearFlag(); 
+					f_chdrive(FS_CPU);
 					f_mount(pfm->fatfs,FS_CPU,1);
-					ungets("@cfg.ini\r");
+							ungets("@cfg.ini\r");
 					_stdio(NULL);
 }
 /*______________________________________________________________________________
@@ -563,6 +564,16 @@ char 			*c;
 						case _Esc:				
 							_SET_EVENT(pfm,_TRIGGER);											// console esc +-	trigger... no ja!!
 							break;				
+						case _f1:	
+						case _F1:	
+							pfm->Trigger.counter=0;
+							_SET_EVENT(pfm,_TRIGGER);
+							break;				
+						case _f2:
+						case _F2:
+							pfm->Trigger.counter=1;
+							_SET_EVENT(pfm,_TRIGGER);
+							break;				
 						default:				
 							c=cgets(i,EOF);				
 							if(c) {		
@@ -669,19 +680,81 @@ PFM				*p=proc->arg;
 							_stdio(io);
 						}
 //______________________________________________________________________________________
+//
 						switch(rx.StdId) {
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//____________Tandem message block _____________________________________________________
+//______________________________________________________________________________________
 							case _ID_SYS_TRIGG:
-								_SET_EVENT(p,_TRIGGER);
-							break;
-							case _PFM_TAND_CH0:
-										p->burst[0].Time=		*(short *)q++;q++;
-										p->burst[0].U=			*(short *)q++;q++;
-										p->burst[0].Length=	*(short *)q++;q++;
-										p->burst[0].N=			*(char *)q++;
-										p->burst[0].Ereq=		*(char *)q++;
-										SetPwmTab(p);
-										Eack(NULL);	
-									break;
+								if(rx.DLC) {
+									switch(rx.Data[0]) {
+										case PFM_STAT_SIMM1:									// < 1a 01
+											p->Trigger.counter=0;
+											_SET_MODE(p,_ALTERNATE_TRIGGER);
+										break;
+										case PFM_STAT_SIMM2:									// < 1a 02
+											p->Trigger.counter=1;
+											_SET_MODE(p,_ALTERNATE_TRIGGER);
+										break;
+										case PFM_STAT_SIMM1 | PFM_STAT_SIMM2:	// < 1a 03
+											_CLEAR_MODE(p,_ALTERNATE_TRIGGER);
+											p->Trigger.counter=0;
+										break;
+										default:
+											_SET_ERROR(p,PFM_ERR_UB);
+											return;
+									}
+								}
+								_SET_EVENT(p,_TRIGGER);										// < 1a
+								break;
+//______________________________________________________________________________________
+							case _PFM_TAND_CH0:													// < 100 64 00 00 10 00 04 03 01
+								p->Burst=&p->burst[0];
+								p->Burst->Time	=*(short *)q++;q++;
+								p->Burst->U			=*(short *)q++;q++;
+								p->Burst->Length=*(short *)q++;q++;
+								p->Burst->N			=*(char *)q++;
+								p->Burst->Ereq	=*(char *)q++;
+								_SetPwmTab(p,PFM_STAT_SIMM1);														
+								break;
+//______________________________________________________________________________________
+							case _PFM_TAND_CH1:													// < 101 00 04  00 10 00 04 01 01
+										p->Burst=&p->burst[1];
+								p->Burst->Time	=*(short *)q++;q++;
+								p->Burst->U			=*(short *)q++;q++;
+								p->Burst->Length=*(short *)q++;q++;
+								p->Burst->N			=*(char *)q++;
+								p->Burst->Ereq	=*(char *)q++;
+								_SetPwmTab(p,PFM_STAT_SIMM2);														
+								break;
+//______________________________________________________________________________________										
+							case _PFM_TAND_DLY:
+								p->burst[0].Delay=	*(short *)q++;q++;
+								p->burst[1].Delay=	*(short *)q++;q++;
+								SetPwmTab(p);
+								break;
+//______________________________________________________________________________________									
+							case _PFM_TAND_POCKELS:
+								p->burst[0].pockels.delay=	*(short *)q++;q++;
+								p->burst[0].pockels.width=	*(short *)q++;q++;
+								p->burst[1].pockels.delay=	*(short *)q++;q++;
+								p->burst[1].pockels.width=	*(short *)q++;q++;
+								PFM_pockels(p);	
+								SetPwmTab(p);
+								break;
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//______________________________________________________________________________________
+//______________________________________________________________________________________
 //______________________________________________________________________________________
 							case _ID_PFMcom2SYS:
 								if(_MODE(p,_CAN_2_COM))	{
@@ -722,23 +795,14 @@ PFM				*p=proc->arg;
 										PFM_command(p,rx.Data[1]);
 										Eack(NULL);
 										break;
-									case _PFM_set:
+									case _PFM_set:				// >20  03 00 10 64 00 01				100u,409.6V 
 										p->Burst->U = *(short *)q++;q++;
 										p->Burst->Time=*(short *)q++;q++;
 										p->Burst->Ereq=*q++;
-// _______
-										p->Burst->Pmax = __max(0,__min(_PWM_RATE_HI, (p->Burst->U *_PWM_RATE_HI)/_AD2HV(10*p->HVref)));
-// _______
-										if(p->Burst->Pmax > 0 && p->Burst->Pmax < _PWM_RATE_HI) {
-//											p->Burst->Imax=__min(4095,_I2AD(p->Burst->U/10 + p->Burst->U/2));
-											SetPwmTab(p);														
-											Eack(NULL);
-										} else {
-											_SET_ERROR(p,PFM_ERR_PSRDYN);
-										}
+										SetPwmTab(p);														
 										break;
 // ______ smafu za preverjanje LW protokola______________________________________________________________
-									case _PFM_reset:
+									case _PFM_reset:			// >20 04 00 04 03 01						3x, 1m, 1000m
 										p->Burst->Period=*(short *)q++;q++;
 										p->Burst->N=*q++;
 										p->Burst->Length=*q++*1000;
@@ -770,7 +834,6 @@ PFM				*p=proc->arg;
 										}
 //________								
 										SetPwmTab(p);
-										Eack(NULL);
 										break;
 									case _PFM_simmer_set:
 										if(rx.DLC==5) {
@@ -823,7 +886,7 @@ PFM				*p=proc->arg;
 										p->Burst->N=*q;																						// stevilo pulzov v intervalu	(byte)
 										PFM_pockels(p);																						// pockels timer setup
 										SetPwmTab(p);																							// pulse buildup...
-										Eack(NULL);																								// reset integratorja energije
+//										Eack(NULL);																								// reset integratorja energije
 									break;
 
 									case _PFM_SetHVmode:																				// 0x72, _PFM_SetHVmode 
@@ -1101,7 +1164,7 @@ int						u=p->HV/7;
 //__________________________________________________________________________________________________________
 
 					if(_STATUS(p,PFM_STAT_SIMM1 | PFM_STAT_SIMM2) == PFM_STAT_SIMM1)	// preklopi na aktivni objekt samo, ce je eksplicitno dolocen
-						p->Burst = &p->burst[0];																				// ce je simm. 0 oz. 3 se uporabi burst 1 na SetPwmTab00
+						p->Burst = &p->burst[0];																				// ce je simm. 0 oz. 3 se uporabi burst 1 na __SetPwmTab
 					if(_STATUS(p,PFM_STAT_SIMM1 | PFM_STAT_SIMM2) == PFM_STAT_SIMM2)
 						p->Burst = &p->burst[1];
 					p->Trigger.time=0;																								// reset trigger process		

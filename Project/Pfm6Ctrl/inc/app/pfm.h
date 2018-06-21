@@ -262,6 +262,8 @@ extern  struct _TIM {																			// realtime structure, used with timer s
 	} pwch1[_MAX_BURST/_PWM_RATE_HI],
 		pwch2[_MAX_BURST/_PWM_RATE_HI],												// output tables
 		*p1,*p2;																							// pointers to output tables
+	_POCKELS	
+		pockels[2];
 	int		
 		U1off,U2off,																					// flash voltage, idle status
 		I1off,I2off,																					// flash current, idle status
@@ -271,8 +273,7 @@ extern  struct _TIM {																			// realtime structure, used with timer s
 		cref1,cref2,																					// current loop reference (after 200usec)
 		ci1,ci2,																							// current loop gain
 		Hvref,Caps,Icaps;																			// test mode parameters
-	_POCKELS	
-		pockels[2];
+
 } _TIM;
 typedef struct _TIM_DMA _TIM_DMA; 
 //________________________________________________________________________
@@ -340,6 +341,7 @@ int							USBH_Iap(int);
 #define 				_PFM_TAND_CH0					0x100
 #define 				_PFM_TAND_CH1					0x101
 #define 				_PFM_TAND_DLY					0x102
+#define 				_PFM_TAND_POCKELS			0x103
 
 #define					_ID_SYS2ENRG					0x1f
 #define					_ID_ENRG2SYS					0x3f
@@ -411,7 +413,7 @@ short						N,										// burst pulse count
 								Time,
 								Period;								// _PFM_reset command parameters, ms
 char						Ereq;		              
-short						Pmax,			            
+short						PW,			            
 								Pdelay,								// burst interval	pwm
 								Delay,								// -"- delay
 								max[2];								// burst time current limit
@@ -472,8 +474,9 @@ extern 					_ADC3DMA							ADC3_buf[];
 				        
 void						App_Init(void),
 				        
-								SetSimmerRate(PFM *, SimmerType),
+								_SetPwmTab(PFM *, int),
 								SetPwmTab(PFM *),
+								SetSimmerRate(PFM *, SimmerType),
 								Trigger(PFM *),
 								TriggerADC(PFM *),
 								CanReply(char *, ...);
@@ -711,10 +714,11 @@ int			SetChargerVoltage(int);
 								_DEBUG_(_DBG_SYS_MSG,"trigger 2 disabled");				\
 								GPIO_SetBits(_TRIGGER2_PORT,_TRIGGER2_BIT);		  	\
 							} while(0)
-							      
+
 #define	_CRITICAL_ERR_MASK		(PFM_ERR_DRVERR | PFM_ERR_PULSEENABLE | PFM_ADCWDG_ERR |							\
 																PFM_ERR_PSRDYN | PFM_ERR_LNG | PFM_HV2_ERR | 												\
-																	PFM_I2C_ERR | PFM_ERR_VCAP1 | PFM_ERR_VCAP2 | PFM_ERR_ETRIG )
+																	PFM_I2C_ERR | PFM_ERR_VCAP1 | PFM_ERR_VCAP2 | PFM_ERR_ETRIG)
+							
 
 #define	_PFM_CWBAR_STAT				PFM_ERR_PULSEENABLE
 				        

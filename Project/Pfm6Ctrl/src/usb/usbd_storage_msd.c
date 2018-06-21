@@ -65,7 +65,7 @@ int8_t	STORAGE_Read (uint8_t, uint8_t *, uint32_t, uint16_t);
 int8_t	STORAGE_Write (uint8_t, uint8_t *, uint32_t, uint16_t);
 int8_t	STORAGE_GetMaxLun (void);
 
-#define STORAGE_LUN_NBR                  1
+#define STORAGE_LUN_NBR                  2
 /**
   * @}
   */ 
@@ -132,26 +132,36 @@ USBD_STORAGE_cb_TypeDef  *USBD_STORAGE_fops = &USBD_MICRO_SDIO_fops;
   */ 
 
 /*-----------------------------------------------------------------------*/
-int						FLASH_Program(uint32_t Address, uint32_t Data) {
-int						m;
-							FLASH_Unlock();
-							FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR|FLASH_FLAG_PGSERR);	
-							do {
-								Watchdog();	
-								m=FLASH_ProgramWord(Address,Data);
-							} while (m==FLASH_BUSY);
-							return(m);
+int	FLASH_Program(uint32_t Address, uint32_t Data) {
+int	m;
+		FLASH_Unlock();
+		FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR|FLASH_FLAG_PGSERR);	
+		do {
+			Watchdog();	
+			m=FLASH_ProgramWord(Address,Data);
+		} while (m==FLASH_BUSY);
+		return(m);
 }
 /**
   * @brief  Initialize the storage medium
   * @param  lun : logical unit number
   * @retval Status
   */
+uint8_t *ramdsk=NULL;
 //_____________________________________________________________________________________________
 int8_t STORAGE_Init (uint8_t lun)
 {
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	if(lun==1) {
+		FLASH_Unlock();
+		FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	} else {
+		if(!ramdsk) {
+			int	wbuf[SECTOR_SIZE];
+			ramdsk=(uint8_t *)0x10000000;
+			memset(ramdsk,0,0x10000);
+			return f_mkfs("0:",FM_SFD | FM_ANY, 0, wbuf,SECTOR_SIZE*sizeof(int));
+		}			
+	}
 	return (RES_OK);
 }
 //_____________________________________________________________________________________________
@@ -164,8 +174,13 @@ int8_t STORAGE_Init (uint8_t lun)
   */
 int8_t STORAGE_GetCapacity (uint8_t lun, uint32_t *block_num, uint32_t *block_size)
 {
-	*block_size=SECTOR_SIZE;
-	*block_num=SECTOR_COUNT;
+	if(lun==1) {
+		*block_size=SECTOR_SIZE;
+		*block_num=SECTOR_COUNT;
+	} else {
+		*block_size=SECTOR_SIZE;
+		*block_num=0x10000/SECTOR_SIZE;
+	}
 	return (RES_OK);
 }
 //_____________________________________________________________________________________________
@@ -176,6 +191,8 @@ int8_t STORAGE_GetCapacity (uint8_t lun, uint32_t *block_num, uint32_t *block_si
   */
 int8_t  STORAGE_IsReady (uint8_t lun)
 {
+	if(lun==0 && !ramdsk)
+			return RES_NOTRDY;
 	return (RES_OK);
 }
 //_____________________________________________________________________________________________
@@ -203,21 +220,26 @@ int8_t STORAGE_Read(uint8_t lun,
 										uint32_t blk_addr,                       
 										uint16_t blk_len)
 {
-int i,*p,*q=NULL;
-	for(p=(int *)FATFS_ADDRESS; (int)p < FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT &&  p[SECTOR_SIZE/4]!=-1; p=&p[SECTOR_SIZE/4+1]) {
-		if(p[SECTOR_SIZE/4] == blk_addr)
-			q=p;
+if(lun==1) {
+	int i,*p,*q=NULL;
+		for(p=(int *)FATFS_ADDRESS; (int)p < FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT &&  p[SECTOR_SIZE/4]!=-1; p=&p[SECTOR_SIZE/4+1]) {
+			if(p[SECTOR_SIZE/4] == blk_addr)
+				q=p;
+		}
+		if((int)p >= FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT)
+			return RES_ERROR;
+		if(q)
+			p=q;
+		q=(int *)buf;
+		for(i=0;i<SECTOR_SIZE/4; ++i)
+			*q++=~(*p++);	
+		if(--blk_len)
+			return STORAGE_Read (lun, (uint8_t *)q, ++blk_addr, blk_len);
+		return RES_OK; 
+	} else {
+		memcpy(buf,&ramdsk[blk_addr*(SECTOR_SIZE)],blk_len*SECTOR_SIZE);
+		return RES_OK; 
 	}
-	if((int)p >= FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT)
-		return RES_ERROR;
-	if(q)
-		p=q;
-	q=(int *)buf;
-	for(i=0;i<SECTOR_SIZE/4; ++i)
-		*q++=~(*p++);	
-	if(--blk_len)
-		return STORAGE_Read (lun, (uint8_t *)q, ++blk_addr, blk_len);
-	return RES_OK; 
 }
 //_____________________________________________________________________________________________
 /**
@@ -233,7 +255,8 @@ int8_t STORAGE_Write (uint8_t lun,
 											uint32_t blk_addr,
 											uint16_t blk_len)
 {
-int i,*p,*q=NULL;
+if(lun==1) {
+	int i,*p,*q=NULL;
 	for(p=(int *)FATFS_ADDRESS; (int)p < FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT &&  p[SECTOR_SIZE/4]!=-1; p=&p[SECTOR_SIZE/4+1])
 		if(p[SECTOR_SIZE/4] == blk_addr)
 			q=p;
@@ -256,6 +279,10 @@ int i,*p,*q=NULL;
 	if(--blk_len)
 		return STORAGE_Write (lun, (uint8_t *)q, ++blk_addr, blk_len);
 	return RES_OK; 
+} else {
+		memcpy(&ramdsk[blk_addr*(SECTOR_SIZE)],buf,blk_len*SECTOR_SIZE);
+		return RES_OK; 
+}
 }	  
 //_____________________________________________________________________________________________
 /**

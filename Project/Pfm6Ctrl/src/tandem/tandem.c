@@ -35,11 +35,12 @@ static
 FIL				f;
 FATFS			fs;
 UINT			bw;
-					if(f_mount(&fs,FS_CPU,1) == FR_OK && 
-						f_open(&f,"/tandem.ini",FA_READ) == FR_OK) {
-						f_read(&f,pfm->burst,2*sizeof(burst),&bw);
-						f_read(&f,&triggerMode,sizeof(triggerMode),&bw);
-						f_close(&f);
+					if(f_chdrive(FS_CPU) == FR_OK &&
+						f_mount(&fs,FS_CPU,1) == FR_OK && 
+						f_open(&f,"/tandem.bin",FA_READ) == FR_OK) {
+							f_read(&f,pfm->burst,2*sizeof(burst),&bw);
+							f_read(&f,&triggerMode,sizeof(triggerMode),&bw);
+							f_close(&f);
 					}
 }
 //______________________________________________________________________________________
@@ -48,12 +49,13 @@ static
 FIL				f;
 FATFS			fs;
 UINT			bw;
-					if(f_mount(&fs,FS_CPU,1) == FR_OK && 
-						f_open(&f,"/tandem.ini",FA_WRITE | FA_OPEN_ALWAYS) == FR_OK) {
-						f_write(&f,pfm->burst,2*sizeof(burst),&bw);
-						f_write(&f,&triggerMode,sizeof(triggerMode),&bw);
-						f_sync(&f);
-						f_close(&f);
+					if(f_chdrive(FS_CPU) == FR_OK &&
+						f_mount(&fs,FS_CPU,1) == FR_OK && 
+							f_open(&f,"/tandem.bin",FA_WRITE | FA_OPEN_ALWAYS) == FR_OK) {
+								f_write(&f,pfm->burst,2*sizeof(burst),&bw);
+								f_write(&f,&triggerMode,sizeof(triggerMode),&bw);
+								f_sync(&f);
+								f_close(&f);
 					}
 }
 //______________________________________________________________________________________
@@ -64,11 +66,11 @@ int				i=pfm->burst[0].Period+pfm->burst[1].Period;
 					switch(state) {
 						case _ErSetup:							
 							__print("\rEr     : %5du,%5dV, n=%3d,%5du",
-								pfm->Burst->Time,pfm->Burst->Pmax*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length);
+								pfm->Burst->Time,pfm->Burst->PW*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length);
 							break;
 						case _NdSetup:							
 							__print("\rNd     : %5du,%5dV, n=%3d,%5du",
-								pfm->Burst->Time,pfm->Burst->Pmax*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length);
+								pfm->Burst->Time,pfm->Burst->PW*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length);
 							break;
 						case _Pockels:							
 							__print("\rpockels: %5.1fu,%5.1fu,%5.1fu,%5.1fu",
@@ -84,11 +86,11 @@ int				i=pfm->burst[0].Period+pfm->burst[1].Period;
 							switch(triggerMode) {
 								case _BOTH:
 									_CLEAR_MODE(pfm,_ALTERNATE_TRIGGER);
-									__print("\rtrigger:   BOTH,%5dm,%5du",pfm->Burst->Period,pfm->burst[1].Delay-pfm->burst[0].Delay);
+									__print("\rtrigger:   BOTH,%5dm,%5du",pfm->burst[1].Period,pfm->burst[1].Delay-pfm->burst[0].Delay);
 									break;
 								case _ALTER:
 									_SET_MODE(pfm,_ALTERNATE_TRIGGER);
-									__print("\rtrigger:  ALTER,%5dm,%5dm",i,i-pfm->Burst->Period);
+									__print("\rtrigger:  ALTER,%5dm,%5dm",i,i-pfm->burst[1].Period);
 									break;
 								case _Er:
 									_CLEAR_MODE(pfm,_ALTERNATE_TRIGGER);
@@ -120,7 +122,7 @@ static
 							triggerMode = __max(_BOTH,__min(_Nd, triggerMode));
 						break;
 						case 1:
-							pfm->burst[1].Period = __max(5,__min(2000, pfm->burst[1].Period + a));
+							pfm->burst[1].Period = __max(2,__min(2000, pfm->burst[1].Period + a));
 							if(!_MODE(pfm,_ALTERNATE_TRIGGER))
 								pfm->burst[0].Period=pfm->burst[1].Period;
 							break;
@@ -128,13 +130,13 @@ static
 							if(_MODE(pfm,_ALTERNATE_TRIGGER)) {
 								pfm->burst[0].Period +=a;
 								pfm->burst[1].Period -=a;
-								if(pfm->burst[0].Period < 5) {
-									pfm->burst[0].Period = pfm->burst[0].Period + pfm->burst[1].Period - 5;
-									pfm->burst[1].Period = 5;
+								if(pfm->burst[0].Period < 2) {
+									pfm->burst[0].Period = pfm->burst[0].Period + pfm->burst[1].Period - 2;
+									pfm->burst[1].Period = 2;
 								}
-								if(pfm->burst[1].Period < 5) {
-									pfm->burst[1].Period = pfm->burst[0].Period + pfm->burst[1].Period - 5;
-									pfm->burst[0].Period = 5;
+								if(pfm->burst[1].Period < 2) {
+									pfm->burst[1].Period = pfm->burst[0].Period + pfm->burst[1].Period - 2;
+									pfm->burst[0].Period = 2;
 								}
 							} else {
 								int d = pfm->burst[1].Delay - pfm->burst[0].Delay + a;
@@ -158,10 +160,10 @@ static
 									_CLEAR_MODE(pfm,_AUTO_TRIGGER);
 									if(pfm->burst[0].pockels.width || pfm->burst[1].pockels.width)
 										PFM_pockels(pfm);
-									simmerMode(_SIMM1);	
-									SetPwmTab(pfm);
-									simmerMode(_SIMM2);	
-									SetPwmTab(pfm);
+//									simmerMode(_SIMM1);	
+									_SetPwmTab(pfm,_SIMM1);
+//									simmerMode(_SIMM2);	
+									_SetPwmTab(pfm,_SIMM2);
 									switch(triggerMode) {
 										case _BOTH:
 										case _ALTER:
@@ -237,7 +239,7 @@ static
 								pfm->Burst->Time		= __max(50,__min(2000,pfm->Burst->Time +a));
 								break;
 							case 1:
-								pfm->Burst->Pmax		= __max(0,__min(_PWM_RATE_HI,pfm->Burst->Pmax +a));
+								pfm->Burst->U				= __max(0,__min(800,pfm->Burst->U +a));
 								break;
 							case 2:
 								pfm->Burst->N				= __max(1,__min(10,pfm->Burst->N +a));
@@ -289,6 +291,10 @@ int				i,cnt=0,timeout=0;
 								}									
 								_proc_loop();
 								continue;
+							case _CtrlZ:
+								while(1);				
+							case _CtrlY:
+								NVIC_SystemReset();				
 							case _f1: 
 							case _F1:
 								if(state != _ErSetup)

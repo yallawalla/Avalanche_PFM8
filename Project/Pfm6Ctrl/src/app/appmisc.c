@@ -81,16 +81,23 @@ _USER_SHAPE	ushape[_MAX_USER_SHAPE];
 * Input         :  
 * Return        :
 *******************************************************************************/
-_TIM_DMA *SetPwmTab00(PFM *p, _TIM_DMA *t) {
+_TIM_DMA *__SetPwmTab(PFM *p, _TIM_DMA *t) {
 int		i,j,n;
 int		to			=p->Burst->Time;
 int		tpause	=p->Burst->Length/p->Burst->N - p->Burst->Time;							// dodatek ups....
-int		Uo=p->Burst->Pmax;
 int		dUo=0;																															// modif. 2,3,4... pulza, v %
 float	P2V = (float)_AD2HV(p->HVref)/_PWM_RATE_HI;
+int		Uo=p->Burst->PW = p->Burst->U *_PWM_RATE_HI/_AD2HV(10*p->HVref);
+//-------validate U parameter-------	
+			if(p->Burst->PW > 0 && p->Burst->PW >= _MAX_PWM_RATE) {
+				p->Burst->U=_MAX_PWM_RATE*_AD2HV(10*p->HVref)/_PWM_RATE_HI;
+				p->Burst->PW=_MAX_PWM_RATE;
+				_SET_ERROR(p,PFM_ERR_UB);
+			}
 //-------user shape part -----------																			// 3. koren iz razmerja energij, ajde :)
+	
 			if(*(int *)ushape) {
-				float e2E=pow(pow(P2V*p->Burst->Pmax,3)/400000.0*p->Burst->Time*p->Burst->N/(*(int *)ushape),1.0/3.0)/P2V;
+				float e2E=pow(pow(P2V*p->Burst->PW,3)/400000.0*p->Burst->Time*p->Burst->N/(*(int *)ushape),1.0/3.0)/P2V;
 				p->Burst->Length=0;
 				for(i=1; ushape[i].T && i < _MAX_BURST/(10*_uS)-1 && i<_MAX_USER_SHAPE; ++t,++i) {
 					t->n=2*ushape[i].T/10-1;
@@ -113,7 +120,7 @@ float	P2V = (float)_AD2HV(p->HVref)/_PWM_RATE_HI;
 					if(p->Burst->Time==qshape[i].qref) {
 						if(qshape[i].q0 > 0) {
 							to=qshape[i].q0;
-							Uo=(int)(pow((pow(p->Burst->Pmax,3)*p->Burst->N*qshape[i].qref/to),1.0/3.0)+0.5);
+							Uo=(int)(pow((pow(p->Burst->PW,3)*p->Burst->N*qshape[i].qref/to),1.0/3.0)+0.5);
 							if(p->Burst->Ereq & _SHPMOD_MAIN) {
 								if(Uo > qshape[i].q1)
 									Uo = qshape[i].q1;
@@ -152,8 +159,8 @@ float	P2V = (float)_AD2HV(p->HVref)/_PWM_RATE_HI;
 //
 						if(p->Burst->Ereq & _SHPMOD_QSWCH) {
 							to=qshape[i].qref;
-							Uo=p->Burst->Pmax;
-							dUo=pow(p->Burst->Pmax*P2V,3) - 400000000 / qshape[i].qref * qshape[i].q3;			// varianta z zmanjsevanjem za fiksno E(J);
+							Uo=p->Burst->PW;
+							dUo=pow(p->Burst->PW*P2V,3) - 400000000 / qshape[i].qref * qshape[i].q3;			// varianta z zmanjsevanjem za fiksno E(J);
 							if(dUo > 0)
 								dUo=pow(dUo,1.0/3.0)/P2V - Uo;
 							else
@@ -163,7 +170,7 @@ float	P2V = (float)_AD2HV(p->HVref)/_PWM_RATE_HI;
 						} else {
 							to=qshape[i].q3;
 							tpause=_minmax(Uo,260,550,20,100);
-							Uo=(int)(pow((pow(p->Burst->Pmax,3)*p->Burst->N*qshape[i].qref - pow(qshape[i].q1,3)*qshape[i].q0)/qshape[i].qref/p->Burst->N,1.0/3.0)+0.5);
+							Uo=(int)(pow((pow(p->Burst->PW,3)*p->Burst->N*qshape[i].qref - pow(qshape[i].q1,3)*qshape[i].q0)/qshape[i].qref/p->Burst->N,1.0/3.0)+0.5);
 						}
 					}				
 			}
@@ -200,34 +207,51 @@ float	P2V = (float)_AD2HV(p->HVref)/_PWM_RATE_HI;
 /*******************************************************************************
 * Function Name : SetPwmTab
 * Description   : Selects the n'th pw buffer
-*								: Calls the waveform generator SetPwmTab00
+*								: Calls the waveform generator __SetPwmTab
 *								: Calculates energy integrating interval to ADC
 * Input         : *p, PFM object pointer
 * Return        :
 *******************************************************************************/
-void	SetPwmTab(PFM *p) {
-			int n,ch=p->Simmer.active;												// active channel
-			while(_MODE(p,_PULSE_INPROC))											// wait the prev setup to finish !!!
+void	_SetPwmTab(PFM *p, int ch) {
+			int n;																						// active channel
+			_TIM_DMA *t;
+			while(_MODE(p,_PULSE_INPROC))
 				_wait(2,_proc_loop);
+			
 			if(ch == PFM_STAT_SIMM1) {				
 				_TIM.pockels[0]=p->burst[0].pockels;
-				_TIM_DMA *t=SetPwmTab00(p,_TIM.pwch1);
+				p->Burst = &p->burst[0];
+				t=__SetPwmTab(p,_TIM.pwch1);
 				for(n=0; t-- != _TIM.pwch1; n+= t->n);
 				_TIM.eint1 = (n)*(_PWM_RATE_HI/_uS/2);
 			}
 			else if(ch == PFM_STAT_SIMM2) {
 				_TIM.pockels[1]=p->burst[1].pockels;
-				_TIM_DMA *t=SetPwmTab00(p,_TIM.pwch2);
+				p->Burst = &p->burst[1];
+				t=__SetPwmTab(p,_TIM.pwch2);
 				for(n=0; t-- != _TIM.pwch2; n+= t->n);
 				_TIM.eint2 = (n)*(_PWM_RATE_HI/_uS/2);
 			} else {
 				_TIM.pockels[0]=p->burst[0].pockels;
-				_TIM_DMA *t = SetPwmTab00(p,_TIM.pwch1);
+				p->Burst = &p->burst[0];
+				t = __SetPwmTab(p,_TIM.pwch1);
 				memcpy(_TIM.pwch2,_TIM.pwch1,sizeof(_TIM_DMA)*_MAX_BURST/_PWM_RATE_HI);
 				memcpy(&pfm->burst[1],&pfm->burst[0],sizeof(burst));
 				for(n=0; t-- != _TIM.pwch1; n+= t->n);
 				_TIM.eint1=_TIM.eint2 = (n)*(_PWM_RATE_HI/_uS/2);
 			}
+			Eack(NULL);
+}
+/*******************************************************************************
+* Function Name : SetPwmTab
+* Description   : Selects the n'th pw buffer
+*								: Calls the waveform generator __SetPwmTab
+*								: Calculates energy integrating interval to ADC
+* Input         : *p, PFM object pointer
+* Return        :
+*******************************************************************************/
+void	SetPwmTab(PFM *p) {
+			_SetPwmTab(p, p->Simmer.active);
 }
 /*______________________________________________________________________________
 * Function Name : SetSimmerPw

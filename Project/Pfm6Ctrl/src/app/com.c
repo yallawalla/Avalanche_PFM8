@@ -1023,7 +1023,7 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 				case 'p':
 					n=numscan(++c,cc,',');
 					if(n==0) {
-						__print("\r>p(ulse)  T,U           ... %dus,%dV",pfm->Burst->Time,pfm->Burst->Pmax*_AD2HV(pfm->HVref)/_PWM_RATE_HI);
+						__print("\r>p(ulse)  T,U           ... %dus,%dV",pfm->Burst->Time,pfm->Burst->PW*_AD2HV(pfm->HVref)/_PWM_RATE_HI);
 						if(pfm->Burst->pockels.delay || pfm->Burst->pockels.width)
 							__print("\r\n>q(swch)  delay,width   ... %.1fus,%.1fus",(float)pfm->Burst->pockels.delay/10,(float)pfm->Burst->pockels.width/10);
 						break;
@@ -1032,12 +1032,8 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 					if(n>0)
 						pfm->Burst->Time=atoi(cc[0]);
 //__________________________________
-					if(n>1) { 
-						if(atof(cc[1]) >= 1.0)
-							pfm->Burst->Pmax=atof(cc[1])*_PWM_RATE_HI/(float)_AD2HV(pfm->HVref);
-						else
-							pfm->Burst->Pmax=_PWM_RATE_HI*atof(cc[1]);
-					}
+					if(n>1)
+						pfm->Burst->U=10*atof(cc[1]);
 //__________________________________
 					if(n==3)
 						pfm->Burst->Ereq = atoi(cc[2]);
@@ -1057,7 +1053,6 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 //______________________________________________________________________________________
 				case 'd':
 					n=numscan(++c,cc,',');
-
 					if(!n) {
 						__print("\r>d(elay)  T,PW          ... %dus,%.2f",pfm->Burst->Delay,(float)pfm->Burst->Pdelay/_PWM_RATE_HI);
 						break;
