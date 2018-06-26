@@ -176,7 +176,7 @@ static
 											simmerMode(_SIMM2);	
 										break;
 									}
-									_SET_MODE(pfm,_ENM_NOTIFY);
+//									_SET_MODE(pfm,_ENM_NOTIFY);
 									CanReply("wwwwX",0xC101,pfm->Simmer.active,40000,pfm->Burst->Length,_ID_SYS2ENRG);
 									break;
 								case _LASER:
@@ -238,6 +238,7 @@ static
 							case 0:
 								pfm->Burst->Time		= __max(50,__min(2000,pfm->Burst->Time +a));
 								break;
+							case 1:
 								pfm->Burst->U				= __max(0,__min(8000,pfm->Burst->U +10*a));
 								if(state==_ErSetup)
 									_SetPwmTab(pfm,PFM_STAT_SIMM1);
@@ -359,7 +360,7 @@ int				i,cnt=0,timeout=0;
 							case _F12:
 								state=_STANDBY;
 								simmerMode(_OFF);
-								_CLEAR_MODE(pfm,_ENM_NOTIFY);
+//								_CLEAR_MODE(pfm,_ENM_NOTIFY);
 								_CLEAR_MODE(pfm,_AUTO_TRIGGER);
 								_CLEAR_DBG(pfm,_DBG_PULSE_MSG);
 								_CLEAR_DBG(pfm,_DBG_ENM_MSG);

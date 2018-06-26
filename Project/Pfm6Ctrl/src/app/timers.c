@@ -643,19 +643,23 @@ int 		hv,j,k,ki=30,kp=0;
 /*******************************************************************************/
 void		Trigger(PFM *p) {
 //_______________________________________________________________________________
-				if(!_MODE(p,_PULSE_INPROC)) {
-#if			!defined (__DISC4__) && !defined (__DISC7__)
-					if(_MODE(p,_ENM_NOTIFY)) {
+				if(!_MODE(p,_PULSE_INPROC)) {															// if triggers overlap, error
+					if(_MODE(p,_ENM_NOTIFY)) {															// only when energymeter present (cfg.ini setup)
+						int tout=__time__ + 5;																// set timeout
 						CanTxMsg tx = {_ID_SYS_TRIGG,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
+						_YELLOW1(50);
 						while(CAN_TransmitStatus(__CAN__, 0) == CAN_TxStatus_Pending &&
 							CAN_TransmitStatus(__CAN__, 1) == CAN_TxStatus_Pending &&
 								CAN_TransmitStatus(__CAN__, 2) == CAN_TxStatus_Pending) {
-									_proc_loop();
+									_proc_loop();																		// wait for transmitter free
+									if(__time__ > tout) {														// if timeout exc.
+										_CLEAR_MODE(p,_ENM_NOTIFY);										// exclude energymeter
+										_YELLOW1(5000);
+										break;																				// and proceed...
+									}
 								}
-						_YELLOW1(50);
 						CAN_Transmit(__CAN__,&tx);
 					}
-#endif
 //_______________________________________________________________________________
 					_TIM.active=p->Simmer.active;														// find active channel
 					if(_MODE(pfm,_CHANNEL1_DISABLE)) {											// single channel 2 mode
