@@ -238,8 +238,11 @@ static
 							case 0:
 								pfm->Burst->Time		= __max(50,__min(2000,pfm->Burst->Time +a));
 								break;
-							case 1:
-								pfm->Burst->U				= __max(0,__min(800,pfm->Burst->U +a));
+								pfm->Burst->U				= __max(0,__min(8000,pfm->Burst->U +10*a));
+								if(state==_ErSetup)
+									_SetPwmTab(pfm,PFM_STAT_SIMM1);
+								if(state==_NdSetup)
+									_SetPwmTab(pfm,PFM_STAT_SIMM2);
 								break;
 							case 2:
 								pfm->Burst->N				= __max(1,__min(10,pfm->Burst->N +a));
