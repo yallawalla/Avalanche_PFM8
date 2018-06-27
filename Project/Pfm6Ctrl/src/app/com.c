@@ -629,7 +629,7 @@ TCHAR			buf[128];
 						int n=strscan(c,sc,' ');
 						int len=strlen(sc[0]);
 //______________________________________________________________________________________
-						if(!(strncmp("0:",sc[0],len) && strncmp("1:",sc[0],len))) {
+						if(!(strncmp("0:",sc[0],len) && strncmp("1:",sc[0],len) && strncmp("2:",sc[0],len))) {
 							if(f_chdrive(c)!=FR_OK ||
 								f_mount(pfm->fatfs,c,1)!=FR_OK ||
 									f_getcwd(buf,_MAX_LFN)!=FR_OK ||
@@ -1405,6 +1405,7 @@ int			u=0,umax=0,umin=0;
 //______________________________________________________________________________________
 				case '0':
 				case '1':
+				case '2':
 					return DecodeFs(c);
 //_______________________________________________________________________________________
 				default:

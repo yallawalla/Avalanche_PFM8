@@ -655,12 +655,10 @@ file cfg.ini
 -l
 -r
 -i
-u 700
-s 200,200,30
+u 500
+s 80,80,50
 -u s
 -E ffffff
--f
--B
 -P
 
 file tandem

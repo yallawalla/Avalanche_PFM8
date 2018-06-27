@@ -21,7 +21,7 @@ DSTATUS disk_initialize	(
             BYTE drv		/* Physical drive number (0) */
 						)
 {
-	if(drv < 2)	return(USBD_MICRO_SDIO_fops.Init(drv));
+	if(drv != *FS_USB - '0')	return(USBD_MICRO_SDIO_fops.Init(drv));
   
   if(HCD_IsDeviceConnected(&USB_OTG_Core))
   {  
@@ -41,7 +41,7 @@ DSTATUS disk_status (
 					BYTE drv		/* Physical drive number (0) */
 					)
 {
-	if(drv < 2)	return(USBD_MICRO_SDIO_fops.IsReady(drv));
+	if(drv != *FS_USB - '0')	return(USBD_MICRO_SDIO_fops.IsReady(drv));
 	return Stat;
 }
 
@@ -59,9 +59,10 @@ DRESULT disk_read (
                   )
 {
   BYTE status = USBH_MSC_OK;  
-  if(drv < 2)	
+  if(drv != *FS_USB - '0')
 		return (DRESULT)USBD_MICRO_SDIO_fops.Read(drv,buff,sector,count);
-  if (Stat & STA_NOINIT) return RES_NOTRDY;
+  if (Stat & STA_NOINIT) 
+		return RES_NOTRDY;
   if(HCD_IsDeviceConnected(&USB_OTG_Core))
   {  
     do
@@ -94,10 +95,12 @@ DRESULT disk_write (
                    )
 {
   BYTE status = USBH_MSC_OK;
-  if(drv < 2)	
+  if(drv != *FS_USB - '0')	
 		return (DRESULT)USBD_MICRO_SDIO_fops.Write(drv,(uint8_t *)buff,sector,count);
-  if (Stat & STA_NOINIT) return RES_NOTRDY;
-  if (Stat & STA_PROTECT) return RES_WRPRT;
+  if (Stat & STA_NOINIT) 
+		return RES_NOTRDY;
+  if (Stat & STA_PROTECT) 
+		return RES_WRPRT;
   
   
   if(HCD_IsDeviceConnected(&USB_OTG_Core))
@@ -144,7 +147,7 @@ DRESULT disk_ioctl (
     break;
     
   case GET_SECTOR_COUNT :	/* Get number of sectors on the disk (DWORD) */
-		if(drv < 2) {
+		if(drv != *FS_USB - '0') {
 			uint32_t i,j;
 			res = (DRESULT)USBD_STORAGE_fops->GetCapacity(drv, &i, &j);
 			*(DWORD*)buff = (DWORD) i;
@@ -154,7 +157,7 @@ DRESULT disk_ioctl (
     break;
     
   case GET_SECTOR_SIZE :	/* Get R/W sector size (WORD) */
-		if(drv < 2) {
+		if(drv != *FS_USB - '0')	{
 			uint32_t i,j;
 			res = (DRESULT)USBD_STORAGE_fops->GetCapacity(drv, &i, &j);
 			*(DWORD*)buff = (DWORD) j;
@@ -164,7 +167,7 @@ DRESULT disk_ioctl (
     break;
     
   case GET_BLOCK_SIZE :	/* Get erase block size in unit of sector (DWORD) */
-		if(drv < 2)
+		if(drv != *FS_USB - '0')	
 			*(DWORD*)buff = 1;
 		else
 			*(DWORD*)buff = 1;
@@ -174,7 +177,7 @@ DRESULT disk_ioctl (
   default:
     res = RES_PARERR;
   }
-	if(drv < 2)
+	if(drv != *FS_USB - '0')	
 		return res; 
 	if (Stat & STA_NOINIT) return RES_NOTRDY;
 		return res; 	

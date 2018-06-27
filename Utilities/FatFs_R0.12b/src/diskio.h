@@ -18,12 +18,14 @@ extern "C" {
 	#define	PAGE_COUNT			3
 	#define FS_CPU					"1:"
 	#define FS_USB					"0:"
+	#define FS_RAM					"2:"
 #else
 	#define FATFS_SECTOR		FLASH_Sector_6
 	#define	PAGE_SIZE				0x20000
 	#define	PAGE_COUNT			5
-	#define FS_CPU					"1:"
-	#define FS_USB					"2:"
+	#define FS_CPU					"0:"
+	#define FS_USB					"1:"
+	#define FS_RAM					"2:"
 #endif
 	
 #define	SECTOR_SIZE				512
