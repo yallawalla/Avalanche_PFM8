@@ -160,9 +160,7 @@ static
 									_CLEAR_MODE(pfm,_AUTO_TRIGGER);
 									if(pfm->burst[0].pockels.width || pfm->burst[1].pockels.width)
 										PFM_pockels(pfm);
-//									simmerMode(_SIMM1);	
 									_SetPwmTab(pfm,_SIMM1);
-//									simmerMode(_SIMM2);	
 									_SetPwmTab(pfm,_SIMM2);
 									switch(triggerMode) {
 										case _BOTH:
@@ -176,8 +174,8 @@ static
 											simmerMode(_SIMM2);	
 										break;
 									}
-//									_SET_MODE(pfm,_ENM_NOTIFY);
-									CanReply("wwwwX",0xC101,pfm->Simmer.active,40000,pfm->Burst->Length,_ID_SYS2ENRG);
+									if(pfm->Trigger.enotify)
+										CanReply("wwwwX",0xC101,pfm->Simmer.active,40000,pfm->Burst->Length,_ID_SYS2ENRG);
 									break;
 								case _LASER:
 									if(!_MODE(pfm,_AUTO_TRIGGER)) {
@@ -230,7 +228,7 @@ static
 						IncrementTrigger(a);
 					else if(state==_Pockels) 
 						IncrementPockels(a);
-					else
+					else {
 						switch(idx) {
 							case -1:
 								idx=0;
@@ -240,10 +238,6 @@ static
 								break;
 							case 1:
 								pfm->Burst->U				= __max(0,__min(8000,pfm->Burst->U +10*a));
-								if(state==_ErSetup)
-									_SetPwmTab(pfm,PFM_STAT_SIMM1);
-								if(state==_NdSetup)
-									_SetPwmTab(pfm,PFM_STAT_SIMM2);
 								break;
 							case 2:
 								pfm->Burst->N				= __max(1,__min(10,pfm->Burst->N +a));
@@ -257,6 +251,11 @@ static
 								break;
 								
 						}
+						if(state==_ErSetup)
+							_SetPwmTab(pfm,PFM_STAT_SIMM1);
+						if(state==_NdSetup)
+							_SetPwmTab(pfm,PFM_STAT_SIMM2);
+					}
 }
 //______________________________________________________________________________________
 int				Tandem() {
@@ -288,11 +287,24 @@ int				i,cnt=0,timeout=0;
 									cnt=pfm->Trigger.counter;
 									timeout=__time__ + 5;
 								}
-								if(state==_LASER && timeout && __time__ > timeout &&
-									(triggerMode == _BOTH || triggerMode == _ALTER)) {
-										CanReply("wwwwX",0xC101,(cnt % 2) + 1,40000,pfm->Burst->Length,_ID_SYS2ENRG);
-										timeout = 0;
-								}									
+								if(state==_LASER && timeout && __time__ > timeout && pfm->Trigger.enotify) {
+									timeout = 0;
+									switch(triggerMode) {
+										case _Er:
+											CanReply("wwwwX",0xC101,1,40000,pfm->Burst->Length,_ID_SYS2ENRG);
+										break;
+										case _Nd:
+											CanReply("wwwwX",0xC101,2,40000,pfm->Burst->Length,_ID_SYS2ENRG);
+										break;
+										case _BOTH:
+										case _ALTER:
+											if(pfm->Trigger.enotify == 3)
+												CanReply("wwwwX",0xC101,(cnt % 2) + 1,40000,pfm->Burst->Length,_ID_SYS2ENRG);
+											else
+												CanReply("wwwwX",0xC101,pfm->Trigger.enotify,40000,pfm->Burst->Length,_ID_SYS2ENRG);
+										break;
+										}
+								}								
 								_proc_loop();
 								continue;
 							case _CtrlZ:
@@ -304,7 +316,7 @@ int				i,cnt=0,timeout=0;
 								if(state != _ErSetup)
 									__print("\r\n");
 								state=_ErSetup;
-								simmerMode(_SIMM1);
+								simmerMode(_OFF);
 								Increment(0);
 								break;								
 							case _f2: 
@@ -312,7 +324,7 @@ int				i,cnt=0,timeout=0;
 								if(state != _NdSetup)
 									__print("\r\n");
 								state=_NdSetup;
-								simmerMode(_SIMM2);
+								simmerMode(_OFF);
 								Increment(0);
 								break;								
 							case _f3: 
@@ -328,7 +340,7 @@ int				i,cnt=0,timeout=0;
 								if(state != _Pockels)
 									__print("\r\n");
 								state=_Pockels;
-								simmerMode(_SIMM1);
+								simmerMode(_OFF);
 								Increment(0);
 								break;								
 							case _Up:
@@ -360,7 +372,6 @@ int				i,cnt=0,timeout=0;
 							case _F12:
 								state=_STANDBY;
 								simmerMode(_OFF);
-//								_CLEAR_MODE(pfm,_ENM_NOTIFY);
 								_CLEAR_MODE(pfm,_AUTO_TRIGGER);
 								_CLEAR_DBG(pfm,_DBG_PULSE_MSG);
 								_CLEAR_DBG(pfm,_DBG_ENM_MSG);

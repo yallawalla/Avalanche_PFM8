@@ -146,7 +146,6 @@ typedef					enum
 								_ALTERNATE_TRIGGER,				//17
 								_JOINT_CHANNELS,					//18
 								_F2V,											//19
-								_ENM_NOTIFY,							//20
 								__TEST__									=29,
 								_CAN_2_COM								//30
 } 							mode;
@@ -432,6 +431,7 @@ unsigned int		timeout;
 //________________________________________________________________________
 typedef 				struct {
 int							erpt,									// send energy on every ....
+								enotify,							// notify energymeter mode ... 0=off, 1=ch1, 2=ch2, 3=alternate(counter % 2)
 								counter,							// counter for multiple  triggers sequence	
 								count,								// number of multiple  triggers
 								time,									// next trigger

@@ -184,8 +184,10 @@ int		Uo=p->Burst->PW = p->Burst->U *_PWM_RATE_HI/_AD2HV(10*p->HVref);
 						} else {
 							t->T=Uo+dUo+p->Burst->Pdelay;					
 						}
-						
-						(n > 255) ? (t->n=255) : (t->n=p->Burst->pockels.trigger=n);
+						if(n > 255)
+							(t->n=255);
+						else
+							(t->n=p->Burst->pockels.trigger=n);
 					}
 //-------PAUSE----------------------			
 					for(n=2*((tpause*_uS)/_PWM_RATE_HI)-1;n>0;n -= 256,++t)	{

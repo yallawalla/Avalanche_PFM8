@@ -487,9 +487,10 @@ int 		hv,j,k,ki=30,kp=0;
 					_TIM.Hvref=pfm->HVref;
 				
 				if(_TIM.p1) {																							//----- channel 1 -----------
+					burst *b=&pfm->burst[0];
 					x=_TIM.p1->T;
 #ifndef __PFM8__
-				if(_TIM.p1->T > pfm->Burst->Pdelay && 										//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
+				if(_TIM.p1->T > 2*b->Pdelay && 														//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
 					(_TIM.p1->n == _TIM.pockels[0].trigger || 
 						_TIM.p1->n == 255)) {
 					TIM_SetAutoreload(TIM4,_TIM.pockels[0].delay + _TIM.pockels[0].width);
@@ -504,7 +505,7 @@ int 		hv,j,k,ki=30,kp=0;
 					if(_MODE(pfm,_U_LOOP)) {
 						x = (x * _TIM.Hvref + hv/2)/hv;
 
-//					if(m && z1 > pfm->Burst->Pdelay*2) {
+//					if(m && z1 > b->Pdelay*2) {
 //						for(i=4;i<8;++i)
 //							e1+=(short)(ADC1_buf[k-i].U) * (short)(ADC1_buf[k-i].I-_TIM.I1off);
 //					}
@@ -513,7 +514,7 @@ int 		hv,j,k,ki=30,kp=0;
 //						e1=0;
 //					}
 
-//					if(m && z2 > pfm->Burst->Pdelay*2) {
+//					if(m && z2 > b->Pdelay*2) {
 //						for(i=4;i<8;++i)
 //							e2+=(short)(ADC2_buf[k-i].U) * (short)(ADC2_buf[k-i].I-_TIM.I2off);
 //					} else if (!_E2ref) {
@@ -522,16 +523,16 @@ int 		hv,j,k,ki=30,kp=0;
 //					}
 //----- mode 10, current stab. ---------------------------------------------------									
 //
-						if(pfm->Burst->Time > 200 && _MODE(pfm,_P_LOOP)) {	
+						if(b->Time > 200 && _MODE(pfm,_P_LOOP)) {	
 //----- current loop for ch1, if cref1 present !----------------------------------									
-							if(_TIM.cref1 && _TIM.p1->T > pfm->Burst->Pdelay*2) {
+							if(_TIM.cref1 && _TIM.p1->T > b->Pdelay*2) {
 								int dx=(_TIM.cref1 - ADC1_buf[k-5].U * ADC1_buf[k-5].I)/4096;
 								_TIM.ci1 += dx*ki;
 								x += _TIM.ci1/4096 + dx*kp/4096;
 							}
 //----- calc. cref1 after 200 us for ch1 -----------------------------------------									
-							if(k > 200 + pfm->Burst->Delay) {
-								if(!_TIM.cref1 && _TIM.p1->T > 2*pfm->Burst->Pdelay) {
+							if(k > 200 + b->Delay) {
+								if(!_TIM.cref1 && _TIM.p1->T > 2*b->Pdelay) {
 									int n,jU=0,jI=0;
 									for(n=5;n<13;++n)	{
 										jU+=ADC1_buf[k-n].U;
@@ -545,7 +546,7 @@ int 		hv,j,k,ki=30,kp=0;
 					}					
 //----- vpis v OC registre ---------------------------------------------------------------
 					if(_TIM.p1->n) {																				// set simmer pw on last sample !
-						x = __max(pfm->Burst->Pdelay,__min(_MAX_PWM_RATE, x));			
+						x = __max(b->Pdelay,__min(_MAX_PWM_RATE, x));			
 						if(_TIM.m1++ == _TIM.p1->n/2) {												//----- pwch tabs increment ---
 							_TIM.m1=0;
 							++_TIM.p1;
@@ -556,9 +557,10 @@ int 		hv,j,k,ki=30,kp=0;
 					}
 				}
 				if(_TIM.p2) {																							//----- channel 2 -----------
+					burst *b=&pfm->burst[1];
 					y=_TIM.p2->T;
 #ifndef __PFM8__
-				if(_TIM.p2->T > pfm->Burst->Pdelay && 										//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
+				if(_TIM.p2->T > 2*b->Pdelay &&					 									//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
 					(_TIM.p2->n == _TIM.pockels[1].trigger || 
 						_TIM.p2->n == 255)) {
 					TIM_SetAutoreload(TIM4,_TIM.pockels[1].delay + _TIM.pockels[1].width);
@@ -573,7 +575,7 @@ int 		hv,j,k,ki=30,kp=0;
 					if(_MODE(pfm,_U_LOOP)) {
 						y = (y * _TIM.Hvref + hv/2)/hv;
 				
-//					if(m && z1 > pfm->Burst->Pdelay*2) {
+//					if(m && z1 > b->Pdelay*2) {
 //						for(i=4;i<8;++i)
 //							e1+=(short)(ADC1_buf[k-i].U) * (short)(ADC1_buf[k-i].I-_TIM.I1off);
 //					}
@@ -582,7 +584,7 @@ int 		hv,j,k,ki=30,kp=0;
 //						e1=0;
 //					}
 
-//					if(m && z2 > pfm->Burst->Pdelay*2) {
+//					if(m && z2 > b->Pdelay*2) {
 //						for(i=4;i<8;++i)
 //							e2+=(short)(ADC2_buf[k-i].U) * (short)(ADC2_buf[k-i].I-_TIM.I2off);
 //					} else if (!_E2ref) {
@@ -591,16 +593,16 @@ int 		hv,j,k,ki=30,kp=0;
 //					}
 //----- mode 10, current stab. ---------------------------------------------------									
 //
-						if(pfm->Burst->Time>200 && _MODE(pfm,_P_LOOP)) {	
+						if(b->Time>200 && _MODE(pfm,_P_LOOP)) {	
 //----- current loop for ch2, if cref2 present !----------------------------------									
-							if(_TIM.cref2 && _TIM.p2->T > pfm->Burst->Pdelay*2) {
+							if(_TIM.cref2 && _TIM.p2->T > b->Pdelay*2) {
 								int dx=(_TIM.cref2 - ADC2_buf[k-5].U * ADC2_buf[k-5].I)/4096;
 								_TIM.ci2 += dx*ki;
 								y += _TIM.ci2/4096 + dx*kp/4096;
 							}
 //----- calc. cref2 after 200 us for ch2 -----------------------------------------									
-							if(k > 200 + pfm->Burst->Delay) {
-								if(!_TIM.cref2 && _TIM.p2->T > 2*pfm->Burst->Pdelay) {
+							if(k > 200 + b->Delay) {
+								if(!_TIM.cref2 && _TIM.p2->T > 2*b->Pdelay) {
 									int n,jU=0,jI=0;
 									for(n=5;n<13;++n)	{
 										jU+=ADC2_buf[k-n].U;
@@ -614,7 +616,7 @@ int 		hv,j,k,ki=30,kp=0;
 					}					
 //----- vpis v OC registre ---------------------------------------------------------------
 					if(_TIM.p2->n)	{																				// set simmer pw on last sample !
-						y = __max(pfm->Burst->Pdelay,__min(_MAX_PWM_RATE, y));
+						y = __max(b->Pdelay,__min(_MAX_PWM_RATE, y));
 						
 						if(_TIM.m2++ == _TIM.p2->n/2) {												//----- pwch tabs increment ---	
 							_TIM.m2=0;
@@ -642,9 +644,8 @@ int 		hv,j,k,ki=30,kp=0;
 	*/
 /*******************************************************************************/
 void		Trigger(PFM *p) {
-//_______________________________________________________________________________
 				if(!_MODE(p,_PULSE_INPROC)) {															// if triggers overlap, error
-					if(_MODE(p,_ENM_NOTIFY)) {															// only when energymeter present (cfg.ini setup)
+					if(p->Trigger.enotify) {																// only when energymeter present (cfg.ini setup)
 						int tout=__time__ + 5;																// set timeout
 						CanTxMsg tx = {_ID_SYS_TRIGG,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 						_YELLOW1(50);
@@ -653,7 +654,7 @@ void		Trigger(PFM *p) {
 								CAN_TransmitStatus(__CAN__, 2) == CAN_TxStatus_Pending) {
 									_proc_loop();																		// wait for transmitter free
 									if(__time__ > tout) {														// if timeout exc.
-										_CLEAR_MODE(p,_ENM_NOTIFY);										// exclude energymeter
+										p->Trigger.enotify=0;													// exclude energymeter
 										_YELLOW1(5000);
 										break;																				// and proceed...
 									}

@@ -73,6 +73,10 @@ int			DecodeMinus(char *c) {
 				case 'i':
 					__charger6=NULL;
 					break;
+//__________________________________________________ em notification off _________
+				case 'n':
+					pfm->Trigger.enotify = 0;
+				break;
 //__________________________________________________can loop/net_____________
 				case 'c':
 					n=strscan(c,cc,' ');
@@ -298,6 +302,11 @@ int			DecodePlus(char *c) {
 					n=numscan(++c,cc,',');
 					while(n--)
 						_SET_MODE(pfm,atoi(cc[n]));
+					break;
+//__________________________________________________ em notification mode ___________
+				case 'n':
+					for(c=strchr(c,' '); c && *c;)
+						pfm->Trigger.enotify = strtoul(++c,&c,16);
 					break;
 //__________________________________________________ watchdog setup _________
 				case 'w':

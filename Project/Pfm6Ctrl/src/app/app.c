@@ -86,7 +86,7 @@ void 			App_Init(void) {
 					pfm->Burst->pockels.trigger=0;
 					memcpy(&pfm->burst[1],&pfm->burst[0],sizeof(burst));
 	
-					pfm->Trigger.count=0;
+					pfm->Trigger.count=pfm->Trigger.enotify=0;
 						
 					pfm->Simmer.mode=_XLAP_QUAD;
 					pfm->Simmer.max=_I2AD(1000);
