@@ -25,9 +25,9 @@
 // TIM1_polarity TIM_OCPolarity_High);
 
 #if		defined		(__PFM6__)
-	#define 				SW_version	215		
+	#define 				SW_version	400		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	315		
+	#define 				SW_version	600		
 #else
 *** error, define HW platform
 #endif

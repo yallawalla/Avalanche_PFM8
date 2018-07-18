@@ -474,7 +474,21 @@ int 		hv,j,k,ki=30,kp=0;
 #endif					
 					return;
 				}
-
+//----- Qswitch pasus --------------------------------------------------------------------
+				if(_TIM.p1 && _TIM.p->width &&				
+					_TIM.p1->T > 2*pfm->burst[0].Pdelay &&	(_TIM.p1->n == _TIM.p->trigger || _TIM.p1->n == 255)) {
+					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width + 100);
+					TIM_SetCompare1(TIM4,_TIM.p->delay + 100);
+					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
+					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
+				} else if(_TIM.p2 && _TIM.p->width &&
+					_TIM.p2->T > 2*pfm->burst[1].Pdelay &&	(_TIM.p2->n == _TIM.p->trigger || _TIM.p2->n == 255)) {
+					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width + 100);
+					TIM_SetCompare1(TIM4,_TIM.p->delay + 100);
+					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
+					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
+				} else
+					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);				// single pulse, timer se disabla po izteku											
 //----- HV voltage averaging, calc. active ADC DMA index----------------------------------
 
 				for(hv=j=0;j<_AVG3;++j)																		// 
@@ -487,25 +501,12 @@ int 		hv,j,k,ki=30,kp=0;
 					_TIM.Hvref=pfm->HVref;
 				
 				if(_TIM.p1) {																							//----- channel 1 -----------
-					burst *b=&pfm->burst[0];
 					x=_TIM.p1->T;
-#ifndef __PFM8__
-				if(_TIM.p1->T > 2*b->Pdelay && 	_TIM.p->width &&					//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
-					(_TIM.p1->n == _TIM.p->trigger || 
-						_TIM.p1->n == 255)) {
-					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width);
-					TIM_SetCompare1(TIM4,_TIM.p->delay +1);
-
-					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
-					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
-				} else
-					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);				// single pulse, timer se disabla po izteku		
-#endif				
 //----- mode 9, forward voltage stab. ---------------------------------------------------	
 					if(_MODE(pfm,_U_LOOP)) {
 						x = (x * _TIM.Hvref + hv/2)/hv;
 
-//					if(m && z1 > b->Pdelay*2) {
+//					if(m && z1 > pfm->burst[0].Pdelay*2) {
 //						for(i=4;i<8;++i)
 //							e1+=(short)(ADC1_buf[k-i].U) * (short)(ADC1_buf[k-i].I-_TIM.I1off);
 //					}
@@ -514,7 +515,7 @@ int 		hv,j,k,ki=30,kp=0;
 //						e1=0;
 //					}
 
-//					if(m && z2 > b->Pdelay*2) {
+//					if(m && z2 > pfm->burst[0].Pdelay*2) {
 //						for(i=4;i<8;++i)
 //							e2+=(short)(ADC2_buf[k-i].U) * (short)(ADC2_buf[k-i].I-_TIM.I2off);
 //					} else if (!_E2ref) {
@@ -523,16 +524,16 @@ int 		hv,j,k,ki=30,kp=0;
 //					}
 //----- mode 10, current stab. ---------------------------------------------------									
 //
-						if(b->Time > 200 && _MODE(pfm,_P_LOOP)) {	
+						if(pfm->burst[0].Time > 200 && _MODE(pfm,_P_LOOP)) {	
 //----- current loop for ch1, if cref1 present !----------------------------------									
-							if(_TIM.cref1 && _TIM.p1->T > b->Pdelay*2) {
+							if(_TIM.cref1 && _TIM.p1->T > pfm->burst[0].Pdelay*2) {
 								int dx=(_TIM.cref1 - ADC1_buf[k-5].U * ADC1_buf[k-5].I)/4096;
 								_TIM.ci1 += dx*ki;
 								x += _TIM.ci1/4096 + dx*kp/4096;
 							}
 //----- calc. cref1 after 200 us for ch1 -----------------------------------------									
-							if(k > 200 + b->Delay) {
-								if(!_TIM.cref1 && _TIM.p1->T > 2*b->Pdelay) {
+							if(k > 200 + pfm->burst[0].Delay) {
+								if(!_TIM.cref1 && _TIM.p1->T > 2*pfm->burst[0].Pdelay) {
 									int n,jU=0,jI=0;
 									for(n=5;n<13;++n)	{
 										jU+=ADC1_buf[k-n].U;
@@ -546,7 +547,7 @@ int 		hv,j,k,ki=30,kp=0;
 					}					
 //----- vpis v OC registre ---------------------------------------------------------------
 					if(_TIM.p1->n) {																				// set simmer pw on last sample !
-						x = __max(b->Pdelay,__min(_MAX_PWM_RATE, x));			
+						x = __max(pfm->burst[0].Pdelay,__min(_MAX_PWM_RATE, x));			
 						if(_TIM.m1++ == _TIM.p1->n/2) {												//----- pwch tabs increment ---
 							_TIM.m1=0;
 							++_TIM.p1;
@@ -557,25 +558,11 @@ int 		hv,j,k,ki=30,kp=0;
 					}
 				}
 				if(_TIM.p2) {																							//----- channel 2 -----------
-					burst *b=&pfm->burst[1];
 					y=_TIM.p2->T;
-#ifndef __PFM8__
-				if(_TIM.p2->T > 2*b->Pdelay &&	_TIM.p->width &&					//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
-					(_TIM.p2->n == _TIM.p->trigger || 
-						_TIM.p2->n == 255)) {
-					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width);
-					TIM_SetCompare1(TIM4,_TIM.p->delay +1);
-
-					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
-					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
-				} else
-					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);				// single pulse, timer se disabla po izteku		
-#endif				
 //----- mode 9, forward voltage stab. ---------------------------------------------------	
 					if(_MODE(pfm,_U_LOOP)) {
-						y = (y * _TIM.Hvref + hv/2)/hv;
-				
-//					if(m && z1 > b->Pdelay*2) {
+						y = (y * _TIM.Hvref + hv/2)/hv;			
+//					if(m && z1 > pfm->burst[1].Pdelay*2) {
 //						for(i=4;i<8;++i)
 //							e1+=(short)(ADC1_buf[k-i].U) * (short)(ADC1_buf[k-i].I-_TIM.I1off);
 //					}
@@ -584,7 +571,7 @@ int 		hv,j,k,ki=30,kp=0;
 //						e1=0;
 //					}
 
-//					if(m && z2 > b->Pdelay*2) {
+//					if(m && z2 > pfm->burst[1].delay*2) {
 //						for(i=4;i<8;++i)
 //							e2+=(short)(ADC2_buf[k-i].U) * (short)(ADC2_buf[k-i].I-_TIM.I2off);
 //					} else if (!_E2ref) {
@@ -593,16 +580,16 @@ int 		hv,j,k,ki=30,kp=0;
 //					}
 //----- mode 10, current stab. ---------------------------------------------------									
 //
-						if(b->Time>200 && _MODE(pfm,_P_LOOP)) {	
+						if(pfm->burst[1].Time>200 && _MODE(pfm,_P_LOOP)) {	
 //----- current loop for ch2, if cref2 present !----------------------------------									
-							if(_TIM.cref2 && _TIM.p2->T > b->Pdelay*2) {
+							if(_TIM.cref2 && _TIM.p2->T > pfm->burst[1].Pdelay*2) {
 								int dx=(_TIM.cref2 - ADC2_buf[k-5].U * ADC2_buf[k-5].I)/4096;
 								_TIM.ci2 += dx*ki;
 								y += _TIM.ci2/4096 + dx*kp/4096;
 							}
 //----- calc. cref2 after 200 us for ch2 -----------------------------------------									
-							if(k > 200 + b->Delay) {
-								if(!_TIM.cref2 && _TIM.p2->T > 2*b->Pdelay) {
+							if(k > 200 + pfm->burst[1].Delay) {
+								if(!_TIM.cref2 && _TIM.p2->T > 2*pfm->burst[1].Pdelay) {
 									int n,jU=0,jI=0;
 									for(n=5;n<13;++n)	{
 										jU+=ADC2_buf[k-n].U;
@@ -616,7 +603,7 @@ int 		hv,j,k,ki=30,kp=0;
 					}					
 //----- vpis v OC registre ---------------------------------------------------------------
 					if(_TIM.p2->n)	{																				// set simmer pw on last sample !
-						y = __max(b->Pdelay,__min(_MAX_PWM_RATE, y));
+						y = __max(pfm->burst[1].Pdelay,__min(_MAX_PWM_RATE, y));
 						
 						if(_TIM.m2++ == _TIM.p2->n/2) {												//----- pwch tabs increment ---	
 							_TIM.m2=0;
@@ -627,12 +614,13 @@ int 		hv,j,k,ki=30,kp=0;
 						_TIM.p2=NULL;
 					}
 				}
-
+//----- TEST mode processing -------------------------------------------------------------
 				if(_MODE(pfm,__TEST__)) {																	//----- mode  29, simulacija klasicnega odziva, =C cap (mF), =P current(A)
 					_SET_MODE(pfm,_U_LOOP);																	// obveze U stab. ker modificiramo HV referenco
 					if(k>5)																									// scale fakt. za C v uF pri 880V/1100A full scale, 100kHz sample rate pride ~80... ni placa za izpeljavo		
 						_TIM.Hvref -= (ADC1_buf[k-5].I+ADC2_buf[k-5].I)/80*1000/_TIM.Caps;	
 				}			
+//----- Check min-max leverls for PW -----------------------------------------------------
 				if(TIM1->CCR1==_MAX_PWM_RATE || TIM1->CCR3==_MAX_PWM_RATE)// duty cycle 100% = PSRDYN error
  					_SET_ERROR(pfm,PFM_ERR_PSRDYN);
 }
