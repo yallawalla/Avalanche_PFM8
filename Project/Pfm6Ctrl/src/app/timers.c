@@ -490,11 +490,11 @@ int 		hv,j,k,ki=30,kp=0;
 					burst *b=&pfm->burst[0];
 					x=_TIM.p1->T;
 #ifndef __PFM8__
-				if(_TIM.p1->T > 2*b->Pdelay && 														//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
-					(_TIM.p1->n == _TIM.pockels[0].trigger || 
+				if(_TIM.p1->T > 2*b->Pdelay && 	_TIM.p->width &&					//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
+					(_TIM.p1->n == _TIM.p->trigger || 
 						_TIM.p1->n == 255)) {
-					TIM_SetAutoreload(TIM4,_TIM.pockels[0].delay + _TIM.pockels[0].width);
-					TIM_SetCompare1(TIM4,_TIM.pockels[0].delay +1);
+					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width);
+					TIM_SetCompare1(TIM4,_TIM.p->delay +1);
 
 					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
 					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
@@ -560,11 +560,11 @@ int 		hv,j,k,ki=30,kp=0;
 					burst *b=&pfm->burst[1];
 					y=_TIM.p2->T;
 #ifndef __PFM8__
-				if(_TIM.p2->T > 2*b->Pdelay &&					 									//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
-					(_TIM.p2->n == _TIM.pockels[1].trigger || 
+				if(_TIM.p2->T > 2*b->Pdelay &&	_TIM.p->width &&					//----- Qswitch pasus, dela samo na ch 1 -------------------------------------------------
+					(_TIM.p2->n == _TIM.p->trigger || 
 						_TIM.p2->n == 255)) {
-					TIM_SetAutoreload(TIM4,_TIM.pockels[1].delay + _TIM.pockels[1].width);
-					TIM_SetCompare1(TIM4,_TIM.pockels[1].delay +1);
+					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width);
+					TIM_SetCompare1(TIM4,_TIM.p->delay +1);
 
 					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
 					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
@@ -667,46 +667,56 @@ void		Trigger(PFM *p) {
 						if(_MODE(pfm,_ALTERNATE_TRIGGER)) {										// altenate trigger
 							if(p->Trigger.counter % 2) {
 								_TIM.eint=_TIM.eint2;
+								_TIM.p=&pfm->burst[1].pockels;
 								if(_TIM.active & PFM_STAT_SIMM2)
 									_TIM.p2 = _TIM.pwch2;
 							} else {
 								_TIM.eint=_TIM.eint1;
+								_TIM.p=&pfm->burst[0].pockels;
 								if(_TIM.active & PFM_STAT_SIMM1)
 									_TIM.p2 = _TIM.pwch1;
 							} 
 						} else if(_TIM.active & PFM_STAT_SIMM1)	{							// simult. trigger
 							_TIM.p2 = _TIM.pwch1;
 							_TIM.eint=_TIM.eint1;
+							_TIM.p=&pfm->burst[0].pockels;
 						} else if(_TIM.active & PFM_STAT_SIMM2) {
 							_TIM.p2 = _TIM.pwch2;
 							_TIM.eint=_TIM.eint2;
+							_TIM.p=&pfm->burst[1].pockels;
 						}
 					} else if(_MODE(pfm,_CHANNEL2_DISABLE)) {								// single channel 1 mode
 							if(_MODE(pfm,_ALTERNATE_TRIGGER)) {									// altenate trigger
 								if(p->Trigger.counter % 2) {
 									_TIM.eint=_TIM.eint2;
+									_TIM.p=&pfm->burst[1].pockels;
 									if(_TIM.active & PFM_STAT_SIMM2)
 										_TIM.p1 = _TIM.pwch2;
 								} else {
 									_TIM.eint=_TIM.eint1;
+									_TIM.p=&pfm->burst[0].pockels;
 									if(_TIM.active & PFM_STAT_SIMM1)
 										_TIM.p1 = _TIM.pwch1;
 								} 
 						} else if(_TIM.active & PFM_STAT_SIMM1) {							// simult. trigger
 							_TIM.p1 = _TIM.pwch1;
 							_TIM.eint=_TIM.eint1;
+							_TIM.p=&pfm->burst[0].pockels;
 						}	else if(_TIM.active & PFM_STAT_SIMM2) {
 							_TIM.p1 = _TIM.pwch2;
 							_TIM.eint=_TIM.eint2;
+							_TIM.p=&pfm->burst[1].pockels;
 						}
 					} else {																								// dual channel mode
 						if(_MODE(pfm,_ALTERNATE_TRIGGER)) {										// altenate trigger
 							if(p->Trigger.counter % 2) {
 								_TIM.eint=_TIM.eint2;
+								_TIM.p=&pfm->burst[1].pockels;
 								if(_TIM.active & PFM_STAT_SIMM2)
 									_TIM.p2 = _TIM.pwch2;
 							} else {
 								_TIM.eint=_TIM.eint1;
+								_TIM.p=&pfm->burst[0].pockels;
 								if(_TIM.active & PFM_STAT_SIMM1)
 									_TIM.p1 = _TIM.pwch1;
 							}
@@ -718,10 +728,14 @@ void		Trigger(PFM *p) {
 							}
 							
 						} else {																							// simult. trigger
-							if(_TIM.active & PFM_STAT_SIMM1)
-								_TIM.p1 = _TIM.pwch1;
-							if(_TIM.active & PFM_STAT_SIMM2)
+							if(_TIM.active & PFM_STAT_SIMM2) {
 								_TIM.p2 = _TIM.pwch2;
+								_TIM.p=&pfm->burst[1].pockels;
+							}
+							if(_TIM.active & PFM_STAT_SIMM1) {
+								_TIM.p1 = _TIM.pwch1;
+								_TIM.p=&pfm->burst[0].pockels;
+							}
 							_TIM.eint=__max(_TIM.eint1,_TIM.eint2);
 						}
 					}					

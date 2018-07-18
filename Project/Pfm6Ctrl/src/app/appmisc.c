@@ -221,20 +221,17 @@ void	_SetPwmTab(PFM *p, int ch) {
 				_wait(2,_proc_loop);
 			
 			if(ch == PFM_STAT_SIMM1) {				
-				_TIM.pockels[0]=p->burst[0].pockels;
 				p->Burst = &p->burst[0];
 				t=__SetPwmTab(p,_TIM.pwch1);
 				for(n=0; t-- != _TIM.pwch1; n+= t->n);
 				_TIM.eint1 = (n)*(_PWM_RATE_HI/_uS/2);
 			}
 			else if(ch == PFM_STAT_SIMM2) {
-				_TIM.pockels[1]=p->burst[1].pockels;
 				p->Burst = &p->burst[1];
 				t=__SetPwmTab(p,_TIM.pwch2);
 				for(n=0; t-- != _TIM.pwch2; n+= t->n);
 				_TIM.eint2 = (n)*(_PWM_RATE_HI/_uS/2);
 			} else {
-				_TIM.pockels[0]=p->burst[0].pockels;
 				p->Burst = &p->burst[0];
 				t = __SetPwmTab(p,_TIM.pwch1);
 				memcpy(_TIM.pwch2,_TIM.pwch1,sizeof(_TIM_DMA)*_MAX_BURST/_PWM_RATE_HI);

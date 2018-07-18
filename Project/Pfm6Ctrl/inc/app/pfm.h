@@ -261,8 +261,7 @@ extern  struct _TIM {																			// realtime structure, used with timer s
 	} pwch1[_MAX_BURST/_PWM_RATE_HI],
 		pwch2[_MAX_BURST/_PWM_RATE_HI],												// output tables
 		*p1,*p2;																							// pointers to output tables
-	_POCKELS	
-		pockels[2];
+	_POCKELS *p;
 	int		
 		U1off,U2off,																					// flash voltage, idle status
 		I1off,I2off,																					// flash current, idle status
