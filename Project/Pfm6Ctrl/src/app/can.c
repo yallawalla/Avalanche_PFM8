@@ -21,15 +21,15 @@ _io				*__can;
 *******************************************************************************/
 struct { int id, mask; } canFilter[28] =
 {
-	{_ID_SYS2PFM,0x7ff},
-	{_ID_SYS2EC,0x7ff},
-	{_ID_SYS2PFMcom,0x7ff},
-	{_ID_PFMcom2SYS,0x7ff},
-	{_ID_SYS_TRIGG,0x7ff},
-	{_PFM_POCKELS,0x7ff},
-	{_ID_SYS2ENRG,0x7ff},
-	{_ID_ENRG2SYS,0x7ff},
-	{_PFM_TAND_CH0,0x7f0}
+					{_ID_SYS2PFM,0x7ff},
+					{_ID_SYS2EC,0x7ff},
+					{_ID_SYS2PFMcom,0x7ff},
+					{_ID_PFMcom2SYS,0x7ff},
+					{_ID_SYS_TRIGG,0x7ff},
+					{_PFM_POCKELS,0x7ff},
+					{_ID_SYS2ENRG,0x7ff},
+					{_ID_ENRG2SYS,0x7ff},
+					{_PFM_TAND_CH0,0x7f0}
 };
 /*******************************************************************************
 * Function Name  : CAN_Initialize
@@ -38,35 +38,35 @@ struct { int id, mask; } canFilter[28] =
 * Output         : None
 * Return         : PASSED if the reception is well done, FAILED in other case
 *******************************************************************************/
-void	canFilterConfig(int id, int mask) {
-	int i;
-	CAN_FilterInitTypeDef		CAN_FilterInitStructure;
-	for(i=0; canFilter[i].id && canFilter[i].mask; ++i)
-		if(canFilter[i].id==id && canFilter[i].mask==mask)
-			return;
-	canFilter[i].id= id;
-	canFilter[i].mask= mask;
+void			canFilterConfig(int id, int mask) {
+					int i;
+					CAN_FilterInitTypeDef		CAN_FilterInitStructure;
+					for(i=0; canFilter[i].id && canFilter[i].mask; ++i)
+						if(canFilter[i].id==id && canFilter[i].mask==mask)
+							return;
+					canFilter[i].id= id;
+					canFilter[i].mask= mask;
 
-	CAN_FilterInitStructure.CAN_FilterMode=CAN_FilterMode_IdMask;
-	CAN_FilterInitStructure.CAN_FilterScale=CAN_FilterScale_16bit;
-	CAN_FilterInitStructure.CAN_FilterActivation=ENABLE;
-	CAN_FilterInitStructure.CAN_FilterFIFOAssignment=CAN_FIFO0;
+					CAN_FilterInitStructure.CAN_FilterMode=CAN_FilterMode_IdMask;
+					CAN_FilterInitStructure.CAN_FilterScale=CAN_FilterScale_16bit;
+					CAN_FilterInitStructure.CAN_FilterActivation=ENABLE;
+					CAN_FilterInitStructure.CAN_FilterFIFOAssignment=CAN_FIFO0;
 
-	for(i=0; canFilter[i].id && canFilter[i].mask; i+=2) {
-		CAN_FilterInitStructure.CAN_FilterIdLow =  canFilter[i].id<<5;
-		CAN_FilterInitStructure.CAN_FilterMaskIdLow = canFilter[i].mask<<5;
-		
-		CAN_FilterInitStructure.CAN_FilterIdHigh= canFilter[i].id<<5;
-		CAN_FilterInitStructure.CAN_FilterMaskIdHigh= canFilter[i].mask<<5;
-		
-		if(canFilter[i+1].id && canFilter[i+1].mask) {
-			CAN_FilterInitStructure.CAN_FilterIdHigh= canFilter[i+1].id<<5;
-			CAN_FilterInitStructure.CAN_FilterMaskIdHigh= canFilter[i+1].mask<<5;
-		}
-		
-		CAN_FilterInitStructure.CAN_FilterNumber=__FILT_BASE__ + i/2;
-		CAN_FilterInit(&CAN_FilterInitStructure);
-	}
+					for(i=0; canFilter[i].id && canFilter[i].mask; i+=2) {
+						CAN_FilterInitStructure.CAN_FilterIdLow =  canFilter[i].id<<5;
+						CAN_FilterInitStructure.CAN_FilterMaskIdLow = canFilter[i].mask<<5;
+						
+						CAN_FilterInitStructure.CAN_FilterIdHigh= canFilter[i].id<<5;
+						CAN_FilterInitStructure.CAN_FilterMaskIdHigh= canFilter[i].mask<<5;
+						
+						if(canFilter[i+1].id && canFilter[i+1].mask) {
+							CAN_FilterInitStructure.CAN_FilterIdHigh= canFilter[i+1].id<<5;
+							CAN_FilterInitStructure.CAN_FilterMaskIdHigh= canFilter[i+1].mask<<5;
+						}
+						
+						CAN_FilterInitStructure.CAN_FilterNumber=__FILT_BASE__ + i/2;
+						CAN_FilterInit(&CAN_FilterInitStructure);
+					}
 }
 /*******************************************************************************
 * Function Name  : CAN_Initialize

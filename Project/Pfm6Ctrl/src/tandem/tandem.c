@@ -65,15 +65,15 @@ int				i=pfm->burst[0].Period+pfm->burst[1].Period;
 
 					switch(state) {
 						case _ErSetup:							
-							__print("\rEr     : %5du,%5dV, n=%3d,%5du",
+							__print("\rEr     : %6du,%6dV,  n=%3d,%6du",
 								pfm->Burst->Time,pfm->Burst->PW*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length);
 							break;
 						case _NdSetup:							
-							__print("\rNd     : %5du,%5dV, n=%3d,%5du",
+							__print("\rNd     : %6du,%6dV,  n=%3d,%6du",
 								pfm->Burst->Time,pfm->Burst->PW*_AD2HV(pfm->HVref)/_PWM_RATE_HI,pfm->Burst->N,pfm->Burst->Length);
 							break;
 						case _Pockels:							
-							__print("\rpockels: %5.1fu,%5.1fu,%5.1fu,%5.1fu",
+							__print("\rpockels: %6.1fu,%6.1fu,%6.1fu,%6.1fu",
 								(float)pfm->burst[0].pockels.delay/10,(float)pfm->burst[0].pockels.width/10,
 									(float)pfm->burst[1].pockels.delay/10,(float)pfm->burst[1].pockels.width/10);
 							break;
@@ -86,29 +86,29 @@ int				i=pfm->burst[0].Period+pfm->burst[1].Period;
 							switch(triggerMode) {
 								case _BOTH:
 									_CLEAR_MODE(pfm,_ALTERNATE_TRIGGER);
-									__print("\rtrigger:   BOTH,%5dm,%5du",pfm->burst[1].Period,pfm->burst[1].Delay-pfm->burst[0].Delay);
+									__print("\rtrigger:    BOTH,%6dm,%6du",pfm->burst[1].Period,pfm->burst[1].Delay-pfm->burst[0].Delay);
 									break;
 								case _ALTER:
 									_SET_MODE(pfm,_ALTERNATE_TRIGGER);
-									__print("\rtrigger:  ALTER,%5dm,%5dm",i,i-pfm->burst[1].Period);
+									__print("\rtrigger:   ALTER,%6dm,%6dm",i,i-pfm->burst[1].Period);
 									break;
 								case _Er:
 									_CLEAR_MODE(pfm,_ALTERNATE_TRIGGER);
-									__print("\rtrigger:     Er,%5dm,%5du",pfm->Burst->Period,pfm->burst[1].Delay-pfm->burst[0].Delay);
+									__print("\rtrigger:      Er,%6dm,%6du",pfm->Burst->Period,pfm->burst[1].Delay-pfm->burst[0].Delay);
 									break;
 								case _Nd:
 									_CLEAR_MODE(pfm,_ALTERNATE_TRIGGER);
-									__print("\rtrigger:     Nd,%5dm,%5du",pfm->Burst->Period,pfm->burst[1].Delay-pfm->burst[0].Delay);
+									__print("\rtrigger:      Nd,%6dm,%6du",pfm->Burst->Period,pfm->burst[1].Delay-pfm->burst[0].Delay);
 									break;
 							}
 							if(state==_STANDBY)
-								__print(", STDBY");
+								__print(",STANDBY");
 							if(state==_READY)
-								__print(", READY");
-							for(i=7*(3-idx)+1; i--; __print("\b"));
+								__print(",  READY");
+							for(i=8*(3-idx)+1; i--; __print("\b"));
 							return;
 					}
-					for(i=7*(3-idx)+1; i--; __print("\b"));
+					for(i=8*(3-idx)+1; i--; __print("\b"));
 }
 //______________________________________________________________________________________
 static 
@@ -205,16 +205,16 @@ static
 							idx=0;
 							break;
 						case 0:
-							pfm->burst[0].pockels.delay	= __max(0,__min(9999,pfm->burst[0].pockels.delay + a));
+							pfm->burst[0].pockels.delay	= __max(0,__min(49999,pfm->burst[0].pockels.delay + a));
 							break;
 						case 1:
-							pfm->burst[0].pockels.width	= __max(0,__min(9999,pfm->burst[0].pockels.width +a));
+							pfm->burst[0].pockels.width	= __max(0,__min(49999,pfm->burst[0].pockels.width +a));
 							break;
 						case 2:
-							pfm->burst[1].pockels.delay	= __max(0,__min(9999,pfm->burst[1].pockels.delay + a));
+							pfm->burst[1].pockels.delay	= __max(0,__min(49999,pfm->burst[1].pockels.delay + a));
 							break;
 						case 3:
-							pfm->burst[1].pockels.width	= __max(0,__min(9999,pfm->burst[1].pockels.width +a));
+							pfm->burst[1].pockels.width	= __max(0,__min(49999,pfm->burst[1].pockels.width +a));
 							break;
 						default:
 							idx=3;
@@ -259,6 +259,7 @@ static
 }
 //______________________________________________________________________________________
 int				Tandem() {
+int 			kspeed=0, ktimeout=0;
 int				i,cnt=0,timeout=0;
 					triggerMode=_BOTH;
 					state=_STANDBY;
@@ -278,6 +279,8 @@ int				i,cnt=0,timeout=0;
 						i=Escape();
 						switch(i) {
 							case EOF:
+								if(ktimeout && __time__ > ktimeout)
+									kspeed=ktimeout=0;
 								if(simm != pfm->Simmer.active) {
 									__print("\r\n:simmer error...\r\n:");
 									state=_STANDBY;
@@ -344,16 +347,16 @@ int				i,cnt=0,timeout=0;
 								Increment(0);
 								break;								
 							case _Up:
-								Increment(1);
+								Increment(kspeed/50 + 1);
 								break;
 							case _Down:
-								Increment(-1);
+								Increment(-kspeed/50 - 1);
 								break;
 							case _PageUp:
-								Increment(10);
+								Increment(10*(kspeed/50 + 1));
 								break;
 							case _PageDown:
-								Increment(-10);
+								Increment(10*(kspeed/50 - 1));
 								break;
 							case _Left:
 									--idx;
@@ -382,6 +385,8 @@ int				i,cnt=0,timeout=0;
 								_proc_loop();
 								continue;
 					}
+					ktimeout = __time__ + 200;
+					++kspeed;
 					showCLI();
 				}
 }

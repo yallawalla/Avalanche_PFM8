@@ -633,7 +633,7 @@ int 		hv,j,k,ki=30,kp=0;
 /*******************************************************************************/
 void		Trigger(PFM *p) {
 				if(!_MODE(p,_PULSE_INPROC)) {															// if triggers overlap, error
-					if(p->Trigger.enotify) {																// only when energymeter present (cfg.ini setup)
+					if(p->Trigger.enotify) {																// only when energymeter present (ini setup)
 						int tout=__time__ + 5;																// set timeout
 						CanTxMsg tx = {_ID_SYS_TRIGG,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 						_YELLOW1(50);

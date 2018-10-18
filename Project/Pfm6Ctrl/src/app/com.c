@@ -326,13 +326,13 @@ int			DecodePlus(char *c) {
 				case 'i':
 					switch(strscan(++c,cc,',')) {
 						case 0:
-							__charger6=Initialize_I2C(0x58,50000);
+							Initialize_I2C(__charger6, 0x58, 50000);
 						break;
 						case 1:
-							__charger6=Initialize_I2C(getHEX(cc[0],2),0);
+							Initialize_I2C(__charger6, getHEX(cc[0],2), 0);
 						break;
 						case 2:
-							__charger6=Initialize_I2C(getHEX(cc[0],2),atoi(cc[1]));
+							Initialize_I2C(__charger6, getHEX(cc[0],2),atoi(cc[1]));
 						break;
 					}
 					break;
@@ -847,7 +847,7 @@ TCHAR			buf[128];
 //					ExchgSpi(i,4);
 //					ExchgSpi(j,4);
 //					break;
-////______command___________________2w______________________________________________________
+////______command___________________2w_______________________________________
 //				default:
 //						sscanf(c,"%X",&i);
 //						i=((i<<16) | i);
@@ -860,12 +860,13 @@ TCHAR			buf[128];
 int	DecodeCom(char *c) {
 		char 		*cc[8];
 		int		 	m,n,k;
+//__________________________________________________Prompt only response ____
 		if(!c)
 			__print("\r\n>");
 		else
-
+//___________________________________________________________________________
 		switch(*c) {
-//__________________________________________________SW version query____________________
+//__________________________________________________SW version query_________
 				case 'v':
 				case 'V':
 					RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC, ENABLE);
@@ -1279,8 +1280,9 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 #ifdef	__PFM6__
 							__print("\r>f(an)   Tl,Th,min,max,T... %d,%3d,%3d%c,%3d%c,%5.1f,%5.1f",fanTL/100,fanTH/100,fanPmin,'%',fanPmax,'%',(double)IgbtTemp(TH1)/100.0,(double)IgbtTemp(TH2)/100.0);
 #elif		__PFM8__
-							__print("\r>f(an)   Tl,Th,min,max,T... %d,%3d,%3d%c,%3d%c,%5.1f,%5.1f,%5.1f,%5.1f",fanTL/100,fanTH/100,fanPmin,'%',fanPmax,'%',
-								(double)IgbtTemp(TL1)/100.0,(double)IgbtTemp(TH1)/100.0,(double)IgbtTemp(TL2)/100.0,(double)IgbtTemp(TH2)/100.0);
+//							__print("\r>f(an)   Tl,Th,min,max,T... %d,%3d,%3d%c,%3d%c,%5.1f,%5.1f,%5.1f,%5.1f",fanTL/100,fanTH/100,fanPmin,'%',fanPmax,'%',
+//								(double)IgbtTemp(TL1)/100.0,(double)IgbtTemp(TH1)/100.0,(double)IgbtTemp(TL2)/100.0,(double)IgbtTemp(TH2)/100.0);
+							__print("\r>f(an)   Tl,Th,min,max,T... %d,%3d,%3d%c,%3d%c,%5.1f,%5.1f",fanTL/100,fanTH/100,fanPmin,'%',fanPmax,'%',(double)IgbtTemp(TH1)/100.0,(double)IgbtTemp(TH2)/100.0);
 #else
 *** error, define platform
 #endif
@@ -1484,20 +1486,18 @@ int			u=0,umax=0,umin=0;
 #define			_ID_IAP_STRING	0xA6
 #define			_ID_IAP_PING		0xA7
 /*******************************************************************************
-* Function Name  : HexChecksumError
-* Description    : preverja konsistentnost vrstice iz hex fila
-* Input          : pointer na string 
-* Output         : 
-* Return         : 0 ce je OK
+* Function Name  : AckWait
+* Description    : Stop the main CAN RX process and wait for the remote iap ack 
+* Input          : CAN TX msg, waiting time (ms) 
+* Return         : IAP message or EOF (not successful...)
 *******************************************************************************/
 int					AckWait(CanTxMsg *tx, int t) {
 						int to;
 						_proc	*p= _proc_find(ParseCanRx,pfm);	
 						CanRxMsg	rx={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 
-						p->t = __time__ + 1000; 
-						to = __time__ + t; 
-						
+						p->t = __time__ + 1000; 												// zakasni CAN RX process za sekundo
+						to = __time__ + t;															// nastavi cakalni nterval
 						_buffer_push(__can->tx,tx,sizeof(CanTxMsg));
 						if(t == 0)
 							return 0;
@@ -1512,7 +1512,6 @@ int					AckWait(CanTxMsg *tx, int t) {
 * Function Name  : HexChecksumError
 * Description    : preverja konsistentnost vrstice iz hex fila
 * Input          : pointer na string 
-* Output         : 
 * Return         : 0 ce je OK
 *******************************************************************************/
 int					HexChecksumError(char *p) {
@@ -1580,59 +1579,58 @@ int					*d=(int *)tx.Data;
 *				 				 : za vsakih 8 bytov !!!
 *******************************************************************************/
 FRESULT			iapRemote(char * filename) {
-						FIL	f;
-						int n,k;
-						TCHAR l[128];
+						FIL	f;																					// hex file object
+						TCHAR hexline[128];															// line buffer
+						int n,k;																				// misc
 						CanTxMsg tx ={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};		
-						FRESULT err= f_open(&f,filename,FA_READ);
-						
+
+						FRESULT err= f_open(&f,filename,FA_READ);				// open file
 						if(err)
-							return err;
-						for(n=0; !f_eof(&f); ++n) {
-							f_gets(l,sizeof(l),&f);
+							return err;																		// return error code if not succ..
+						for(n=0; !f_eof(&f); ++n) {											// count lines >>>> n
+							f_gets(hexline,sizeof(hexline),&f);
 							Watchdog();
 						}
 						f_close(&f);
 						
-						canFilterConfig(_ID_IAP_GO, 0x7f0);
+						canFilterConfig(_ID_IAP_GO, 0x7f0);							// config. can filters for IAP protocol
 						
-						tx.StdId=_ID_SYS2PFM;
+						tx.StdId=_ID_SYS2PFM;														// send iap req. as from sys
 						tx.Data[0]=_PFM_Iap;
 						tx.DLC=1;
-						if(AckWait(&tx,3000) != 0) {						
-							tx.StdId=_ID_IAP_PING;
+						if(AckWait(&tx,3000) != 0) {										// wait for ping
+							tx.StdId=_ID_IAP_PING;												// send ping
 							tx.DLC=0;
-							if(AckWait(&tx,100) != 0)
+							if(AckWait(&tx,100) != 0)											// wait for response '-'
 								return FR_NOT_READY;
 						}
 						__print("\r\niap ping received...");
-						
-						__print("\r\nerasing");
+						__print("\r\nerasing");													// erase 5 pages
 						for(k=FLASH_Sector_1; k<FLASH_Sector_6; k+=FLASH_Sector_1) {
 							tx.StdId=_ID_IAP_ERASE;
 							tx.DLC=sizeof(int);
 							*(int *)tx.Data=k;
-							if(AckWait(&tx,2000) != 0)
+							if(AckWait(&tx,2000) != 0)										// send erase page, wait for ack
 								return FR_NOT_READY;
 							__print(".");
 						}
 						
-						err= f_open(&f,filename,FA_READ);
+						err= f_open(&f,filename,FA_READ);								// open file again...
 						__print("\r\nprogramming");
 						for(k=0; (!f_eof(&f)); ++k) {
-							f_gets(l,sizeof(l),&f);
-							if(CanHexProg(l) == 0)
+							f_gets(hexline,sizeof(hexline),&f);						// read line
+							if(CanHexProg(hexline) == 0)									// send prog. message
 								return FR_NOT_READY;
-							if((k % (n/20)) == 0)
+							if((k % (n/20)) == 0)													// echo after 20 lines...
 								__print(".%3d%c%c%c%c%c",100*k/n,'%','\x8','\x8','\x8','\x8');
 						}
 						
-						tx.StdId=_ID_IAP_SIGN;
+						tx.StdId=_ID_IAP_SIGN;													// send sign command
 						tx.DLC=0;
-						if(AckWait(&tx,300) != 0)
+						if(AckWait(&tx,300) != 0)												// wait for ack...
 							return FR_NOT_READY;
 						__print("\r\nsign ...");
-						tx.StdId=_ID_IAP_GO;
+						tx.StdId=_ID_IAP_GO;														// send <go> command
 						tx.DLC=0;
 						AckWait(&tx,0);
 						f_close(&f);

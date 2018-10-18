@@ -25,9 +25,9 @@
 // TIM1_polarity TIM_OCPolarity_High);
 
 #if		defined		(__PFM6__)
-	#define 				SW_version	400		
+	#define 				SW_version	401		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	600		
+	#define 				SW_version	601		
 #else
 *** error, define HW platform
 #endif
@@ -544,7 +544,7 @@ _io 						*Initialize_USART1(int),
 void						canFilterConfig(int, int);
 
 void	 					*Initialize_F2V(_proc *);
-_i2c*						Initialize_I2C(int, int);
+_i2c*						Initialize_I2C(_i2c*, int, int);
 				
 extern int			fanPmin,fanPmax,fanTL,fanTH;
 

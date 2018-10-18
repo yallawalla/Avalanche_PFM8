@@ -105,7 +105,7 @@ void 			App_Init(void) {
 					Initialize_ADC();
 					Initialize_TIM();
 #if		!defined (__DISC4__) && !defined (__DISC7__)
-					__charger6=Initialize_I2C(0x58,50000);
+					__charger6=Initialize_I2C(NULL, 0x58,50000);
 #endif
 					pfm->fatfs=calloc(1,sizeof(FATFS));
 		
@@ -832,7 +832,7 @@ PFM				*p=proc->arg;
 												p->Burst->N=1;																											// treated as single pulse
 											}
 										}
-//________								
+//________
 										SetPwmTab(p);
 										break;
 									case _PFM_simmer_set:
@@ -842,7 +842,7 @@ PFM				*p=proc->arg;
 											p->Simmer.pw[1]=*(short *)q/50 + 7;
 											SetSimmerRate(p,_SIMMER_LOW);	
 											break;
-										}		
+										}
 										else if(rx.DLC==7) {
 											short	pw1,pw2;
 											char	r1,r2;
@@ -850,16 +850,16 @@ PFM				*p=proc->arg;
 											pw2 =*(short *)q++;q++;
 											r1=*q++;
 											r2=*q++;
-											
+
 											if(pw1 >= 120 && pw1 <= 500 &&
-													pw2 >= 120 && pw2 <= 500 && 
+													pw2 >= 120 && pw2 <= 500 &&
 														r1 >= 10 && r1 <= 100 &&
 															r2 >= 10 && r2 <= 100) {
 																p->Simmer.pw[0]=pw1*_uS/1000;
 																p->Simmer.pw[1]=pw2*_uS/1000;
 																p->Simmer.rate[0]=r1*_uS;
 																p->Simmer.rate[1]=r2*_uS;
-																SetSimmerRate(pfm,_SIMMER_LOW);	
+																SetSimmerRate(pfm,_SIMMER_LOW);
 																break;
 															}
 										}

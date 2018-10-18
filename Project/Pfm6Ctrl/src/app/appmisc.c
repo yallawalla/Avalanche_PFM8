@@ -433,10 +433,12 @@ const	int Rtab[]={
 			(4096.0*_Rdiv(3000.0,336.7))
 			};
 
-int		cc,t=__max( __max(__fit(ADC3_buf[0].IgbtT[0],Rtab,Ttab),
-												__fit(ADC3_buf[0].IgbtT[1],Rtab,Ttab)),
-									__max(__fit(ADC3_buf[0].IgbtT[2],Rtab,Ttab),
-												__fit(ADC3_buf[0].IgbtT[3],Rtab,Ttab)));
+//int		cc,t=__max( __max(__fit(ADC3_buf[0].IgbtT[0],Rtab,Ttab),
+//												__fit(ADC3_buf[0].IgbtT[1],Rtab,Ttab)),
+//									__max(__fit(ADC3_buf[0].IgbtT[2],Rtab,Ttab),
+//												__fit(ADC3_buf[0].IgbtT[3],Rtab,Ttab)));
+
+int		cc,t = __max(__fit(ADC3_buf[0].IgbtT[0],Rtab,Ttab), __fit(ADC3_buf[0].IgbtT[1],Rtab,Ttab));
 #else
 
 const	int Rtab[]={

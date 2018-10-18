@@ -650,18 +650,19 @@ tandem, pfm8
 
 za avalanche polovicni simmer start
 
-file cfg.ini
+fil cfg.ini
 -l d0,d1,d2,d3,,d4,d5,d6,d7
 -l
 -r
--i
-u 500
-s 80,80,50
+u 700
+s 300,300,30
 -u s
 -E ffffff
+-f
+-B
 -P
 
-file tandem
+fil tandem
 s0
 -m 15,16
 +m 12,15
@@ -672,16 +673,16 @@ s3
 s3
 -m 11,16
 
-file nd
-s0
--m 16
-+m 15
-s3
-
-file alex
+fil nd
 s0
 -m 15
 +m 16
+s3
+
+fil alex
+s0
+-m 16
++m 15
 s3
 
 22.1.2018
@@ -701,3 +702,92 @@ s3
 - skrajsanje int. na 10ms, stach in heap nazaj v main RAM
 - eMac ostane ...
 
+15.10.2018
+- bug pri odcit. temperaturnih sensorjev (pfm8)
+	zaradi manjkajocih senzorjev na pfm8 sta bila veljavna samo izpisa "zgornjih" PTC. 
+	Ker so bile "neveljavne" vrednosti potenc. lahko višje, posledilcno ni delala regulacija hlajenja.
+- bug pri i2c alloc
+	potencialni mem. leakage... ob. napaki i2c se je ponovno pognala inicializacija, v kateri je bil malloc...
+	v 10-15 sekundah je zmanjkalo heapa... efekt se je pokazal v create file in v (ne)delovanju VCP
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+0:/dir
+cfg.ini         89
+tandem          72
+alex            23
+nd              23
+cfg.bak         79
+0:/
+0:/
+0:/
+0:/
+0:/ty cfg.ini
+-l d0,d1,d2,d3,,d4,d5,d6,d7
+-l
+-r
+u 700
+-u s
+-E ffffff
+-f
+-P
+-B
+s 300,300,30
+
+0:/ty tandem
+s0
+-m 15,16
++m 12,15
+s3
+-d 1000
+-m 12,15
++m 11,16
+s3
+-m 11,16
+
+0:/ty alex
+s0
+-m 16
++m 15
+s3
+
+0:/ty nd
+s0
+-m 15
++m 16
+s3
+
+0:/ty cfg.bak
+-l d0,d1,d2,d3,,d4,d5,d6,d7
+-l
+-r
+-i
+u 700
+-u s
+-E ffffff
+-f
+-P
+-B
+
+0:/
+
+v 6.01 Oct 17 2018, <A969CFE7>

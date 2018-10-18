@@ -30,7 +30,7 @@ GPIO_InitTypeDef	GPIO_InitStructure;
 						_wait(25,_proc_loop);
 						I2C_SoftwareResetCmd(I2C1,ENABLE);
 						I2C_SoftwareResetCmd(I2C1,DISABLE);
-						p=Initialize_I2C(p->addr,p->speed);	
+						Initialize_I2C(p, p->addr, p->speed);	
 					}
 }
 //______________________________________________________________________________________
@@ -41,15 +41,16 @@ GPIO_InitTypeDef	GPIO_InitStructure;
   * @retval None
   */
 //______________________________________________________________________________________
-_i2c 			*Initialize_I2C(int addr, int speed)
+_i2c 			*Initialize_I2C(_i2c *i2c, int addr, int speed)
 {
 I2C_InitTypeDef I2C_InitStructure;
 GPIO_InitTypeDef	GPIO_InitStructure;
-_i2c			*p=calloc(1,sizeof(_i2c));
+					if(!i2c)
+						i2c=calloc(1,sizeof(_i2c));
 					if(addr)
-						p->addr=addr;
+						i2c->addr=addr;
 					if(speed)
-						p->speed=speed;
+						i2c->speed=speed;
 
 					GPIO_StructInit(&GPIO_InitStructure);
 
@@ -81,10 +82,16 @@ _i2c			*p=calloc(1,sizeof(_i2c));
 					I2C_StretchClockCmd(I2C1, ENABLE);
 					I2C_ARPCmd(I2C1, ENABLE);
 					I2C_AcknowledgeConfig(I2C1, ENABLE);	
+					
+					
+					
+					
+					
+					
 					I2C_Cmd(I2C1, ENABLE);
 					I2C_ITConfig(I2C1, I2C_IT_ERR , ENABLE);
 
-					return p;
+					return i2c;
 }
 //______________________________________________________________________________________
 /**
