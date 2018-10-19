@@ -475,6 +475,7 @@ int 		hv,j,k,ki=30,kp=0;
 					return;
 				}
 //----- Qswitch pasus --------------------------------------------------------------------
+#ifndef __PFM8__
 				if(_TIM.p1 && _TIM.p->width &&				
 					_TIM.p1->T > 2*pfm->burst[0].Pdelay &&	(_TIM.p1->n == _TIM.p->trigger || _TIM.p1->n == 255)) {
 					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width + 100);
@@ -489,6 +490,7 @@ int 		hv,j,k,ki=30,kp=0;
 					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
 				} else
 					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);				// single pulse, timer se disabla po izteku											
+#endif
 //----- HV voltage averaging, calc. active ADC DMA index----------------------------------
 
 				for(hv=j=0;j<_AVG3;++j)																		// 

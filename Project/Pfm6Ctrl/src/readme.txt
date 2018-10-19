@@ -791,3 +791,8 @@ u 700
 0:/
 
 v 6.01 Oct 17 2018, <A969CFE7>
+
+
+jeba s TIM4, QSwitch !!! popravljena...
+v 6.01 Oct 19 2018, <61AB4C87>
+

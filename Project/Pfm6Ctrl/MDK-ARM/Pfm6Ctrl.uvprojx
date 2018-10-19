@@ -6533,7 +6533,7 @@
       <TargetName>__DISC405</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060528::V5.06 update 5 (build 528)::ARMCC</pCCUsed>
+      <pCCUsed>5060422::V5.06 update 4 (build 422)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F405VGTx</Device>
@@ -6856,7 +6856,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,USE_USB_OTG_FS,__DISC4__,__PFM6__,__F4__,HSE_VALUE=8000000</Define>
+              <Define>USE_STDPERIPH_DRIVER,USE_USB_OTG_FS,__DISC4__,__PFM8__,__F4__,HSE_VALUE=8000000</Define>
               <Undefine></Undefine>
               <IncludePath>..\inc;..\inc\app;..\inc\usbd_msc;..\inc\usbd_cdc;..\inc\usbh_msc;..\src\wifi;..\..\..\Libraries\CMSIS\Include;..\..\..\Libraries\CMSIS\Device\ST\STM32F4xx\Include;..\..\..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\..\..\Libraries\STM32_USB_OTG_Driver\inc;..\..\..\Libraries\STM32_USB_Device_Library\Core\inc;..\..\..\Libraries\STM32_USB_HOST_Library\Core\inc;..\..\..\Libraries\STM32_USB_HOST_Library\Class\msc\inc;..\..\..\Libraries\STM32_USB_HOST_Library\Class\hid\inc;..\..\..\Libraries\STM32_USB_Device_Library\Class\msc\inc;..\..\..\Libraries\STM32_USB_Device_Library\Class\cdc\inc;..\..\..\Utilities\FatFs_R0.12b\src;..\src\tetris</IncludePath>
             </VariousControls>
