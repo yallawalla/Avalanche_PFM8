@@ -738,9 +738,6 @@ alex            23
 nd              23
 cfg.bak         79
 0:/
-0:/
-0:/
-0:/
 0:/ty cfg.ini
 -l d0,d1,d2,d3,,d4,d5,d6,d7
 -l
@@ -788,11 +785,14 @@ u 700
 -P
 -B
 
-0:/
 
 v 6.01 Oct 17 2018, <A969CFE7>
-
 
 jeba s TIM4, QSwitch !!! popravljena...
 v 6.01 Oct 19 2018, <61AB4C87>
 
+8.11.2918
+v 6.02 Nov  8 2018, <24350F3F>
+- še ena s TIM4, iz Starwalker, lažni pockels ob nastavitvi..
+- start pockelsa premaknjen za 10u... ostalo od nekega poizkušanja, "moti" pri VERDE
+- odpravljen bug pri konzolni nastavitvi bursta s stirimi parametri... izpadlo pri popravljanju joint moda !!!

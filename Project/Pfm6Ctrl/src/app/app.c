@@ -239,7 +239,7 @@ PFM				*p=proc->arg;
 						} else {
 							if(p->Trigger.time==0)
 								break;
-							if(__time__ >= p->Trigger.time && _MODE(p,_AUTO_TRIGGER)) {
+							if(__time__ >= p->Trigger.time && (_MODE(p,_AUTO_TRIGGER) || p->Trigger.count)) {
 								p->Trigger.time=0;
 								_SET_EVENT(p,_TRIGGER);
 								continue;
@@ -1185,18 +1185,22 @@ int				PFM_pockels(PFM *p) {
 					TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
 					TIM_OCStructInit(&TIM_OCInitStructure);
 					GPIO_StructInit(&GPIO_InitStructure);
-					TIM_DeInit(TIM4);
+	
+					TIM_DeInit(TIM4);																					// reset TIM4
 					RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 					
-					GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-					GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+					GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;							// to prevent glitch, back to GPIO mode first
 					GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-					GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-						
-					GPIO_PinAFConfig(GPIOD, GPIO_PinSource12, GPIO_AF_TIM4);
+					GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;						
+					GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	
 					GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+					GPIO_SetBits(GPIOD,GPIO_Pin_12);													// preset
+					GPIO_Init(GPIOD, &GPIO_InitStructure);										// activate GPIO mode
+	
+					GPIO_PinAFConfig(GPIOD, GPIO_PinSource12, GPIO_AF_TIM4);	// this one, causes glitch !!!!
+					GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;							// then, change config
 					GPIO_Init(GPIOD, &GPIO_InitStructure);
-															
+									
 					TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
 					TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 					TIM_OCInitStructure.TIM_Pulse=1;

@@ -172,24 +172,23 @@ int		Uo=p->Burst->PW = p->Burst->U *_PWM_RATE_HI/_AD2HV(10*p->HVref);
 							tpause=_minmax(Uo,260,550,20,100);
 							Uo=(int)(pow((pow(p->Burst->PW,3)*p->Burst->N*qshape[i].qref - pow(qshape[i].q1,3)*qshape[i].q0)/qshape[i].qref/p->Burst->N,1.0/3.0)+0.5);
 						}
-					}				
+					}
 			}
 			if(p->Burst->Ereq & _SHPMOD_MAIN) {
 //-------PULSE----------------------
-				for(j=0; j<p->Burst->N; ++j) {			
+				for(j=0; j<p->Burst->N; ++j) {
 					for(n=2*((to*_uS + _PWM_RATE_HI/2)/_PWM_RATE_HI)-1; n>0; n -= 256, ++t) {
-						
 						if(j == 0) {
-							t->T=Uo+p->Burst->Pdelay;			
+							t->T=Uo+p->Burst->Pdelay;
 						} else {
-							t->T=Uo+dUo+p->Burst->Pdelay;					
+							t->T=Uo+dUo+p->Burst->Pdelay;
 						}
 						if(n > 255)
 							(t->n=255);
 						else
 							(t->n=p->Burst->pockels.trigger=n);
 					}
-//-------PAUSE----------------------			
+//-------PAUSE----------------------
 					for(n=2*((tpause*_uS)/_PWM_RATE_HI)-1;n>0;n -= 256,++t)	{
 						t->T=p->Burst->Pdelay;
 						(n > 255) ? (t->n=255) : (t->n=n);

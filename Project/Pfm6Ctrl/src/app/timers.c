@@ -478,14 +478,14 @@ int 		hv,j,k,ki=30,kp=0;
 #ifndef __PFM8__
 				if(_TIM.p1 && _TIM.p->width &&				
 					_TIM.p1->T > 2*pfm->burst[0].Pdelay &&	(_TIM.p1->n == _TIM.p->trigger || _TIM.p1->n == 255)) {
-					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width + 100);
-					TIM_SetCompare1(TIM4,_TIM.p->delay + 100);
+					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width + 1);
+					TIM_SetCompare1(TIM4,_TIM.p->delay + 1);
 					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
 					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
 				} else if(_TIM.p2 && _TIM.p->width &&
 					_TIM.p2->T > 2*pfm->burst[1].Pdelay &&	(_TIM.p2->n == _TIM.p->trigger || _TIM.p2->n == 255)) {
-					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width + 100);
-					TIM_SetCompare1(TIM4,_TIM.p->delay + 100);
+					TIM_SetAutoreload(TIM4,_TIM.p->delay + _TIM.p->width + 1);
+					TIM_SetCompare1(TIM4,_TIM.p->delay + 1);
 					TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Repetitive);		// triganje na kakrsnokoli stanje nad delay x 2
 					TIM_Cmd(TIM4,ENABLE);																		// trigger !!!
 				} else
@@ -557,6 +557,9 @@ int 		hv,j,k,ki=30,kp=0;
 					} else {
 						x = pfm->Simmer.pw[0];
 						_TIM.p1=NULL;
+#ifndef __PFM8__
+						TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);						
+#endif
 					}
 				}
 				if(_TIM.p2) {																							//----- channel 2 -----------
@@ -614,6 +617,9 @@ int 		hv,j,k,ki=30,kp=0;
 					} else {
 						y = pfm->Simmer.pw[1];
 						_TIM.p2=NULL;
+#ifndef __PFM8__
+						TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);						
+#endif
 					}
 				}
 //----- TEST mode processing -------------------------------------------------------------

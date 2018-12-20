@@ -25,9 +25,9 @@
 // TIM1_polarity TIM_OCPolarity_High);
 
 #if		defined		(__PFM6__)
-	#define 				SW_version	401		
+	#define 				SW_version	402		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	601		
+	#define 				SW_version	602		
 #else
 *** error, define HW platform
 #endif
@@ -39,7 +39,7 @@
 #elif	defined (__F4__)
 	#define					_uS					60
 	#define 				ADC_Ts			ADC_SampleTime_3Cycles
-	#define					_MAX_BURST	(10*_mS)
+	#define					_MAX_BURST	(15*_mS)
 #elif	defined (__F7__)
 	#define					_uS					108
 	#define 				ADC_Ts			ADC_SampleTime_15Cycles
