@@ -25,10 +25,10 @@
 					simm=a;						\
 					PFM_command(pfm,a);
 
-static		enum 	{_BOTH,_ALTER,_Er,_Nd} 																triggerMode	=_BOTH;
-static		enum 	{_ErSetup,_NdSetup,_Pockels, _STANDBY,_READY,_LASER}	state				=_STANDBY;
-static		enum	{_OFF,_SIMM1,_SIMM2,_SIMM_ALL}												simm				=_OFF;
-static		int		idx;
+static		enum 	{_BOTH,_ALTER,_Er,_Nd} 																			triggerMode	=_BOTH;
+static		enum 	{_ErSetup,_NdSetup,_Pockels,_Burst, _STANDBY,_READY,_LASER}	state				=_STANDBY;
+static		enum	{_OFF,_SIMM1,_SIMM2,_SIMM_ALL}															simm				=_OFF;
+static		int		idx, nburst=0, tburst=1000, burstTimeout=0;
 //______________________________________________________________________________________
 static
 	void		LoadSettings() {
@@ -76,6 +76,12 @@ int				i=pfm->burst[0].Period+pfm->burst[1].Period;
 							__print("\rpockels: %6.1fu,%6.1fu,%6.1fu,%6.1fu",
 								(float)pfm->burst[0].pockels.delay/10,(float)pfm->burst[0].pockels.width/10,
 									(float)pfm->burst[1].pockels.delay/10,(float)pfm->burst[1].pockels.width/10);
+							break;
+						case _Burst:			
+							if(nburst)
+								__print("\rburst  :  %6d,%6dm                ",nburst,tburst);
+							else
+								__print("\rburst  :     OFF                        ");
 							break;
 						case _LASER:
 							__dbug=__stdin.io;
@@ -158,6 +164,7 @@ static
 									break;
 								case _READY:
 									_CLEAR_MODE(pfm,_AUTO_TRIGGER);
+									burstTimeout=0;
 									if(pfm->burst[0].pockels.width || pfm->burst[1].pockels.width)
 										PFM_pockels(pfm);
 									_SetPwmTab(pfm,_SIMM1);
@@ -178,10 +185,19 @@ static
 										CanReply("wwwwX",0xC101,pfm->Simmer.active,40000,pfm->Burst->Length,_ID_SYS2ENRG);
 									break;
 								case _LASER:
-									if(!_MODE(pfm,_AUTO_TRIGGER)) {
+									if(nburst) {
+										__print("\r\n>");
+										_CLEAR_MODE(pfm,_AUTO_TRIGGER);
+										_wait(5,_proc_loop);
+										pfm->Trigger.count=nburst;
+										pfm->Trigger.counter=0;
+										burstTimeout=__time__+ tburst;
+										_SET_EVENT(pfm,_TRIGGER);	
+									} else if(!_MODE(pfm,_AUTO_TRIGGER)) {
 										__print("\r\n>");
 										_wait(5,_proc_loop);
 										_SET_MODE(pfm,_AUTO_TRIGGER);
+										pfm->Trigger.count=0;
 										_SET_EVENT(pfm,_TRIGGER);	
 									}
 									break;
@@ -223,11 +239,31 @@ static
 }
 //______________________________________________________________________________________
 static 
+	void		IncrementBurst(int a) {
+					switch(idx) {
+						case -1:
+							idx=0;
+							break;
+						case 0:
+							nburst	= __max(0,__min(1000,nburst + a));
+							break;
+						case 1:
+							tburst	= __max(100,__min(5000,tburst + a));
+							break;
+						default:
+							idx=0;
+							break;	
+						}
+}
+//______________________________________________________________________________________
+static 
 	void		Increment(int a) {
 					if(state==_STANDBY || state==_READY || state==_LASER) 
 						IncrementTrigger(a);
 					else if(state==_Pockels) 
 						IncrementPockels(a);
+					else if(state==_Burst) 
+						IncrementBurst(a);
 					else {
 						switch(idx) {
 							case -1:
@@ -270,6 +306,7 @@ int				i,cnt=0,timeout=0;
 					__print("\r\n[F2]  - Nd parameters");
 					__print("\r\n[F3]  - trigger settings");
 					__print("\r\n[F4]  - pockels settings");
+					__print("\r\n[F5]  - burst settings");
 					__print("\r\n[F11] - save settings");
 					__print("\r\n[F12] - exit");
 					__print("\r\n:");
@@ -309,6 +346,10 @@ int				i,cnt=0,timeout=0;
 										}
 								}								
 								_proc_loop();
+								if(burstTimeout && __time__ > burstTimeout) {
+									_SET_EVENT(pfm,_TRIGGER);	
+									burstTimeout = __time__ + tburst;
+								}
 								continue;
 							case _CtrlZ:
 								while(1);				
@@ -343,6 +384,14 @@ int				i,cnt=0,timeout=0;
 								if(state != _Pockels)
 									__print("\r\n");
 								state=_Pockels;
+								simmerMode(_OFF);
+								Increment(0);
+								break;								
+							case _f5: 
+							case _F5:
+								if(state != _Burst)
+									__print("\r\n");
+								state=_Burst;
 								simmerMode(_OFF);
 								Increment(0);
 								break;								
@@ -387,6 +436,6 @@ int				i,cnt=0,timeout=0;
 					}
 					ktimeout = __time__ + 200;
 					++kspeed;
-					showCLI();
+					showCLI();					
 				}
 }

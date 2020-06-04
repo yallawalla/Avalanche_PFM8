@@ -39,7 +39,7 @@
 #elif	defined (__F4__)
 	#define					_uS					60
 	#define 				ADC_Ts			ADC_SampleTime_3Cycles
-	#define					_MAX_BURST	(15*_mS)
+	#define					_MAX_BURST	(10*_mS)
 #elif	defined (__F7__)
 	#define					_uS					108
 	#define 				ADC_Ts			ADC_SampleTime_15Cycles
