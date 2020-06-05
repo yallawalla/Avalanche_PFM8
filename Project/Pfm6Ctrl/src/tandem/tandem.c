@@ -26,34 +26,39 @@
 					PFM_command(pfm,a);
 
 static		enum 	{_BOTH,_ALTER,_Er,_Nd} 																			triggerMode	=_BOTH;
-static		enum 	{_ErSetup,_NdSetup,_Pockels,_Burst, _STANDBY,_READY,_LASER}	state				=_STANDBY;
+static		enum 	{_ErSetup,_NdSetup,_Pockels,_Pack, _STANDBY,_READY,_LASER}	state				=_STANDBY;
 static		enum	{_OFF,_SIMM1,_SIMM2,_SIMM_ALL}															simm				=_OFF;
-static		int		idx, nburst=0, tburst=1000, burstTimeout=0;
+static		int		idx;
+static		int		nPack=0, tPack=1000, packTimeout=0;
 //______________________________________________________________________________________
-static
+static		
 	void		LoadSettings() {
 FIL				f;
 FATFS			fs;
 UINT			bw;
 					if(f_chdrive(FS_CPU) == FR_OK &&
 						f_mount(&fs,FS_CPU,1) == FR_OK && 
-						f_open(&f,"/tandem.bin",FA_READ) == FR_OK) {
+						f_open(&f,"/tandem1.bin",FA_READ) == FR_OK) {
 							f_read(&f,pfm->burst,2*sizeof(burst),&bw);
 							f_read(&f,&triggerMode,sizeof(triggerMode),&bw);
+							f_read(&f,&nPack,sizeof(int),&bw);
+							f_read(&f,&tPack,sizeof(int),&bw);
 							f_close(&f);
 					}
 }
 //______________________________________________________________________________________
-static
+static		
 	void		SaveSettings() {
 FIL				f;
 FATFS			fs;
 UINT			bw;
 					if(f_chdrive(FS_CPU) == FR_OK &&
 						f_mount(&fs,FS_CPU,1) == FR_OK && 
-							f_open(&f,"/tandem.bin",FA_WRITE | FA_OPEN_ALWAYS) == FR_OK) {
+							f_open(&f,"/tandem1.bin",FA_WRITE | FA_OPEN_ALWAYS) == FR_OK) {
 								f_write(&f,pfm->burst,2*sizeof(burst),&bw);
 								f_write(&f,&triggerMode,sizeof(triggerMode),&bw);
+								f_write(&f,&nPack,sizeof(int),&bw);
+								f_write(&f,&tPack,sizeof(int),&bw);
 								f_sync(&f);
 								f_close(&f);
 					}
@@ -77,11 +82,11 @@ int				i=pfm->burst[0].Period+pfm->burst[1].Period;
 								(float)pfm->burst[0].pockels.delay/10,(float)pfm->burst[0].pockels.width/10,
 									(float)pfm->burst[1].pockels.delay/10,(float)pfm->burst[1].pockels.width/10);
 							break;
-						case _Burst:			
-							if(nburst)
-								__print("\rburst  :  %6d,%6dm                ",nburst,tburst);
+						case _Pack:			
+							if(nPack)
+								__print("\rpacket :  %6d,%6dm                ",nPack,tPack);
 							else
-								__print("\rburst  :     OFF                        ");
+								__print("\rpacket :     OFF                        ");
 							break;
 						case _LASER:
 							__dbug=__stdin.io;
@@ -131,6 +136,8 @@ static
 							pfm->burst[1].Period = __max(2,__min(2000, pfm->burst[1].Period + a));
 							if(!_MODE(pfm,_ALTERNATE_TRIGGER))
 								pfm->burst[0].Period=pfm->burst[1].Period;
+							if(nPack && tPack < nPack * pfm->burst[1].Period)
+								tPack=nPack*pfm->burst[1].Period;
 							break;
 						case 2:
 							if(_MODE(pfm,_ALTERNATE_TRIGGER)) {
@@ -164,7 +171,7 @@ static
 									break;
 								case _READY:
 									_CLEAR_MODE(pfm,_AUTO_TRIGGER);
-									burstTimeout=0;
+									packTimeout=0;
 									if(pfm->burst[0].pockels.width || pfm->burst[1].pockels.width)
 										PFM_pockels(pfm);
 									_SetPwmTab(pfm,_SIMM1);
@@ -185,13 +192,13 @@ static
 										CanReply("wwwwX",0xC101,pfm->Simmer.active,40000,pfm->Burst->Length,_ID_SYS2ENRG);
 									break;
 								case _LASER:
-									if(nburst) {
+									if(nPack) {
 										__print("\r\n>");
 										_CLEAR_MODE(pfm,_AUTO_TRIGGER);
 										_wait(5,_proc_loop);
-										pfm->Trigger.count=nburst;
+										pfm->Trigger.count=nPack;
 										pfm->Trigger.counter=0;
-										burstTimeout=__time__+ tburst;
+										packTimeout=__time__+ tPack;
 										_SET_EVENT(pfm,_TRIGGER);	
 									} else if(!_MODE(pfm,_AUTO_TRIGGER)) {
 										__print("\r\n>");
@@ -239,16 +246,18 @@ static
 }
 //______________________________________________________________________________________
 static 
-	void		IncrementBurst(int a) {
+	void		IncrementPack(int a) {
 					switch(idx) {
 						case -1:
 							idx=0;
 							break;
 						case 0:
-							nburst	= __max(0,__min(1000,nburst + a));
+							nPack	= __max(0, __min(1000, nPack + a));
+							tPack = __max(tPack, nPack * pfm->burst[1].Period);
 							break;
 						case 1:
-							tburst	= __max(100,__min(5000,tburst + a));
+							tPack	= __max(nPack*pfm->burst[1].Period,__min(2000,tPack + a));
+							nPack	= __min(nPack,tPack/pfm->burst[1].Period);
 							break;
 						default:
 							idx=0;
@@ -262,8 +271,8 @@ static
 						IncrementTrigger(a);
 					else if(state==_Pockels) 
 						IncrementPockels(a);
-					else if(state==_Burst) 
-						IncrementBurst(a);
+					else if(state==_Pack) 
+						IncrementPack(a);
 					else {
 						switch(idx) {
 							case -1:
@@ -306,7 +315,7 @@ int				i,cnt=0,timeout=0;
 					__print("\r\n[F2]  - Nd parameters");
 					__print("\r\n[F3]  - trigger settings");
 					__print("\r\n[F4]  - pockels settings");
-					__print("\r\n[F5]  - burst settings");
+					__print("\r\n[F5]  - packet settings");
 					__print("\r\n[F11] - save settings");
 					__print("\r\n[F12] - exit");
 					__print("\r\n:");
@@ -346,9 +355,9 @@ int				i,cnt=0,timeout=0;
 										}
 								}								
 								_proc_loop();
-								if(burstTimeout && __time__ > burstTimeout) {
+								if(packTimeout && __time__ > packTimeout) {
 									_SET_EVENT(pfm,_TRIGGER);	
-									burstTimeout = __time__ + tburst;
+									packTimeout = __time__ + tPack;
 								}
 								continue;
 							case _CtrlZ:
@@ -389,9 +398,9 @@ int				i,cnt=0,timeout=0;
 								break;								
 							case _f5: 
 							case _F5:
-								if(state != _Burst)
+								if(state != _Pack)
 									__print("\r\n");
-								state=_Burst;
+								state=_Pack;
 								simmerMode(_OFF);
 								Increment(0);
 								break;								
