@@ -17,7 +17,7 @@
 #include 	<stdio.h>
 
 PFM				*pfm;
-_io				*__com1,*__com3;
+_io				*__com1,*__com3,*__com6;
 const char *_errStr[]={
 					"simmer 1 failed",
 					"simmer 2 failed",
@@ -100,6 +100,7 @@ void 			App_Init(void) {
 					__com1=Initialize_USART1(921600);		
 #if		defined (__PFM8__)
 					__com3=Initialize_USART3(115200);		
+					__com6=Initialize_USART6(115200);		
 #endif
 					__can=Initialize_CAN(0);
 					Initialize_ADC();
@@ -129,12 +130,12 @@ int				i,j;
 int				i,j;
 					srand(__time__);
 					for(i=0; i<_AVG3; ++i) {
-						ADC3_buf[i].HV=_V2AD(700,2000,6.2) + noise;
-						ADC3_buf[i].HV2=_V2AD(350,2000,6.2) + noise;
+						ADC3_buf[i].HV=_V2AD(700,2000,8.0) + noise;
+						ADC3_buf[i].HV2=_V2AD(350,2000,8.0) + noise;
 						for(j=0; j<sizeof(ADC3_buf[i].IgbtT)/sizeof(short); ++j)
 							ADC3_buf[i].IgbtT[j]=2000 + noise;
-						ADC3_buf[i].VCAP1=_V2AD(350,2000,6.2) + noise;
-						ADC3_buf[i].VCAP2=_V2AD(350,2000,6.2) + noise;
+						ADC3_buf[i].VCAP1=_V2AD(350,2000,8.0) + noise;
+						ADC3_buf[i].VCAP2=_V2AD(350,2000,8.0) + noise;
 						ADC3_buf[i].Up12=_V2AD(12,62,10) + noise;
 						ADC3_buf[i].Up5=_V2AD(5,10,10) + noise;
 						ADC3_buf[i].Up3=_V2AD(3.3,10,10) + noise;
@@ -147,6 +148,8 @@ int				i,j;
 						_proc_add((func *)ParseCom,__com1,						"COM1 parser",0);
 					if(__com3)
 						_proc_add((func *)ParseCom,__com3,						"COM3 parser",0);
+					if(__com6)
+						_proc_add((func *)ParseCom,__com6,						"COM6 parser",0);
 					
 					_proc_add((func *)ParseCanTx,pfm,								"CAN tx",0);
 					_proc_add((func *)ParseCanRx,pfm,								"CAN rx",0);
@@ -165,7 +168,7 @@ int				i,j;
 					Watchdog_init(300);	
 					Initialize_DAC();
 //---------------------------------------------------------------------------------
-					_stdio(__com1);
+					_stdio(__com6);
 					if(RCC_GetFlagStatus(RCC_FLAG_SFTRST) == SET)
 						__print("\r ... SWR reset, %dMHz\r\n>",SystemCoreClock/1000000);
 					else if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET)
@@ -358,12 +361,12 @@ static		int		bounce=0;
 						else
 							_CLEAR_ERROR(p,PFM_HV2_ERR);
 						
-						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].VCAP1) > ADC3_buf[0].HV/10)
+						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].VCAP1) > ADC3_buf[0].HV/8)
 							_SET_ERROR(p,PFM_ERR_VCAP1);
 						else
 							_CLEAR_ERROR(p,PFM_ERR_VCAP1);
 
-						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].VCAP2) > ADC3_buf[0].HV/10)
+						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].VCAP2) > ADC3_buf[0].HV/8)
 							_SET_ERROR(p,PFM_ERR_VCAP2);
 						else
 							_CLEAR_ERROR(p,PFM_ERR_VCAP2);

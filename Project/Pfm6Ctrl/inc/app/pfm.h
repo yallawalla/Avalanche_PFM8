@@ -39,7 +39,7 @@
 #elif	defined (__F4__)
 	#define					_uS					60
 	#define 				ADC_Ts			ADC_SampleTime_3Cycles
-	#define					_MAX_BURST	(15*_mS)
+	#define					_MAX_BURST	(10*_mS)
 #elif	defined (__F7__)
 	#define					_uS					108
 	#define 				ADC_Ts			ADC_SampleTime_15Cycles
@@ -70,8 +70,8 @@
 #elif	defined		(__PFM8__)
 	#define				_AD2HV(a)		((int)(((a)*_UREF)/4096.0/_AVG3/_Rdiv(6.2e3,2e6)+0.5))
 	#define				_HV2AD(a)		((int)(((a)*4096.0*_AVG3*_Rdiv(6.2e3,2e6))/_UREF+0.5))
-	#define				_Ifullsc		((int)1270)
-	#define				_kmJ				((int)(_V2AD(1000,2000,6.2)*_I2AD(1000)/1000))
+	#define				_Ifullsc		((int)1656)
+	#define				_kmJ				((int)(_V2AD(1000,2000,8.0)*_I2AD(1000)/1000))
 #else
 *** error, define HW platform
 #endif
@@ -175,6 +175,7 @@ typedef					enum
 #define					PFM_ERR_VCAP1							0x10000					//
 #define					PFM_ERR_VCAP2							0x20000					//
 #define					PFM_ERR_ETRIG							0x40000					//
+#define					PFM_ERR_VIN								0x08000000				//
 
 extern const char *_errStr[];
 
@@ -540,6 +541,7 @@ void						SysTick_init(void),
 										
 _io 						*Initialize_USART1(int),
 								*Initialize_USART3(int),
+								*Initialize_USART6(int),
 								*Initialize_CAN(int);
 void						canFilterConfig(int, int);
 
@@ -550,6 +552,7 @@ extern int			fanPmin,fanPmax,fanTL,fanTH;
 
 extern _io			*__com1,
 								*__com3,
+								*__com6,
 								*__dbug,
 								*__can;
 								
@@ -716,7 +719,7 @@ int			SetChargerVoltage(int);
 
 #define	_CRITICAL_ERR_MASK		(PFM_ERR_DRVERR | PFM_ERR_PULSEENABLE | PFM_ADCWDG_ERR |							\
 																PFM_ERR_PSRDYN | PFM_ERR_LNG | PFM_HV2_ERR | 												\
-																	PFM_I2C_ERR | PFM_ERR_VCAP1 | PFM_ERR_VCAP2 | PFM_ERR_ETRIG)
+																	PFM_I2C_ERR | PFM_ERR_VCAP1 | PFM_ERR_VCAP2 | PFM_ERR_ETRIG | PFM_ERR_VIN)
 							
 
 #define	_PFM_CWBAR_STAT				PFM_ERR_PULSEENABLE

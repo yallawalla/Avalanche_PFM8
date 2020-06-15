@@ -32,8 +32,14 @@
 #define	USART3_RX_PIN		GPIO_Pin_11
 #define	USART3_TX_PIN		GPIO_Pin_10
 #define	USART3_PORT			GPIOC
-#define	USART3_TXSRC		GPIO_PinSource10
 #define	USART3_RXSRC		GPIO_PinSource11
+#define	USART3_TXSRC		GPIO_PinSource10
+
+#define	USART6_RX_PIN		GPIO_Pin_9
+#define	USART6_TX_PIN		GPIO_Pin_14
+#define	USART6_PORT			GPIOG
+#define	USART6_RXSRC		GPIO_PinSource9
+#define	USART6_TXSRC		GPIO_PinSource14
 #endif
 #define RxBufferSize		128
 #define TxBufferSize		128
@@ -180,11 +186,19 @@ _io 										*io;
 	return io;
 }
 //______________________________________________________________________________________
-extern _io* __com3;
+extern _io *__com3,*__com6;
 //______________________________________________________________________________________
 int	putCOM3(_buffer *p, int	c) {
 	if(_buffer_push(__com3->tx,&c,1)==1)
 		USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+	else
+		c=EOF;
+	return(c);
+}
+//______________________________________________________________________________________
+int	putCOM6(_buffer *p, int	c) {
+	if(_buffer_push(__com6->tx,&c,1)==1)
+		USART_ITConfig(USART6, USART_IT_TXE, ENABLE);
 	else
 		c=EOF;
 	return(c);
@@ -235,8 +249,54 @@ GPIO_InitTypeDef				GPIO_InitStructure;
 	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);		
 	return io;
 }
+//______________________________________________________________________________________
+_io *Initialize_USART6(int speed) {
+
+USART_InitTypeDef 			USART_InitStructure;
+USART_ClockInitTypeDef  USART_ClockInitStructure;
+_io 										*io;
+GPIO_InitTypeDef				GPIO_InitStructure;
+	
+	GPIO_StructInit(&GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+ 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_Pin = USART6_TX_PIN;
+	GPIO_Init(USART6_PORT, &GPIO_InitStructure);
+	
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+ 	GPIO_InitStructure.GPIO_Pin = USART6_RX_PIN;
+	GPIO_Init(USART6_PORT, &GPIO_InitStructure);
+
+ 	GPIO_PinAFConfig(USART6_PORT, USART6_TXSRC, GPIO_AF_USART6);		
+ 	GPIO_PinAFConfig(USART6_PORT, USART6_RXSRC, GPIO_AF_USART6);		
+	
+	io=_io_init(RxBufferSize,TxBufferSize);
+	io->put = putCOM6;
+
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART6, ENABLE);
+ 
+	USART_ClockInitStructure.USART_Clock = USART_Clock_Disable;
+	USART_ClockInitStructure.USART_CPOL = USART_CPOL_Low;
+	USART_ClockInitStructure.USART_CPHA = USART_CPHA_2Edge;
+	USART_ClockInitStructure.USART_LastBit = USART_LastBit_Disable;
+	USART_ClockInit(USART6, &USART_ClockInitStructure);
+ 
+	USART_InitStructure.USART_BaudRate = speed;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+	USART_Init(USART6, &USART_InitStructure);
+
+	/* Enable USART6 */
+	
+	USART_Cmd(USART6, ENABLE);
+	USART_ITConfig(USART6, USART_IT_RXNE, ENABLE);		
+	return io;
+}
 /*******************************************************************************
-* Function Name  : USART1_IRQHandler
+* Function Name  : USART3_IRQHandler
 * Description    : This function handles USART3  interrupt request.
 * Input          : None
 * Output         : None
@@ -252,9 +312,32 @@ int i=0;
 	if(USART_GetFlagStatus(USART3, USART_FLAG_TXE) != RESET) {
 		USART_ClearITPendingBit(USART3, USART_IT_TXE);
 		if (_buffer_pull(__com3->tx,&i,1))															// if data available
-			USART_SendData(USART3, i);																		// send!
+			USART_SendData(USART3, i);																		// 		send!
 		else																														// else
-			USART_ITConfig(USART3, USART_IT_TXE, DISABLE);								// disable interrupt
+			USART_ITConfig(USART3, USART_IT_TXE, DISABLE);								// 		disable interrupt
+	}
+}
+/*******************************************************************************
+* Function Name  : USART6_IRQHandler
+* Description    : This function handles USART6  interrupt request.
+* Input          : None
+* Output         : None
+* Return         : None
+*******************************************************************************/
+void USART6_IRQHandler(void) {
+int i=0;
+	if(USART_GetFlagStatus(USART6, USART_FLAG_RXNE) != RESET) {
+		USART_ClearITPendingBit(USART6, USART_IT_RXNE);
+		i=USART_ReceiveData(USART6);
+		_buffer_push(__com6->rx,&i,1);
+		
+		}
+	if(USART_GetFlagStatus(USART6, USART_FLAG_TXE) != RESET) {
+		USART_ClearITPendingBit(USART6, USART_IT_TXE);
+		if (_buffer_pull(__com6->tx,&i,1))															// if data available
+			USART_SendData(USART6, i);																		// 		send!
+		else																														// else
+			USART_ITConfig(USART6, USART_IT_TXE, DISABLE);								// 		disable interrupt
 	}
 }
 

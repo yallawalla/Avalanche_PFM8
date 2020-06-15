@@ -58,16 +58,19 @@ void 	Initialize_NVIC() {
 			NVIC_InitStructure.NVIC_IRQChannel = TIM8_TRG_COM_TIM14_IRQn;	// fan sensor
 			NVIC_Init(&NVIC_InitStructure);
 
-			NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;				// HW errors
+			NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;					// HW errors
 			NVIC_Init(&NVIC_InitStructure);
 			
 			NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
 			NVIC_Init(&NVIC_InitStructure);
 			
-			NVIC_InitStructure.NVIC_IRQChannel = ADC_IRQn;							// analog watchdogs
+			NVIC_InitStructure.NVIC_IRQChannel = ADC_IRQn;								// analog watchdogs
 			NVIC_Init(&NVIC_InitStructure);
 
-			NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;							// analog watchdogs
+			NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;							// com3
+			NVIC_Init(&NVIC_InitStructure);
+
+			NVIC_InitStructure.NVIC_IRQChannel = USART6_IRQn;							// com6
 			NVIC_Init(&NVIC_InitStructure);
 }
 /******************************************************************************/
