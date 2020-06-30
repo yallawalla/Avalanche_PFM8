@@ -168,7 +168,7 @@ int				i,j;
 					Watchdog_init(300);	
 					Initialize_DAC();
 //---------------------------------------------------------------------------------
-					_stdio(__com6);
+					_stdio(__com1);
 					if(RCC_GetFlagStatus(RCC_FLAG_SFTRST) == SET)
 						__print("\r ... SWR reset, %dMHz\r\n>",SystemCoreClock/1000000);
 					else if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET)

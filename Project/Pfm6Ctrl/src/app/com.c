@@ -767,6 +767,15 @@ TCHAR			buf[128];
 
 //__list directory______________________________________________________________________
 						else if(!strncmp("dir",sc[0],len)) {
+							union {
+								uint16_t fdate;
+								struct { 
+									int	day:5;
+									int	month:4;
+									int	year:7;
+								} date;
+							} f;
+							
 							if(n==2)
 								if(f_opendir(&dir,sc[1])!=FR_OK || f_readdir(&dir,NULL)!=FR_OK)
 									return _PARSE_ERR_OPENFILE;					
@@ -774,11 +783,13 @@ TCHAR			buf[128];
 								f_readdir(&dir,&fno);
 								if(!dir.sect)
 									break;
-									__print("\r\n%-16s",fno.fname);
+								__print("\r\n%-28s",fno.fname);
 								if (fno.fattrib & AM_DIR)
-									__print("/");
+									__print("%16s","/");
 								else
-									__print("%d",(int)fno.fsize);
+									__print("%16d",(int)fno.fsize);
+								f.fdate=fno.fdate;
+								__print("   %2d-%2d-%4d",f.date.day, f.date.month, 1980+f.date.year);
 							}
 						}
 //__iap_________________________________________________________________________________
@@ -1675,8 +1686,7 @@ int					state=0;
 													if(f_chdrive(FS_USB)== FR_OK && f_open(&f0,t,FA_OPEN_EXISTING | FA_READ)!=FR_OK) 
 														continue;
 													if(f_chdrive(FS_CPU)== FR_OK && f_open(&f1,t,FA_CREATE_ALWAYS | FA_WRITE)!=FR_OK) 
-														continue;
-
+														continue;												
 													for (;;) {
 														if((__time__ / 100) % 2)
 															_YELLOW1(1000);
@@ -1691,8 +1701,9 @@ int					state=0;
 													++state;
 													f_close(&f0);																				// close both files
 													f_close(&f1);	
+//													f_utime(t,&fno);
 												}
-//							f_mount(NULL,FS_USB,1);																					// dismount both drives
+//							f_mount(NULL,FS_USB,1);																				// dismount both drives
 //							f_mount(NULL,FS_CPU,1);
 							}
 							if(state>1) {
@@ -1709,6 +1720,104 @@ int					state=0;
 						}
 						return(0);
 					}
+/*******************************************************************************
+* Function Name  : CanHexProg request, server
+* Description    : dekodira in razbije vrstice hex fila na 	pakete 8 bytov in jih
+*								 : pošlje na CAN bootloader
+* Input          : pointer na string, zaporedne vrstice hex fila, <cr> <lf> ali <null> niso nujni
+* Output         : 
+* Return         : 0 ce je checksum error sicer eof(-1). bootloader asinhrono odgovarja z ACK message
+*				 				 : za vsakih 8 bytov !!!
+*******************************************************************************/
+FRESULT			HexBinWrite(char *p, FIL *f) {
+static int	extAddr=0;
+uint32_t		n,a,i,j;
+FRESULT			fr=FR_OK;
+
+						if(HexChecksumError(++p))
+							return FR_INVALID_PARAMETER;
+						n=str2hex(&p,2);
+						a=(extAddr<<16)+str2hex(&p,4);
+						switch(str2hex(&p,2)) {
+							case 00:
+								if(a<_FLASH_TOP)
+									return FR_INVALID_PARAMETER;
+								f_write(f, &a, sizeof(uint32_t), &j);
+								f_write(f, &n, sizeof(uint8_t), &j);
+								while(fr==FR_OK && n--) {
+									i=str2hex(&p,2);
+									fr=f_write(f, &i, sizeof(uint8_t), &j);
+									++p;++p;
+								}	
+								break;
+							case 01:
+								break;
+							case 02:
+								break;
+							case 04:
+							case 05:
+								extAddr=str2hex(&p,4);
+								break;
+						}
+						return(fr);
+}
+/*******************************************************************************
+* Function Name  : CanHexProg request, server
+* Description    : dekodira in razbije vrstice hex fila na 	pakete 8 bytov in jih
+*								 : pošlje na CAN bootloader
+* Input          : pointer na string, zaporedne vrstice hex fila, <cr> <lf> ali <null> niso nujni
+* Output         : 
+* Return         : 0 ce je checksum error sicer eof(-1). bootloader asinhrono odgovarja z ACK message
+*				 				 : za vsakih 8 bytov !!!
+*******************************************************************************/
+FRESULT			USBH_IapBin(void) {	
+FATFS				fs0,fs1;
+DIR					dir;
+FIL					f0,f1;
+TCHAR 			buffer[128];   																										//	file copy buffer */
+FRESULT 		fr=FR_OK;          																								//	FatFs function common result code	*/
+UINT 				br, bw;         																									//	File read/write count */
+FILINFO			fno;
+	
+						if(f_mount(&fs0,"0:",1) ||
+							f_mount(&fs1,"1:",1) ||
+							f_chdrive("1:") || 
+							f_chdir("/sync") ||
+							f_findfirst(&dir,&fno,"/sync","*")) 
+								return FR_DISK_ERR;
+						
+						do {
+							if (fno.fattrib & AM_DIR)
+								continue;
+							fr=FR_DISK_ERR;
+							if(f_chdrive("1:") || f_open(&f1,fno.fname,FA_OPEN_EXISTING | FA_READ))
+								break;
+							if(!strcmp(strchr(fno.fname,'.')+1,"hex")) {
+								strcpy(strchr(fno.fname,'.')+1,"bin");
+								if(f_chdrive("0:") || f_open(&f0,fno.fname,FA_CREATE_ALWAYS | FA_WRITE))
+									break;
+								do {
+									if(f_gets(buffer,128,&f1))
+										fr=HexBinWrite(buffer,&f0);
+								} while(!f_eof(&f1) && fr==FR_OK);
+							} else {
+								if(f_chdrive("0:") || f_open(&f0,fno.fname,FA_CREATE_ALWAYS | FA_WRITE))
+									break;
+								for (;;) {
+									fr = f_read(&f1, buffer, sizeof buffer, &br);	
+									if (fr || br == 0) break; 
+									fr = f_write(&f0, buffer, br, &bw);
+									if (fr || bw < br) break;
+									Watchdog();
+								}
+							}
+							f_close(&f0);
+							f_close(&f1);
+						}  while(f_findnext(&dir,&fno) == FR_OK && *fno.fname);
+						f_close(&f0);
+						f_close(&f1);
+						return(fr);
+}
 /**
 * @}
 */
