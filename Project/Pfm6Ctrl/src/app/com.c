@@ -1315,13 +1315,13 @@ int			u=0,umax=0,umin=0;
 					switch(numscan(++c,cc,',')) {
 						case 0:
 #ifdef	__PFM8__
-							__print("(bank) HV,HV/2,Vc1,Vc2... %.0fV,%5.0fV,%5.0fV,%5.0fV\r\n",_AD2V(ADC3_buf[0].HV,2000,8.0),
-																																								_AD2V(ADC3_buf[0].HV2,2000,8.0),
-																																								_AD2V(ADC3_buf[0].VCAP1,2000,8.0),
-																																								_AD2V(ADC3_buf[0].VCAP2,2000,8.0));
-							__print("         V12,V5,V3      ... %.1fV,%5.1fV,%5.1fV",				_AD2V(ADC3_buf[0].Up12,62,10),
-																																								_AD2V(ADC3_buf[0].Up5,10,10),
-																																								_AD2V(ADC3_buf[0].Up3,10,10));
+							__print("(bank) HV,HV/2,Vc1,Vc2... %.0fV,%5.0fV,%5.0fV,%5.0fV\r\n",_AD2V(ADC3_buf[0].HV,2000.0,8.0),
+																																								_AD2V(ADC3_buf[0].HV2,2000.0,8.0),
+																																								_AD2V(ADC3_buf[0].VCAP1,2000.0,8.0),
+																																								_AD2V(ADC3_buf[0].VCAP2,2000.0,8.0));
+							__print("         V24,V5,V3      ... %.1fV,%5.1fV,%5.1fV",				_AD2V(ADC3_buf[0].Up12,7500.0,560.0),
+																																								_AD2V(ADC3_buf[0].Up5,560.0,560.0),
+																																								_AD2V(ADC3_buf[0].Up3,560.0,560.0));
 #elif 	__PFM6__
 							__print("(bank)  Uc,Uc/2,20,-5 ... %.0fV,%5.0fV,%5.1fV,%5.1fV",	_AD2V(ADC3_buf[0].HV,2000,7.5),
 																																								_AD2V(ADC3_buf[0].HV2,1000,7.5),
