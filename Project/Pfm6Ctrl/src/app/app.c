@@ -456,7 +456,7 @@ int						i=_STATUS_WORD;
 //-------------------------------------------------------------------------------						
 //	critical PFM error handling
 //
-					if(p->Error  & _CRITICAL_ERR_MASK) {
+					if(p->Error  & ~pfm->Errmask  & _CRITICAL_ERR_MASK) {
 						if(p->Simmer.active)	{													// on error = simmer off
 							PFM_command(p,0);
 							}

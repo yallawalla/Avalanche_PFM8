@@ -175,7 +175,7 @@ typedef					enum
 #define					PFM_ERR_VCAP1							0x10000					//
 #define					PFM_ERR_VCAP2							0x20000					//
 #define					PFM_ERR_ETRIG							0x40000					//
-#define					PFM_ERR_VIN								0x08000000				//
+#define					PFM_ERR_VIN								0x08000000			//
 
 extern const char *_errStr[];
 
