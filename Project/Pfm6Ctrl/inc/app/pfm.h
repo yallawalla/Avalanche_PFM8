@@ -68,8 +68,8 @@
 	#define				_Ifullsc		((int)1200)
 	#define				_kmJ				((int)(_V2AD(1000,2000,7.5)*_I2AD(1000)/1000))
 #elif	defined		(__PFM8__)
-	#define				_AD2HV(a)		((int)(((a)*_UREF)/4096.0/_AVG3/_Rdiv(6.2e3,2e6)+0.5))
-	#define				_HV2AD(a)		((int)(((a)*4096.0*_AVG3*_Rdiv(6.2e3,2e6))/_UREF+0.5))
+	#define				_AD2HV(a)		((int)(((a)*_UREF)/4096.0/_AVG3/_Rdiv(8.0e3,2e6)+0.5))
+	#define				_HV2AD(a)		((int)(((a)*4096.0*_AVG3*_Rdiv(8.0e3,2e6))/_UREF+0.5))
 	#define				_Ifullsc		((int)1656)
 	#define				_kmJ				((int)(_V2AD(1000,2000,8.0)*_I2AD(1000)/1000))
 #else

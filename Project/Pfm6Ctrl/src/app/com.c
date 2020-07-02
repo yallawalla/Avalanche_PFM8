@@ -1701,7 +1701,7 @@ int					state=0;
 													++state;
 													f_close(&f0);																				// close both files
 													f_close(&f1);	
-//													f_utime(t,&fno);
+													f_utime(t,&fno);
 												}
 //							f_mount(NULL,FS_USB,1);																				// dismount both drives
 //							f_mount(NULL,FS_CPU,1);

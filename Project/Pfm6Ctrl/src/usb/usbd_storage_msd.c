@@ -275,16 +275,17 @@ int8_t STORAGE_Write (uint8_t lun,
 			return RES_ERROR;
 
 		q=(int *)buf;
-		for(i=0; i<SECTOR_SIZE/4; ++i)	
-			if(*q++)
-				break;
+		
+//		for(i=0; i<SECTOR_SIZE/4; ++i)	
+//			if(*q++)
+//				break;
 
-		if(i<SECTOR_SIZE/4) {												// all zeroes ???
+//		if(i<SECTOR_SIZE/4) {												// all zeroes ???
 			q=(int *)buf;
 			for(i=0; i<SECTOR_SIZE/4; ++i,++p,++q)
 				FLASH_Program((int)p,~(*q));
 			FLASH_Program((int)p,blk_addr);
-		}
+//		}
 		
 		if(--blk_len)
 			return STORAGE_Write (lun, (uint8_t *)q, ++blk_addr, blk_len);
