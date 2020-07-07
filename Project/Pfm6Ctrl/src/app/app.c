@@ -32,13 +32,13 @@ const char *_errStr[]={
 					"20V supply failure",
 					"-5V supply failure",
 #elif	defined (__PFM8__)
-					"12V supply failure",
+					"24V supply failure",
 					"5V supply failure",
 #else
 					"unspecified....",
 					"unspecified....",
 #endif
-					"CMD not allowed",
+					"(800)...unspecified ",
 					"HV out of range",
 					"IGBT fan error",
 					"HV mid voltage out of range",
@@ -46,6 +46,19 @@ const char *_errStr[]={
 					"VCAP1 error",
 					"VCAP2 error",
 					"ext. trigger error",
+					"(80000)...unspecified",
+					"(100000)...unspecified",
+					"(200000)...unspecified",
+					"(400000)...unspecified",
+					"(800000)...unspecified",
+					"err charger status 01",
+					"err charger status 02",
+					"err charger status 03",
+					"err charger status 08",
+					"err charger status 10",
+					"err charger status 20",
+					"err charger status 40",
+					"err charger status 80",
 	NULL
 };
 /*______________________________________________________________________________
@@ -340,12 +353,12 @@ static		int		bounce=0;
 					p->Up5  += (8*(ADC3_buf[0].Up5)  - p->Up5)/8;
 					p->Up3  += (8*(ADC3_buf[0].Up3)  - p->Up3)/8;
 
-					if(abs(p->Up12 - 8*_V2AD(12,62,10)) >  8*_V2AD(2,62,10) && __time__ > 3000)                       
+					if(abs(p->Up12 - 8*_V2AD(24.0,7500.0,560.0)) >  8*_V2AD(2.0,7500.0,560.0) && __time__ > 3000)                       
 						_SET_ERROR(p,PFM_ERR_48V);
 					else
 						_CLEAR_ERROR(p,PFM_ERR_48V);
 					
-					if(abs(p->Up5 - 8*_V2AD(5,10,10)) >  8*_V2AD(1,10,10) && __time__ > 3000)                       
+					if(abs(p->Up5 - 8*_V2AD(5.0,560.0,560.0)) >  8*_V2AD(0.5,560.0,560.0) && __time__ > 3000)                       
 						_SET_ERROR(p,PFM_ERR_15V);
 					else
 						_CLEAR_ERROR(p,PFM_ERR_15V);
@@ -1125,6 +1138,9 @@ void			PFM_command(PFM *p, int n) {
 int						u=p->HV/7;
 							if(_MODE(p,_CH1_SINGLE_TRIGGER))															// single trigger config.. as from V1.11
 								u=2*p->HV/7;
+#ifdef __PFM8__
+							u=_HV2AD(50);
+#endif
 							_TIM.I1off=ADC1_simmer.I;																			// get current sensor offset
 							_TIM.U1off=ADC1_simmer.U;																			// check idle voltage
 							if(abs(u - _AVG3*ADC1_simmer.U) > _HV2AD(50)) {								// HV +/- 50 range ???
@@ -1136,6 +1152,9 @@ int						u=p->HV/7;
 int						u=p->HV/7;
 							if(_MODE(p,_CH2_SINGLE_TRIGGER))															// single trigger config.. as from V1.11
 								u=2*p->HV/7;
+#ifdef __PFM8__
+							u=_HV2AD(50);
+#endif
 							_TIM.I2off=ADC2_simmer.I;
 							_TIM.U2off=ADC2_simmer.U;
 							if(abs(u - _AVG3*ADC2_simmer.U) > _HV2AD(50)) {

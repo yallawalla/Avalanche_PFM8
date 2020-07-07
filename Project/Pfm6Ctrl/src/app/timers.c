@@ -350,7 +350,8 @@ void 		*Initialize_F2V(_proc *p) {
 				pfm->Trigger.timeout=0;
 			}
 		}
-		if(pfm->Error & ~pfm->Errmask & _CRITICAL_ERR_MASK)
+//		if(pfm->Error & ~pfm->Errmask & _CRITICAL_ERR_MASK)
+		if(pfm->Error & ~pfm->Errmask)
 			GPIO_SetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);
 		else
 			GPIO_ResetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);
@@ -376,7 +377,7 @@ void 		__EXTI_IRQHandler(void)
 						if(_PFM_CWBAR)
 							_SET_EVENT(pfm,_TRIGGER);
 						else
-							pfm->Trigger.timeout=__time__+5;											// pulse rearm in 5 ms					
+							pfm->Trigger.timeout=__time__+5;										// pulse rearm in 5 ms					
 					} else {																								// pfm6 mode
 						if(_PFM_CWBAR) {																			// rising edge, main error reset & restart
 							_SET_STATUS(pfm,_PFM_CWBAR_STAT);
