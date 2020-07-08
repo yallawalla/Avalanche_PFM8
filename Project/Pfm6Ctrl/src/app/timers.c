@@ -129,7 +129,7 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		EXTI_ClearITPendingBit(_FAULT_INT_line);
 		EXTI_InitStructure.EXTI_Line = _FAULT_INT_line;
 		EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-		EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  
+		EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
 		EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 		EXTI_Init(&EXTI_InitStructure);
 // ________________________________________________________________________________
@@ -392,7 +392,9 @@ void 		__EXTI_IRQHandler(void)
 
 				if(EXTI_GetITStatus(_FAULT_INT_line) == SET) { 						// IGBT FAULT					
 					EXTI_ClearITPendingBit(_FAULT_INT_line);								// clear flag
+#ifndef __PFM8__
 					if(_PFM_CWBAR)
+#endif
 						_SET_ERROR(pfm,PFM_ERR_DRVERR);
 				}
 }
