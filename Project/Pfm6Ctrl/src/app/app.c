@@ -368,18 +368,18 @@ static		int		bounce=0;
 					else
 						_SET_ERROR(p,PFM_SCRFIRED);		
 					
-					if(ADC3_buf[0].HV > 100) {
+					if(ADC3_buf[0].HV > _HV2AD(100.0)) {
 						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].HV2) > ADC3_buf[0].HV/10)
 							_SET_ERROR(p,PFM_HV2_ERR);
 						else
 							_CLEAR_ERROR(p,PFM_HV2_ERR);
 						
-						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].VCAP1) > ADC3_buf[0].HV/8)
+						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].VCAP1) > ADC3_buf[0].HV/4)
 							_SET_ERROR(p,PFM_ERR_VCAP1);
 						else
 							_CLEAR_ERROR(p,PFM_ERR_VCAP1);
 
-						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].VCAP2) > ADC3_buf[0].HV/8)
+						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].VCAP2) > ADC3_buf[0].HV/4)
 							_SET_ERROR(p,PFM_ERR_VCAP2);
 						else
 							_CLEAR_ERROR(p,PFM_ERR_VCAP2);

@@ -351,9 +351,10 @@ void 		*Initialize_F2V(_proc *p) {
 			}
 		}
 //		if(pfm->Error & ~pfm->Errmask & _CRITICAL_ERR_MASK)
-		if(pfm->Error & ~pfm->Errmask)
+		if(pfm->Error & ~pfm->Errmask) {
 			GPIO_SetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);
-		else
+			PFM_command(pfm,0);
+		}	else
 			GPIO_ResetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);
 	}
 	return Initialize_F2V;

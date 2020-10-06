@@ -27,7 +27,7 @@
 #if		defined		(__PFM6__)
 	#define 				SW_version	402		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	700
+	#define 				SW_version	701
 #else
 *** error, define HW platform
 #endif
@@ -719,7 +719,7 @@ int			SetChargerVoltage(int);
 
 #define	_CRITICAL_ERR_MASK		(PFM_ERR_DRVERR | PFM_ERR_PULSEENABLE | PFM_ADCWDG_ERR |							\
 																PFM_ERR_PSRDYN | PFM_ERR_LNG | PFM_HV2_ERR | 												\
-																	PFM_I2C_ERR | PFM_ERR_VCAP1 | PFM_ERR_VCAP2 | PFM_ERR_ETRIG | PFM_ERR_VIN)
+																	PFM_I2C_ERR | PFM_ERR_VCAP1 | PFM_ERR_VCAP2 | PFM_ERR_VIN)
 							
 
 #define	_PFM_CWBAR_STAT				PFM_ERR_PULSEENABLE
