@@ -148,18 +148,11 @@
 /* #define VECT_TAB_SRAM */
 #define VECT_TAB_OFFSET  0x00 /*!< Vector Table base offset field. 
                                    This value must be a multiple of 0x200. */
-/******************************************************************************/
+#define PLL_M		HSE_VALUE/1000000
 
-/************************* PLL Parameters *************************************/
-/* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N */
-#define PLL_M      25
-#define PLL_N      336
-
-/* SYSCLK = PLL_VCO / PLL_P */
-#define PLL_P      2
-
-/* USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ */
-#define PLL_Q      7
+#define PLL_N		240
+#define PLL_P		2
+#define PLL_Q		5
 
 /******************************************************************************/
 
@@ -331,11 +324,11 @@ void SystemInit(void)
   SetSysClock();
 
   /* Configure the Vector Table location add offset address ------------------*/
-#ifdef VECT_TAB_SRAM
-  SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM */
-#else
-  SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
-#endif
+//#ifdef VECT_TAB_SRAM
+//  SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM */
+//#else
+//  SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
+//#endif
 }
 /**
   * @brief  Configures the System clock source, PLL Multiplier and Divider factors, 

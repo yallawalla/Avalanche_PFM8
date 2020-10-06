@@ -11,18 +11,10 @@
 /** @addtogroup PFM6_Setup
 * @{
 */
-#if defined  (STM32F2XX)
-#include		"stm32f2xx.h"
-#elif defined (STM32F10X_HD)
-#include		"stm32f10x.h"
-#elif	undefined (STM32F2XX || STM32F10X_HD)
-*** undefined target !!!!
-#endif
-#include <string.h>
-#include <stdio.h>
-#include <ctype.h>
-#include "io.h"
-_io	*__com0, *__com1, *__dbug;
+#include	"cpu.h"
+#include	<string.h>
+#include	<stdio.h>
+#include	"io.h"
 /*******************************************************************************
 * Function Name  : DMA_Configuration
 * Description    : Configures the DMA.
@@ -30,21 +22,40 @@ _io	*__com0, *__com1, *__dbug;
 * Output         : None
 * Return         : None
 *******************************************************************************/
-#define USART1_DR_Base  USART1_BASE+4
-#define RxBufferSize		256
-#define TxBufferSize		256
+#ifdef	__DISC4__
+#define	USART3_TX_PIN		GPIO_Pin_8
+#define	USART3_RX_PIN		GPIO_Pin_9
+#define	USART3_PORT			GPIOD
+#define	USART3_TXSRC		GPIO_PinSource8
+#define	USART3_RXSRC		GPIO_PinSource9
+#else
+#define	USART3_RX_PIN		GPIO_Pin_11
+#define	USART3_TX_PIN		GPIO_Pin_10
+#define	USART3_PORT			GPIOC
+#define	USART3_RXSRC		GPIO_PinSource11
+#define	USART3_TXSRC		GPIO_PinSource10
+
+#define	USART6_RX_PIN		GPIO_Pin_9
+#define	USART6_TX_PIN		GPIO_Pin_14
+#define	USART6_PORT			GPIOG
+#define	USART6_RXSRC		GPIO_PinSource9
+#define	USART6_TXSRC		GPIO_PinSource14
+#endif
+#define RxBufferSize		128
+#define TxBufferSize		128
 /* Private variables ---------------------------------------------------------*/
 USART_InitTypeDef USART_InitStructure;
+#if	!defined (__DISC4__)	&& !defined (__DISC7__)
 void DMA_Configuration(_io *io)
-{
+{	
 	DMA_InitTypeDef DMA_InitStructure;
 	DMA_StructInit(&DMA_InitStructure);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
 
-/*DMA Channel4 USART1 TX*/
+/*DMA2 channel4, stream7  USART1 TX*/
 	DMA_DeInit(DMA2_Stream7);
 	DMA_InitStructure.DMA_Channel = DMA_Channel_4;
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)USART1_DR_Base;
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)USART1_BASE+4;
 	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)(io->tx->_buf);
 	DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
 	DMA_InitStructure.DMA_BufferSize = 0;
@@ -55,18 +66,16 @@ void DMA_Configuration(_io *io)
 	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
 	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
 	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
-//	DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
-//	DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;
 	DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
 	DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
 
 	DMA_Init(DMA2_Stream7, &DMA_InitStructure);
 	DMA_Cmd(DMA2_Stream7, ENABLE);
 
-/*DMA Channel4 USART1 RX*/
+/*DMA2 channel4, stream2 USART1 RX*/
 	DMA_DeInit(DMA2_Stream2);
 	DMA_InitStructure.DMA_Channel = DMA_Channel_4;
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)USART1_DR_Base;
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)USART1_BASE+4;
 	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)(io->rx->_buf);
 	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
 	DMA_InitStructure.DMA_BufferSize = RxBufferSize;
@@ -78,31 +87,7 @@ void DMA_Configuration(_io *io)
 	USART_DMACmd(USART1, USART_DMAReq_Rx | USART_DMAReq_Tx, ENABLE);
 }
 //______________________________________________________________________________________
-volatile int32_t 
-		ITM_RxBuffer=ITM_RXBUFFER_EMPTY; 
-int	__getDMA(_buffer *rx) {
-int	i=0;
-#ifdef __DISCO__
-	if(ITM_CheckChar()) {
-		i=ITM_ReceiveChar();
-		_buffer_push(rx,&i,1);
-	}		
-#else
-	if(DMA2_Stream2->NDTR)
-		rx->_push=&(rx->_buf[rx->size - DMA2_Stream2->NDTR]);
-	else
-		rx->_push=rx->_buf;
-#endif
-	if(_buffer_pull(rx,&i,1))
-		return i;
-	else
-		return EOF;
-}
-//______________________________________________________________________________________
 int	__putDMA(_buffer *tx, int	c) {
-#ifdef __DISCO__
-	return	ITM_SendChar(c);
-#else
 static
 	int n=0;
 
@@ -121,16 +106,49 @@ static
 	DMA2->HIFCR = 0x0F400000;																					// clear all flags
 	DMA2_Stream7->CR |= 0x00000001;																		// stream 7 on
 	return(c);
-#endif
 }
 //______________________________________________________________________________________
-_io *Initialize_USART(int speed) {
+int	__getDMA(_buffer *rx) {
+int	i=0;
+	if(DMA2_Stream2->NDTR)
+		rx->_push = &(rx->_buf[rx->size - DMA2_Stream2->NDTR]);
+	else
+		rx->_push = rx->_buf;
+	if(_buffer_pull(rx,&i,1))
+		return i;
+	else
+		return EOF;
+}
+#else
+//______________________________________________________________________________________
+volatile int32_t  ITM_RxBuffer=ITM_RXBUFFER_EMPTY; 
+void DMA_Configuration(_io *io) {	
+
+}
+//______________________________________________________________________________________
+int	__putDMA(_buffer *tx, int	c) {
+	ITM_SendChar(c);
+	return  c;
+}
+//______________________________________________________________________________________
+int	__getDMA(_buffer *rx) {
+int	i=0;
+	if(_buffer_pull(rx,&i,1))
+		return i;
+	else if(ITM_CheckChar())
+		return ITM_ReceiveChar();
+	else
+		return EOF;
+}
+#endif
+//______________________________________________________________________________________
+_io *Initialize_USART1(int speed) {
 
 USART_InitTypeDef 			USART_InitStructure;
 USART_ClockInitTypeDef  USART_ClockInitStructure;
 GPIO_InitTypeDef				GPIO_InitStructure;
 _io 										*io;
-#if  defined (__PFM6__)
+
 	GPIO_StructInit(&GPIO_InitStructure);
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
  	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -143,26 +161,7 @@ _io 										*io;
 
  	GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);		
  	GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);		
-#elif  defined (__DISCO__)
-	GPIO_StructInit(&GPIO_InitStructure);
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
- 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
- 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
-
- 	GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_USART1);		
- 	GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_USART1);		
-#else
-	#### error, no HW defined
-#endif
-	io=_io_init(RxBufferSize,TxBufferSize);	// initialize buffer
-	io->get= __getDMA;	
-	io->put= __putDMA;
-
+	
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
  
 	USART_ClockInitStructure.USART_Clock = USART_Clock_Disable;
@@ -178,273 +177,170 @@ _io 										*io;
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 	USART_Init(USART1, &USART_InitStructure);
-
-	/* Enable USART1 */
-	DMA_Configuration(io);
 	USART_Cmd(USART1, ENABLE);
-//	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);		
+	
+	io=_io_init(RxBufferSize,TxBufferSize);
+	io->get= __getDMA;	
+	io->put= __putDMA;
+	DMA_Configuration(io);
 	return io;
 }
 //______________________________________________________________________________________
-//
-// zamenjava za gets, ne èaka, vraèa pointer na string brez \r(!!!) ali NULL	
-// èe je mode ECHO (-1) na
-//							<cr> izpiše <cr><lf>
-//							<backspace> ali <del> izpiše <backspace><space><backspace>	
-//
+extern _io *__com3,*__com6;
 //______________________________________________________________________________________
-char		*cgets(int c, int mode)
-{
-_buffer		*p=__stdin.io->gets;
-			
-			if(!p)
-				p=__stdin.io->gets=_buffer_init(__stdin.io->rx->size);
-			switch(c) {
-				case EOF:		
-					break;
-				case '\r':
-				case '\n':
-					*p->_push = '\0';
-					p->_push=p->_pull=p->_buf;
-					return(p->_buf);
-				case 0x08:
-				case 0x7F:
-					if(p->_push != p->_pull) {
-						--p->_push;
-						if(mode)
-							__print("\b \b");
-					}
-					break;
-				default:
-					if(p->_push != &p->_buf[p->size-1])
-						*p->_push++ = c;
-					else  {
-						*p->_push=c;
-						if(mode)
-							fputc('\b',&__stdout);
-					}
-					if(mode) {
-						if(isprint(c))
-							fputc(c,&__stdout);
-						else
-							__print("%c%02X%c",'<',c,'>');
-					}
-					break;
-			}
-			return(NULL);
+int	putCOM3(_buffer *p, int	c) {
+	if(_buffer_push(__com3->tx,&c,1)==1)
+		USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+	else
+		c=EOF;
+	return(c);
 }
 //______________________________________________________________________________________
-int			strscan(char *s,char *ss[],int c) {
-			int		i=0;
-			while(1)
-			{
-				while(*s==' ') ++s;
-				if(!*s)
-					return(i);
-
-				ss[i++]=s;
-				while(*s && *s!=c)
-				{
-					if(*s==' ')
-						*s='\0';
-					s++;
-				}
-				if(!*s)
-					return(i);
-				*s++=0;
-			}
+int	putCOM6(_buffer *p, int	c) {
+	if(_buffer_push(__com6->tx,&c,1)==1)
+		USART_ITConfig(USART6, USART_IT_TXE, ENABLE);
+	else
+		c=EOF;
+	return(c);
 }
 //______________________________________________________________________________________
-int		numscan(char *s,char *ss[],int c) {
-			while(*s && !isdigit(*s)) 
-				++s;
-			return(strscan(s,ss,c));
+_io *Initialize_USART3(int speed) {
+
+USART_InitTypeDef 			USART_InitStructure;
+USART_ClockInitTypeDef  USART_ClockInitStructure;
+_io 										*io;
+GPIO_InitTypeDef				GPIO_InitStructure;
+	
+	GPIO_StructInit(&GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+ 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_Pin = USART3_TX_PIN;
+	GPIO_Init(USART3_PORT, &GPIO_InitStructure);
+	
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+ 	GPIO_InitStructure.GPIO_Pin = USART3_RX_PIN;
+	GPIO_Init(USART3_PORT, &GPIO_InitStructure);
+
+ 	GPIO_PinAFConfig(USART3_PORT, USART3_TXSRC, GPIO_AF_USART3);		
+ 	GPIO_PinAFConfig(USART3_PORT, USART3_RXSRC, GPIO_AF_USART3);		
+	
+	io=_io_init(RxBufferSize,TxBufferSize);
+	io->put = putCOM3;
+
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+ 
+	USART_ClockInitStructure.USART_Clock = USART_Clock_Disable;
+	USART_ClockInitStructure.USART_CPOL = USART_CPOL_Low;
+	USART_ClockInitStructure.USART_CPHA = USART_CPHA_2Edge;
+	USART_ClockInitStructure.USART_LastBit = USART_LastBit_Disable;
+	USART_ClockInit(USART3, &USART_ClockInitStructure);
+ 
+	USART_InitStructure.USART_BaudRate = speed;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+	USART_Init(USART3, &USART_InitStructure);
+
+	/* Enable USART3 */
+	
+	USART_Cmd(USART3, ENABLE);
+	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);		
+	return io;
 }
 //______________________________________________________________________________________
-int			hex2asc(int i)
-{
-			if(i<10)
-				return(i+'0');
-			else 
-				return(i-10+'A');
-}
-//_____________________________________________________________________________________
-int			asc2hex(int i)
-{
-			if(isxdigit(i))
-			{
-				if(isdigit(i))
-					return(i-'0');
-				else
-					return(toupper(i)-'A'+0x0a);
-			}
-			else
-				return(0);
-}
-//______________________________________________________________________________________
-int			getHEX(char *p, int n)
-{
-			int	i=0;
-			while(n-- && isxdigit(*p))
-				i=(i<<4) | asc2hex(*p++);
-			return(i);
-}
-//______________________________________________________________________________________
-void		putHEX(unsigned int i,int n)
-{
-			if(n>1)
-				putHEX(i>>4,n-1);
-			fputc(hex2asc(i & 0x0f),&__stdout);
-}
-//_____________________________________________________________________________________
-char		*endstr(char *p)
-{
-			while(*p)
-				++p;
-			return(p);
-}
-//_____________________________________________________________________________________
-#define		HEXREC3
-//_____________________________________________________________________________________
-int			sDump(char *p,int n)
-{
-			int	i,j;
+_io *Initialize_USART6(int speed) {
 
-#ifdef	HEXREC1
-			i=(int)p + ((int)p >> 8);
-			if(n<252)
-				j=n;
-			else
-				j=252;
-			n -= j;
-			i += (j+3);
-			__print("\r\nS1%02X%04X",j+3,(int)p);
-#endif
+USART_InitTypeDef 			USART_InitStructure;
+USART_ClockInitTypeDef  USART_ClockInitStructure;
+_io 										*io;
+GPIO_InitTypeDef				GPIO_InitStructure;
+	
+	GPIO_StructInit(&GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+ 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_Pin = USART6_TX_PIN;
+	GPIO_Init(USART6_PORT, &GPIO_InitStructure);
+	
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+ 	GPIO_InitStructure.GPIO_Pin = USART6_RX_PIN;
+	GPIO_Init(USART6_PORT, &GPIO_InitStructure);
 
-#ifdef	HEXREC2
-			i=(int)p + ((int)p >> 8) + ((int)p >> 16);
-			if(n<250)
-				j=n;
-			else
-				j=250;
-			n -= j;
-			i += (j+4);
-			__print("\r\nS2%02X%06X",j+4,(int)p);
-#endif
+ 	GPIO_PinAFConfig(USART6_PORT, USART6_TXSRC, GPIO_AF_USART6);		
+ 	GPIO_PinAFConfig(USART6_PORT, USART6_RXSRC, GPIO_AF_USART6);		
+	
+	io=_io_init(RxBufferSize,TxBufferSize);
+	io->put = putCOM6;
 
-#ifdef	HEXREC3
-			i=(int)p + ((int)p >> 8)+ ((int)p >>16)+ ((int)p >> 24);
-			if(n<248)
-				j=n;
-			else
-				j=248;
-			n -= j;
-			i += (j+5);
-			__print("\r\nS3%02X%08X",j+5,(int)p);
-#endif
-//_____________________________________________________________________________________
-			while(j--)
-			{
-				i += *p;
-				putHEX(*p++,2);
-			}
-			putHEX(~i,2);
-			if(n)
-				sDump(p,n);
-			return(-1);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART6, ENABLE);
+ 
+	USART_ClockInitStructure.USART_Clock = USART_Clock_Disable;
+	USART_ClockInitStructure.USART_CPOL = USART_CPOL_Low;
+	USART_ClockInitStructure.USART_CPHA = USART_CPHA_2Edge;
+	USART_ClockInitStructure.USART_LastBit = USART_LastBit_Disable;
+	USART_ClockInit(USART6, &USART_ClockInitStructure);
+ 
+	USART_InitStructure.USART_BaudRate = speed;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+	USART_Init(USART6, &USART_InitStructure);
+
+	/* Enable USART6 */
+	
+	USART_Cmd(USART6, ENABLE);
+	USART_ITConfig(USART6, USART_IT_RXNE, ENABLE);		
+	return io;
 }
-//_____________________________________________________________________________________
-int			iDump(int *p,int n)
-{
-			int		i,j,k;
-			union 	{int i; char c[sizeof(int)];} u;
-
-#ifdef	HEXREC1
-			i=(int)p + ((int)p >> 8);
-			if(n < (255-3)/sizeof(int))
-				j=n;
-			else
-				j=(255-3)/sizeof(int);
-			n -= j;
-			i += (sizeof(int)*j+3);
-			__print("\r\nS1%02X%04X",sizeof(int)*j+3,(int)p);
-#endif
-
-#ifdef	HEXREC2
-			i=(int)p + ((int)p >> 8) + ((int)p >> 16);
-			if(n < (255-5)/sizeof(int))
-				j=n;
-			else
-				j=(255-5)/sizeof(int);
-			n -= j;
-			i += (sizeof(int)*j+4);
-			__print("\r\nS2%02X%06X",sizeof(int)*j+4,(int)p);
-#endif
-
-#ifdef	HEXREC3
-			i=(int)p + ((int)p >> 8)+ ((int)p >>16)+ ((int)p >> 24);
-			if(n < (255-7)/sizeof(int))
-				j=n;
-			else
-				j=(255-7)/sizeof(int);
-			n -= j;
-			i += (sizeof(int)*j+5);
-			__print("\r\nS3%02X%08X",sizeof(int)*j+5,(int)p);
-#endif
-//_____________________________________________________________________________________
-			while(j--)
-			{
-				u.i=*p++;
-				for(k=0; k<sizeof(int); ++k)
-				{
-					i += u.c[k]; 
-					putHEX(u.c[k] ,2);
-				}
-			}
-			putHEX(~i,2);
-			if(n)
-				iDump(p,n);
-			return(-1);
+/*******************************************************************************
+* Function Name  : USART3_IRQHandler
+* Description    : This function handles USART3  interrupt request.
+* Input          : None
+* Output         : None
+* Return         : None
+*******************************************************************************/
+void USART3_IRQHandler(void) {
+int i=0;
+	if(USART_GetFlagStatus(USART3, USART_FLAG_RXNE) != RESET) {
+		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
+		i=USART_ReceiveData(USART3);
+		_buffer_push(__com3->rx,&i,1);
+		}
+	if(USART_GetFlagStatus(USART3, USART_FLAG_TXE) != RESET) {
+		USART_ClearITPendingBit(USART3, USART_IT_TXE);
+		if (_buffer_pull(__com3->tx,&i,1))															// if data available
+			USART_SendData(USART3, i);																		// 		send!
+		else																														// else
+			USART_ITConfig(USART3, USART_IT_TXE, DISABLE);								// 		disable interrupt
+	}
 }
-//_____________________________________________________________________________________
-int			sLoad(char *p)
-{
-			int	 err,k,n;
-			char *q,*a=NULL;
-			k=*++p;												// skip 'S', k='1','2','3'
-			++p;
-			err=n=getHEX(p,2);
-			q=p;
-			++q;++q;
-			while(--n) {
-				err += getHEX(q,2);
-				++q;++q;
-			}
-			if(((~err) & 0xff) != getHEX(q,2))
-				__print("...checksum error !");
-			else {
-				n=getHEX(p,2);				++p;++p;
-				switch(k) {
-				case '1':
-					a=(char *)getHEX(p,4);	++p;++p;++p;++p;
-					n=n-3;
-					break;
-				case '2':
-					a=(char *)getHEX(p,6);	++p;++p;++p;++p;++p;++p;
-					n=n-4;
-					break;
-				case '3':
-					a=(char *)getHEX(p,8);	++p;++p;++p;++p;++p;++p;++p;++p;
-					n=n-5;
-					break;
-				}
-				while(n--) {
-					*(char *)a=getHEX(p,2);
-					++a;++p;++p;
-				}
-			}
-			return(-1);
+/*******************************************************************************
+* Function Name  : USART6_IRQHandler
+* Description    : This function handles USART6  interrupt request.
+* Input          : None
+* Output         : None
+* Return         : None
+*******************************************************************************/
+void USART6_IRQHandler(void) {
+int i=0;
+	if(USART_GetFlagStatus(USART6, USART_FLAG_RXNE) != RESET) {
+		USART_ClearITPendingBit(USART6, USART_IT_RXNE);
+		i=USART_ReceiveData(USART6);
+		_buffer_push(__com6->rx,&i,1);
+		
+		}
+	if(USART_GetFlagStatus(USART6, USART_FLAG_TXE) != RESET) {
+		USART_ClearITPendingBit(USART6, USART_IT_TXE);
+		if (_buffer_pull(__com6->tx,&i,1))															// if data available
+			USART_SendData(USART6, i);																		// 		send!
+		else																														// else
+			USART_ITConfig(USART6, USART_IT_TXE, DISABLE);								// 		disable interrupt
+	}
 }
+
 /**
 * @}
 */ 

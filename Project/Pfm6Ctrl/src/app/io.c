@@ -16,6 +16,12 @@
 #include 	<stdarg.h>
 #include 	<string.h>
 #include 	"io.h"
+//_________________________________________________________________________________
+_io			*_stdio(_io	*p) {
+_io			*io=stdin->io;
+				stdin->io=stdout->io=p;
+				return(io);
+}
 //______________________________________________________________________________________
 //
 //	struct _buffer
@@ -132,14 +138,14 @@ int			__put (_buffer *p, int c) {
 //
 //	io port init instance
 //______________________________________________________________________________________
-_io			*_io_init(int rxl, int txl) {
+_io			*_io_init(int rx, int tx) {
 _io			*p=calloc(1,sizeof(_io));
 				if(p) {
-					p->rx=_buffer_init(rxl);
-					p->tx=_buffer_init(txl);
+					p->rx=_buffer_init(rx);
+					p->tx=_buffer_init(tx);
 					p->get=__get;
 					p->put=__put;
-					p->arg.io=NULL;
+					p->arg.parse=NULL;
 					if(p->rx && p->tx)
 						return(p);
 					if(p->rx)

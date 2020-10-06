@@ -469,6 +469,7 @@ nobenih sprememb, samo simmer je dvignjen na 40us !
 .uporabi se za nastavitev ADC DMA intervala in cas integracije v Eack
 
 - 27.11.2015, unit testing
+
 - dodani CAN filtri za energometer
 - dodan debug izpis za energ. message
 - sprememba konzolnega ukaza za CAN '_' na '<', vpis v CAN rx buffer"
@@ -505,20 +506,293 @@ v 2.12 Feb 24 2016, <EFF7B41B>
 
 24.8.2016
 - aktiviran filter za glitche...
+
 7.9.2016
-- pri konz. vnosu HV je bila spodnja meja na HV-2*HV/3 namesto 2*HV/3, lapsus ...
+- pri konz. vnosu HV je bila default spodnja meja na HV-2*HV/3 namesto 2*HV/3, lapsus ...
 
-10.1.2018
+12.9.2016
+- zmanjšana heap in stack ( na 8k), _MAX_BURST doseže 11 ms
 
-V2.14 	
-	zahteve:
-		- zagonska hitrost ventilatorjev
-		- povecana toleranca za error PFM_STAT_UBHIGH na +-50V
-	wish list:
-		- symb. PFM_STAT_UBHIGH zamenjan z PFM_ERR_LNG
-		- blokirani izpisi v ff.c
+14.9.2016
+- analog watchdog za tok na flesu, sprememba CLI ...>i dac1%, dac2%, Isimm(A), Imax(A)
+													>i 75,75,50,750
+											
+23.9.2016
+- simulacija PFN odziva ???
+
+27.9.2016
+- scaling PFN parametrov -- smafu :(
+- pod __TEST__ mode
+
+6.10.2016
+- can message 0x72, _PFM_SetHVmode // napetost 0 se ignorira, ostane default iz cfg.ini in charger6 se ne prenastavlja
+- konfiguracija se menja samo, ce so parametri prisotni (DLC > 4) 
+- error 0090-0004 pomeni napako v komunikaciji s chargerjem
+ 
+10.10.2016
+
+  CAN _PFM_simmer_set message, spremeniti v format 
+  
+			(byte)cmd[0x06], (short)pw1[ns], (short)pw2[ns], (byte)rate1[us], (byte)rate2[us]
+
+  - Preveriti število in pravilen obseg vseh parametrov, za pw 120-500, za rate 10-100, sicer pusti prejsnje stanje in sprozi error 0090-0004 
+  - Ce sta prisotna samo prva dva parametra, se obnaša po starem...
+
+12.10.2016
+  - Pri aktiviranju analog watchdog za current limit je potrebno paziti na trenutno konfiguracijo TriggerADC() v adc.c !!! 
+  __SWEEPS__ mode, pfm->Burst->Count, premetat parametre po strukturah v pfm.h
+  
+14.10.2016
+  - __SWEEPS__
+  - bug, app.c, Pfm_Command ina n=0 zakomentiran...
+
+17.10.2016, neodvisna kanala, ne dela .... !
+19.10.2016, neodvisna kanala, problem z locenima intervaloma meritve, se ne dela !!!
+21.10.2016, timer 1,8 interrupt koncno dela
+			spremenjen koncept za _TEST_ mode
+
+26.10.2016	PULSE_FINISHED se prestavi iz TIM Isr na konec ADC DMA interrupt, da se zakjuci odziv na ADC preden se gre racunat energija. 
+			za  nazaj naj bi blo OK, ker je bil dozdaj itak samo en interval za vse kanale ???
+
+9.11.2016 	smafu v razporeditvi SetPwmTab ...
+
+23.11.2016	bug v TriggerADC... argument p je lahko NULL in ga ne smes uporabljat v proceduri kot pointer na pfm objekt :):):)
+			>v 2.13 Nov 23 2016, <31584BBF>
 		
-	v 2.14 Jan 12 2018, <50457B50>
+25.11.2016	Spremenjen trigger in timers.c, handler, Eack in TriggerADC uporabljajo skupno strukturo, eint se doloca glede na obratovalni rezim
+
+9.12.2016	ITM debug prenesen v App_Init. metodi getITM in putITM nadomestita orig. __get() in __put()
+			*** kanala za flash U in I sta spremenjena za test __DISC7__
+			*** TRGO za TIM8 koda je razlicna za stm32f4xx in stm32f7xxx
+10.12.2016	VcpDeInit bug.... arg. __com1 je bil klican z naslovom namesto z vsebino... ni blo za opazit, ker se ne klice 
+			v normalnem delovanju	
+			bug v CAN remote console, klic na _proc_add je imel v argumentu (io *)&__com namesto (io *)__com; ostanek od prejšnjega
+			nacina klicanja _proc_loop iz statatice strukture !!!
+			v App_Init ni vec posebej kodiranja za can in i2c inicializacijo na _DISC4/7. Konfiguracijo se nastavi 
+			iz konzole (-i in -can loop, zaradi unit testa)
+
+//----------------------------
+PFM8 rekonfiguracija
+
+3.1.2017	- spremenjena konfiguracija folderja stm, FatFs v Utilities, na Projects ostanejo samo osnovni projekti
+			- rekonf. za PFM8 koncana, target define __PFM8__
+			- dodan skupni handler za EXTI interrupt, timerji preizkušeni ..
+			
+
+9.1.2017    - modif. za tandem
+			- dva locena burst objekta za vnos parametrov
+			- stari Burst se spr. v pointer, ki se aktivira s 
+				>s 0-3
+			- v alter mode brez upoštevanja števila pulzov...
+			- alter starta z zadnjim izbranim kanalom 
+				>s 1 ali 2
+				
+12.1.2017	Dnevni backup
+			- rekonf. simmer objekta
+			- rekonf. PFM_command.... brez staticnih spremenljivk, 
+			  prestavljene so v simmer objekt
+			- modif. PFM_command....  zaenkrat. je predvideno, da v pfm8 vedno delata oba simmerja/fleša hkrati (>s 3). 
+			  Laser oz. trigger je možnno tako izbrati sam z _CH1_SINGLE_TRIGGER, ki se doslej uporablja v ST konfiguraciji
+//----------------------------
+27.1.2017	- sprememba PFM_status_send, pri wklopljenih obeh fleših (s 3), je v primeru napake enega fleša javljal oba
+>v 2.15 Jan 27 2017, <4865DE99>
+
+//----------------------------
+30.1.2017
+
+jeba v usb host in usb device driverjih - usb ID pin pade pa PA10 (USART1 RX) 
+v usbd_conf.c in usbh_conf.c zakomentirat inic. PA10 in PD5 (power pin :))
+
+1.2.2017
+PFM8, dodan task F2V, na CAN rx pretvarja freq, v napetost za pfm->burst in tx signal. stanje CRITICAL error
+
+22.2.2017
+- debug, dodan text. printout
+- adc watchdog 1,2, na ISR dodan disable interrupt, sicer ponavljajoci interrupt podaljšuje pulz
+
+1.3.2017
+- bug v parserju, "p" brez parametrov ne sme klicat SetPfmTab()
+
+14.3.2017
+- popravljen bug za Pfm8 na TIM8/4 v _TIMERS_PWM_SET()
+- ADC na PC0 ne kaže prou ??!? Odstranil stari vbus za discovery, ne pomaga !
+
+20.3.2017
+- _proc_loop klice taske s pointerjem na proces v argumentu
+- vsi taski imajo spremenjen argument
+- VSPfm6 ne uporablja vec ScopeDumpBinary, konzolni ukaz "$"
+- en bug na branju temperature v IgbtTemp()
+
+12.4.2017
+- bug na __TEST__ mode, polnenje virt. C je preseglo operativni HV, zato je bil vsak naslednji pulz vecji
+- za Pfm6 je tokovni fullscale 1200A
+13.4.2017
+- bug v _TIM handlerju - virtualni HV v normalnem režimu ni prevzel obratovalne napetosti! 
+
+14.7.2017
+- bug, major jeba --- v timer ISR je bila zacetna vrednost x in y 0, kar je v ALTERNATE režimu povzrocilo, da je simmer ugasnil !!!
+- todo: 
+tandem:
+	-urediti izpis za debug
+	-šmafu ukrog regul. zakasnitve v alternate režimu
+
+22.2.2018
+
+tandem, drugi prototip
+- jeba z napovedjo strela na can protokolu. Problem je poplava msgov na CAN konzoli; rešitev z izklopom izpisa v TRIGGER_PERIODIC modu
+- za prototip mora cfg.ini  vsebovati -r(ni reseta s crowbarom) in	-E 8 (trigerske impedance ne ustrezajo)
+
+8.3.2018
+tandem, pfm8
+- reenum mode registra
+- dodatek common trigger mode
+- apl. fan startupa iz LW,SW
+
+za avalanche polovicni simmer start
+
+fil cfg.ini
+-l d0,d1,d2,d3,,d4,d5,d6,d7
+-l
+-r
+u 700
+s 300,300,30
+-u s
+-E ffffff
+-f
+-B
+-P
+
+fil tandem
+s0
+-m 15,16
++m 12,15
+s3
+-d 1000
+-m 12,15
++m 11,16
+s3
+-m 11,16
+
+fil nd
+s0
+-m 15
++m 16
+s3
+
+fil alex
+s0
+-m 16
++m 15
+s3
+
+22.1.2018
+- popravki na +/-E, ?E
+- dodatek ?W
+- F2V error ugaša samo na critical error
+- simmer error se aktivira šele po padcu triggerja
+
+3.5.2018
+- prenos stack/heap v CCC RAM
+- izklopi bit banding (!!!), implementacij enaka kot pri F7
+- povecanje MAX_BURST na 13 ms
+- Eack integrator v DSP 
+
+26.4.2018
+- CCM ram je jeba, DMA ne dela
+- skrajsanje int. na 10ms, stach in heap nazaj v main RAM
+- eMac ostane ...
+
+15.10.2018
+- bug pri odcit. temperaturnih sensorjev (pfm8)
+	zaradi manjkajocih senzorjev na pfm8 sta bila veljavna samo izpisa "zgornjih" PTC. 
+	Ker so bile "neveljavne" vrednosti potenc. lahko višje, posledilcno ni delala regulacija hlajenja.
+- bug pri i2c alloc
+	potencialni mem. leakage... ob. napaki i2c se je ponovno pognala inicializacija, v kateri je bil malloc...
+	v 10-15 sekundah je zmanjkalo heapa... efekt se je pokazal v create file in v (ne)delovanju VCP
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+0:/dir
+cfg.ini         89
+tandem          72
+alex            23
+nd              23
+cfg.bak         79
+0:/
+0:/ty cfg.ini
+-l d0,d1,d2,d3,,d4,d5,d6,d7
+-l
+-r
+u 700
+-u s
+-E ffffff
+-f
+-P
+-B
+s 300,300,30
+
+0:/ty tandem
+s0
+-m 15,16
++m 12,15
+s3
+-d 1000
+-m 12,15
++m 11,16
+s3
+-m 11,16
+
+0:/ty alex
+s0
+-m 16
++m 15
+s3
+
+0:/ty nd
+s0
+-m 15
++m 16
+s3
+
+0:/ty cfg.bak
+-l d0,d1,d2,d3,,d4,d5,d6,d7
+-l
+-r
+-i
+u 700
+-u s
+-E ffffff
+-f
+-P
+-B
 
 
-		
+v 6.01 Oct 17 2018, <A969CFE7>
+
+jeba s TIM4, QSwitch !!! popravljena...
+v 6.01 Oct 19 2018, <61AB4C87>
+
+8.11.2918
+v 6.02 Nov  8 2018, <24350F3F>
+- še ena s TIM4, iz Starwalker, lažni pockels ob nastavitvi..
+- start pockelsa premaknjen za 10u... ostalo od nekega poizkušanja, "moti" pri VERDE
+- odpravljen bug pri konzolni nastavitvi bursta s stirimi parametri... izpadlo pri popravljanju joint moda !!!

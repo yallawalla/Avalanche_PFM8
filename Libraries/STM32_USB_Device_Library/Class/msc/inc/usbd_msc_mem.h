@@ -66,7 +66,7 @@ typedef struct _USBD_STORAGE
   int8_t (* GetMaxLun)(void);
   int8_t *pInquiry;
   
-}USBD_STORAGE_cb_TypeDef;
+} USBD_STORAGE_cb_TypeDef;
 /**
   * @}
   */ 

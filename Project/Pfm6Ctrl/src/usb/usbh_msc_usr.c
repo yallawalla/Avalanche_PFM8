@@ -41,37 +41,31 @@
 /** @defgroup USBH_USR 
 * @brief    This file includes the usb host stack user callbacks
 * @{
-*/ 
+*/
 
 /** @defgroup USBH_USR_Private_TypesDefinitions
 * @{
-*/ 
+*/
+
 /**
 * @}
-*/ 
-
+*/
 
 /** @defgroup USBH_USR_Private_Defines
 * @{
-*/ 
-#define IMAGE_BUFFER_SIZE   		512
+*/
+
+#define	IMAGE_BUFFER_SIZE   		512
 extern	USB_OTG_CORE_HANDLE			USB_OTG_Core;
+int			(*USBH_App)(int);
+
 __ALIGN_BEGIN
 USBH_HOST           						USB_Host;
 __ALIGN_END
 
-void	Initialize_host_msc(void) {
-			USBH_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USB_Host, &USBH_MSC_cb, &USR_USBH_MSC_cb);
-}
-
-int		(*USBH_App)(int);
-void	USBHost (void) {
-	USBH_Process(&USB_OTG_Core, &USB_Host);
-}
 /**
 * @}
 */ 
-
 
 /** @defgroup USBH_USR_Private_Macros
 * @{
@@ -87,7 +81,6 @@ extern uint8_t Enum_Done;
 * @{
 */ 
  
-
 /*  Points to the DEVICE_PROP structure of current device */
 /*  The purpose of this register is to speed up the execution */
 
@@ -118,25 +111,6 @@ USBH_Usr_cb_TypeDef USR_USBH_MSC_cb =
 * @}
 */
 
-/** @defgroup USBH_USR_Private_Constants
-* @{
-*/ 
-/*--------------- LCD Messages ---------------*/
-const uint8_t MSG_DEV_ATTACHED[]     = "> Device Attached \n";
-const uint8_t MSG_DEV_DISCONNECTED[] = "> Device Disconnected\n";
-const uint8_t MSG_DEV_ENUMERATED[]   = "> Enumeration completed \n";
-const uint8_t MSG_DEV_HIGHSPEED[]    = "> High speed device detected\n";
-const uint8_t MSG_DEV_FULLSPEED[]    = "> Full speed device detected\n";
-const uint8_t MSG_DEV_LOWSPEED[]     = "> Low speed device detected\n";
-const uint8_t MSG_DEV_ERROR[]        = "> Device fault \n";
-
-const uint8_t MSG_MSC_CLASS[]       = "> Mass storage device connected\n";
-const uint8_t MSG_DISK_SIZE[]       = "> Size of the disk in MBytes: \n";
-const uint8_t MSG_LUN[]             = "> LUN Available in the device:\n";
-const uint8_t MSG_ROOT_CONT[]       = "> Exploring disk flash ...\n";
-const uint8_t MSG_WR_PROTECT[]      = "> The disk is write protected\n";
-const uint8_t MSG_MSC_UNREC_ERROR[] = "> UNRECOVERED ERROR STATE\n";
-
 /**
 * @}
 */
@@ -165,7 +139,7 @@ const uint8_t MSG_MSC_UNREC_ERROR[] = "> UNRECOVERED ERROR STATE\n";
 */
 void USBH_USR_Init(void)
 {
-	_DEBUG_MSG("... initialized");
+	_DEBUG_(_DBG_SYS_MSG,"... host initialized");
 }
 
 /**
@@ -176,7 +150,7 @@ void USBH_USR_Init(void)
 */
 void USBH_USR_DeviceAttached(void)
 {
-	_DEBUG_MSG("... attached");
+	_DEBUG_(_DBG_SYS_MSG,"... attached");
 }
 
 
@@ -187,7 +161,7 @@ void USBH_USR_DeviceAttached(void)
 */
 void USBH_USR_UnrecoveredError (void)
 { 
-	_DEBUG_MSG("... error");
+	_DEBUG_(_DBG_SYS_MSG,"... error");
 }
 
 
@@ -201,7 +175,7 @@ void USBH_USR_DeviceDisconnected (void)
 { 
 	if(USBH_App)
 		USBH_App(EOF);
-	_DEBUG_MSG("... disconnected");
+	_DEBUG_(_DBG_SYS_MSG,"... disconnected");
 }
 /**
 * @brief  USBH_USR_ResetUSBDevice 
@@ -210,7 +184,7 @@ void USBH_USR_DeviceDisconnected (void)
 */
 void USBH_USR_ResetDevice(void)
 { 
-	_DEBUG_MSG("... reset");
+	_DEBUG_(_DBG_SYS_MSG,"... reset");
 }
 
 
@@ -222,7 +196,7 @@ void USBH_USR_ResetDevice(void)
 */
 void USBH_USR_DeviceSpeedDetected(uint8_t DeviceSpeed)
 { 
-	_DEBUG_MSG("... speed detected");
+	_DEBUG_(_DBG_SYS_MSG,"... speed detected");
 }
 
 /**
@@ -233,7 +207,7 @@ void USBH_USR_DeviceSpeedDetected(uint8_t DeviceSpeed)
 */
 void USBH_USR_Device_DescAvailable(void *DeviceDesc)
 {
-	_DEBUG_MSG("... description available");
+	_DEBUG_(_DBG_SYS_MSG,"... description available");
 }
 
 /**
@@ -244,7 +218,7 @@ void USBH_USR_Device_DescAvailable(void *DeviceDesc)
 */
 void USBH_USR_DeviceAddressAssigned(void)
 { 
-	_DEBUG_MSG("... address assigned");
+	_DEBUG_(_DBG_SYS_MSG,"... address assigned");
 }
 
 
@@ -258,7 +232,7 @@ void USBH_USR_Configuration_DescAvailable(USBH_CfgDesc_TypeDef * cfgDesc,
                                           USBH_InterfaceDesc_TypeDef *itfDesc,
                                           USBH_EpDesc_TypeDef *epDesc)
 {
-	_DEBUG_MSG("... configuration available");
+	_DEBUG_(_DBG_SYS_MSG,"... configuration available");
 }
 
 /**
@@ -269,7 +243,7 @@ void USBH_USR_Configuration_DescAvailable(USBH_CfgDesc_TypeDef * cfgDesc,
 */
 void USBH_USR_Manufacturer_String(void *ManufacturerString)
 {
-	_DEBUG_MSG("... %s",(int)ManufacturerString);
+	_DEBUG_(_DBG_SYS_MSG,"... %s",(int)ManufacturerString);
 }
 
 /**
@@ -280,7 +254,7 @@ void USBH_USR_Manufacturer_String(void *ManufacturerString)
 */
 void USBH_USR_Product_String(void *ProductString)
 {
-	_DEBUG_MSG("... %s",(int)ProductString);
+	_DEBUG_(_DBG_SYS_MSG,"... %s",(int)ProductString);
 }
 
 /**
@@ -291,7 +265,7 @@ void USBH_USR_Product_String(void *ProductString)
 */
 void USBH_USR_SerialNum_String(void *SerialNumString)
 {
-	_DEBUG_MSG("... %s",(int)SerialNumString);
+	_DEBUG_(_DBG_SYS_MSG,"... %s",(int)SerialNumString);
 }
 /**
 * @brief  EnumerationDone 
@@ -301,7 +275,7 @@ void USBH_USR_SerialNum_String(void *SerialNumString)
 */
 void USBH_USR_EnumerationDone(void)
 {
-	_DEBUG_MSG("... enumeration done");	
+	_DEBUG_(_DBG_SYS_MSG,"... enumeration done");	
 }
 
 
@@ -313,7 +287,7 @@ void USBH_USR_EnumerationDone(void)
 */
 void USBH_USR_DeviceNotSupported(void)
 { 
-	_DEBUG_MSG("... device not supported");
+	_DEBUG_(_DBG_SYS_MSG,"... device not supported");
 }
 
 

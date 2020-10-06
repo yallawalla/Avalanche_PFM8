@@ -20,6 +20,7 @@ GPIO_InitTypeDef	GPIO_InitStructure;
 	GPIO_StructInit(&GPIO_InitStructure);
 	DAC_StructInit(&DAC_InitStructure);
 
+#if		defined (__PFM6__) || defined (__PFM8__)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
@@ -31,10 +32,18 @@ GPIO_InitTypeDef	GPIO_InitStructure;
 	DAC_InitStructure.DAC_OutputBuffer = DAC_OutputBuffer_Enable;
 	DAC_Init(DAC_Channel_1, &DAC_InitStructure);
 	DAC_Init(DAC_Channel_2, &DAC_InitStructure);
+	
+#if defined __PFM6__
 	DAC_SetDualChannelData(DAC_Align_12b_R,0.85*4096,0.85*4096);
+#else
+	DAC_SetDualChannelData(DAC_Align_12b_R,0,0);
+	DAC_DualSoftwareTriggerCmd(ENABLE);	
+#endif
+
 	DAC_DualSoftwareTriggerCmd(ENABLE);
 	DAC_Cmd(DAC_Channel_1, ENABLE);
 	DAC_Cmd(DAC_Channel_2, ENABLE);
+#endif
 }
 /**
 * @}

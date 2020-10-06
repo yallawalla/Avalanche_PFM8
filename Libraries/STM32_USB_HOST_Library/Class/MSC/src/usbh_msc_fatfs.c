@@ -1,6 +1,7 @@
 #include "usb_conf.h"
 #include "diskio.h"
 #include "usbh_msc_core.h"
+#include "usbd_msc_mem.h"
 /*--------------------------------------------------------------------------
 
 Module Private Functions and Variables
@@ -10,6 +11,7 @@ static volatile DSTATUS Stat = STA_NOINIT;	/* Disk status */
 
 extern USB_OTG_CORE_HANDLE          USB_OTG_Core;
 extern USBH_HOST                    USB_Host;
+extern USBD_STORAGE_cb_TypeDef			USBD_MICRO_SDIO_fops;
 
 /*-----------------------------------------------------------------------*/
 /* Initialize Disk Drive                                                 */
@@ -19,7 +21,7 @@ DSTATUS disk_initialize	(
             BYTE drv		/* Physical drive number (0) */
 						)
 {
-	if(drv==0)	return(STORAGE_Init(drv));
+	if(drv != *FS_USB - '0')	return(USBD_MICRO_SDIO_fops.Init(drv));
   
   if(HCD_IsDeviceConnected(&USB_OTG_Core))
   {  
@@ -39,7 +41,7 @@ DSTATUS disk_status (
 					BYTE drv		/* Physical drive number (0) */
 					)
 {
-	if(drv==0)	return(STORAGE_IsReady(drv));
+	if(drv != *FS_USB - '0')	return(USBD_MICRO_SDIO_fops.IsReady(drv));
 	return Stat;
 }
 
@@ -53,12 +55,14 @@ DRESULT disk_read (
                    BYTE drv,			/* Physical drive number (0) */
                    BYTE *buff,		/* Pointer to the data buffer to store read data */
                    DWORD sector,	/* Start sector number (LBA) */
-                   BYTE count			/* Sector count (1..255) */
+                   UINT count			/* Sector count (1..255) */
                   )
 {
   BYTE status = USBH_MSC_OK;  
-  if(drv==0)	return (DRESULT)STORAGE_Read(drv,buff,sector,count);
-  if (Stat & STA_NOINIT) return RES_NOTRDY;
+  if(drv != *FS_USB - '0')
+		return (DRESULT)USBD_MICRO_SDIO_fops.Read(drv,buff,sector,count);
+  if (Stat & STA_NOINIT) 
+		return RES_NOTRDY;
   if(HCD_IsDeviceConnected(&USB_OTG_Core))
   {  
     do
@@ -87,13 +91,16 @@ DRESULT disk_write (
                     BYTE drv,					/* Physical drive number (0) */
                     const BYTE *buff,	/* Pointer to the data to be written */
                     DWORD sector,			/* Start sector number (LBA) */
-                    BYTE count				/* Sector count (1..255) */
+                    UINT count				/* Sector count (1..255) */
                    )
 {
   BYTE status = USBH_MSC_OK;
-  if(drv==0)	return (DRESULT)STORAGE_Write(drv,(uint8_t *)buff,sector,count);
-  if (Stat & STA_NOINIT) return RES_NOTRDY;
-  if (Stat & STA_PROTECT) return RES_WRPRT;
+  if(drv != *FS_USB - '0')	
+		return (DRESULT)USBD_MICRO_SDIO_fops.Write(drv,(uint8_t *)buff,sector,count);
+  if (Stat & STA_NOINIT) 
+		return RES_NOTRDY;
+  if (Stat & STA_PROTECT) 
+		return RES_WRPRT;
   
   
   if(HCD_IsDeviceConnected(&USB_OTG_Core))
@@ -124,7 +131,7 @@ DRESULT disk_write (
 /* Miscellaneous Functions                                               */
 /*-----------------------------------------------------------------------*/
 
-#if _USE_IOCTL != 0
+#if _USE_IOCTL == 1
 DRESULT disk_ioctl (
                     BYTE drv,		/* Physical drive number (0) */
                     BYTE ctrl,		/* Control code */
@@ -140,33 +147,37 @@ DRESULT disk_ioctl (
     break;
     
   case GET_SECTOR_COUNT :	/* Get number of sectors on the disk (DWORD) */
-		if(drv==0)
-			*(DWORD*)buff = (DWORD) SECTOR_COUNT;
-		else
+		if(drv != *FS_USB - '0') {
+			uint32_t i,j;
+			res = (DRESULT)USBD_STORAGE_fops->GetCapacity(drv, &i, &j);
+			*(DWORD*)buff = (DWORD) i;
+		} else
 			*(DWORD*)buff = (DWORD) USBH_MSC_Param.MSCapacity;
     res = RES_OK;
     break;
     
   case GET_SECTOR_SIZE :	/* Get R/W sector size (WORD) */
-		if(drv==0)
-			*(DWORD*)buff = (DWORD) SECTOR_SIZE;
-		else
-			*(WORD*)buff = 512;
+		if(drv != *FS_USB - '0')	{
+			uint32_t i,j;
+			res = (DRESULT)USBD_STORAGE_fops->GetCapacity(drv, &i, &j);
+			*(DWORD*)buff = (DWORD) j;
+		} else
+			*(WORD*)buff = SECTOR_SIZE;
     res = RES_OK;
     break;
     
   case GET_BLOCK_SIZE :	/* Get erase block size in unit of sector (DWORD) */
-		if(drv==0)
-			*(DWORD*)buff = (DWORD) PAGE_SIZE;
+		if(drv != *FS_USB - '0')	
+			*(DWORD*)buff = 1;
 		else
-			*(DWORD*)buff = 512;
+			*(DWORD*)buff = 1;
     res = RES_OK;    
     break;
    
   default:
     res = RES_PARERR;
   }
-	if(drv==0)
+	if(drv != *FS_USB - '0')	
 		return res; 
 	if (Stat & STA_NOINIT) return RES_NOTRDY;
 		return res; 	

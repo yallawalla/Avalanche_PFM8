@@ -97,36 +97,17 @@ void USB_OTG_BSP_Init(USB_OTG_CORE_HANDLE *pdev)
   RCC_AHB1PeriphClockCmd( RCC_AHB1Periph_GPIOA , ENABLE);  
   
   /* Configure SOF ID DM DP Pins */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8  | 
-                                GPIO_Pin_11 | 
-                                GPIO_Pin_12;
-  
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 |  GPIO_Pin_12; 
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
   GPIO_Init(GPIOA, &GPIO_InitStructure);  
   
-  GPIO_PinAFConfig(GPIOA,GPIO_PinSource8,GPIO_AF_OTG1_FS) ;
+//  GPIO_PinAFConfig(GPIOA,GPIO_PinSource8,GPIO_AF_OTG1_FS) ;
   GPIO_PinAFConfig(GPIOA,GPIO_PinSource11,GPIO_AF_OTG1_FS) ; 
   GPIO_PinAFConfig(GPIOA,GPIO_PinSource12,GPIO_AF_OTG1_FS) ;
-#ifdef __myDef
-  /* Configure  VBUS Pin */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);    
-  
-  /* Configure ID pin */
-  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_10;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;  
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);  
-  GPIO_PinAFConfig(GPIOA,GPIO_PinSource10,GPIO_AF_OTG1_FS) ;   
-#endif
+
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
   RCC_AHB2PeriphClockCmd(RCC_AHB2Periph_OTG_FS, ENABLE) ; 
 
@@ -206,13 +187,13 @@ void USB_OTG_BSP_DriveVBUS(USB_OTG_CORE_HANDLE *pdev, uint8_t state)
 * @param  msec : Value of delay required in milli sec
 * @retval None
 */
-extern void			App_Loop(void);
-void						Wait(int,void (*)(void));
+extern void			_proc_loop(void);
+void						_wait(int,void (*)(void));
 
 void USB_OTG_BSP_mDelay (const uint32_t msec)
 {
 	//USB_OTG_BSP_uDelay(msec * 1000); 
-	Wait(msec,App_Loop);
+	_wait(msec,_proc_loop);
 }
 
 void USB_OTG_BSP_DeInit(USB_OTG_CORE_HANDLE *pdev)

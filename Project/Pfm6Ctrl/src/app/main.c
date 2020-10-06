@@ -12,13 +12,13 @@
 * @brief PFM6 application group
 * @{
 */
-#include	"pfm.h"
 
+#include	"pfm.h"
 int				main(void) {
 					App_Init();
 					while(1)
-						App_Loop();
+						_proc_loop();
 }
 /**
 * @}
-*/ 
+*/

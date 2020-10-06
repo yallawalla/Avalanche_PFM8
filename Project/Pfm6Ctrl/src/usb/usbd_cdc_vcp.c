@@ -43,6 +43,7 @@ static uint16_t VCP_DeInit   (void);
 static uint16_t VCP_Ctrl     (uint32_t Cmd, uint8_t* Buf, uint32_t Len);
 static uint16_t VCP_DataTx   (uint8_t* Buf, uint32_t Len);
 static uint16_t VCP_DataRx   (uint8_t* Buf, uint32_t Len);
+_io *__com;
 
 CDC_IF_Prop_TypeDef VCP_fops = 
 {
@@ -95,7 +96,7 @@ uint32_t	i=APP_Rx_ptr_in;
   */
 uint16_t	VCP_DataRx (uint8_t* Buf, uint32_t Len)
 {
-					_buffer_push(__com1->rx,Buf,Len);
+					_buffer_push(__com->rx,Buf,Len);
 					return USBD_OK;
 }
 //_____________________________________________________________________________________
@@ -124,10 +125,12 @@ int				i=0;
   */
 static uint16_t VCP_Init(void)
 {
-					if(!__com1) {
-						__com1=_io_init(256,256);
-						__com1->put= putVCP;
-						__com1->get= getVCP;	
+					if(!__com) {
+						__com=_io_init(256,256);
+						__com->put= putVCP;
+						__com->get= getVCP;	
+						_proc_add((func *)ParseCom,__com,"VCP parser",0);
+
 					}
 					return USBD_OK;
 }
@@ -140,6 +143,8 @@ static uint16_t VCP_Init(void)
   */
 static uint16_t VCP_DeInit(void)
 {
+					_io_close(__com);
+					_proc_remove((func *)ParseCom,__com);
 					return USBD_OK;
 }
 //_____________________________________________________________________________________

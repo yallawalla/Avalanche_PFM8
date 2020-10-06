@@ -158,8 +158,7 @@ void USBH_Init(USB_OTG_CORE_HANDLE *pdev,
                USBH_HOST *phost,               
                USBH_Class_cb_TypeDef *class_cb, 
                USBH_Usr_cb_TypeDef *usr_cb)
-{
-     
+{  
   /* Hardware Init */
   USB_OTG_BSP_Init(pdev);  
   
@@ -296,8 +295,7 @@ void USBH_Process(USB_OTG_CORE_HANDLE *pdev , USBH_HOST *phost)
     /*The function should return user response true to move to class state */
     if ( phost->usr_cb->UserInput() == USBH_USR_RESP_OK)
     {
-      if((phost->class_cb->Init(pdev, phost))\
-        == USBH_OK)
+      if((phost->class_cb->Init(pdev, phost)) == USBH_OK)
       {
         phost->gState  = HOST_CLASS_REQUEST;     
       }     

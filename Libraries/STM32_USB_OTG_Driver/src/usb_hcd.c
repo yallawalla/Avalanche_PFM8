@@ -122,7 +122,6 @@ uint32_t HCD_Init(USB_OTG_CORE_HANDLE *pdev ,
   return 0;
 }
 
-
 /**
   * @brief  HCD_GetCurrentSpeed
   *         Get Current device Speed.

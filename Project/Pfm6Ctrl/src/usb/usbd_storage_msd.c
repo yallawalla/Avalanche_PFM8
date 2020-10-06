@@ -57,6 +57,13 @@
 /** @defgroup STORAGE_Private_Defines
   * @{
   */ 
+int8_t	STORAGE_Init (uint8_t);
+int8_t	STORAGE_GetCapacity (uint8_t, uint32_t *, uint32_t *);
+int8_t	STORAGE_IsReady (uint8_t);
+int8_t	STORAGE_IsWriteProtected (uint8_t);
+int8_t	STORAGE_Read (uint8_t, uint8_t *, uint32_t, uint16_t);
+int8_t	STORAGE_Write (uint8_t, uint8_t *, uint32_t, uint16_t);
+int8_t	STORAGE_GetMaxLun (void);
 
 #define STORAGE_LUN_NBR                  2
 /**
@@ -125,38 +132,40 @@ USBD_STORAGE_cb_TypeDef  *USBD_STORAGE_fops = &USBD_MICRO_SDIO_fops;
   */ 
 
 /*-----------------------------------------------------------------------*/
-int						FLASH_Program(uint32_t Address, uint32_t Data) {
-int						m;
-							FLASH_Unlock();
-							FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR|FLASH_FLAG_PGSERR);	
-							do {
-								Watchdog();	
-								m=FLASH_ProgramWord(Address,Data);
-							} while (m==FLASH_BUSY);
-							return(m);
-}
-/*-----------------------------------------------------------------------*/
-																		
-int						FLASH_Erase(uint32_t FLASH_Sector) {
-int						m;
-							FLASH_Unlock();
-							FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR|FLASH_FLAG_PGSERR);	
-							do {
-								Watchdog();	
-								m=FLASH_EraseSector(FLASH_Sector,VoltageRange_3);
-							} while (m==FLASH_BUSY);
-							return(m);
+int	FLASH_Program(uint32_t Address, uint32_t Data) {
+int	m;
+		FLASH_Unlock();
+		FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR|FLASH_FLAG_PGSERR);	
+		do {
+			Watchdog();	
+			m=FLASH_ProgramWord(Address,Data);
+		} while (m==FLASH_BUSY);
+		return(m);
 }
 /**
   * @brief  Initialize the storage medium
   * @param  lun : logical unit number
   * @retval Status
   */
+uint8_t *ramdsk=NULL;
 //_____________________________________________________________________________________________
 int8_t STORAGE_Init (uint8_t lun)
 {
-	FLASH_Unlock();
-	FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	if(lun==*FS_CPU - '0') {
+		FLASH_Unlock();
+		FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR | FLASH_FLAG_PGSERR);
+	} else {
+	#ifdef __F4__
+		if(!ramdsk) {
+			int	wbuf[SECTOR_SIZE];
+			ramdsk=(uint8_t *)0x10000000;
+			memset(ramdsk,0,0x10000);
+			return f_mkfs(FS_RAM,FM_SFD | FM_ANY, 0, wbuf,SECTOR_SIZE*sizeof(int));
+		}		
+	#else
+			return (RES_NOTRDY);
+	#endif
+	}
 	return (RES_OK);
 }
 //_____________________________________________________________________________________________
@@ -169,8 +178,15 @@ int8_t STORAGE_Init (uint8_t lun)
   */
 int8_t STORAGE_GetCapacity (uint8_t lun, uint32_t *block_num, uint32_t *block_size)
 {
-	*block_size=SECTOR_SIZE;
-	*block_num=SECTOR_COUNT;
+	if(lun==*FS_CPU - '0') {
+		*block_size=SECTOR_SIZE;
+		*block_num=SECTOR_COUNT;
+	} else {
+		if(!ramdsk)
+			return RES_NOTRDY;
+		*block_size=SECTOR_SIZE;
+		*block_num=0x10000/SECTOR_SIZE;
+	}
 	return (RES_OK);
 }
 //_____________________________________________________________________________________________
@@ -181,6 +197,8 @@ int8_t STORAGE_GetCapacity (uint8_t lun, uint32_t *block_num, uint32_t *block_si
   */
 int8_t  STORAGE_IsReady (uint8_t lun)
 {
+	if(lun != *FS_CPU - '0' && !ramdsk)
+		return RES_NOTRDY;
 	return (RES_OK);
 }
 //_____________________________________________________________________________________________
@@ -190,7 +208,9 @@ int8_t  STORAGE_IsReady (uint8_t lun)
   * @retval Status
   */
 int8_t  STORAGE_IsWriteProtected (uint8_t lun)
-{
+{	
+	if(lun != *FS_CPU - '0' && !ramdsk)
+		return RES_NOTRDY;
 	return (RES_OK);
 }
 //_____________________________________________________________________________________________
@@ -204,25 +224,32 @@ int8_t  STORAGE_IsWriteProtected (uint8_t lun)
   */
 //_____________________________________________________________________________________________
 int8_t STORAGE_Read(uint8_t lun, 
-                 uint8_t *buf, 
-                 uint32_t blk_addr,                       
-                 uint16_t blk_len)
+										uint8_t *buf, 
+										uint32_t blk_addr,                       
+										uint16_t blk_len)
 {
-int i,*p,*q=NULL;
-	for(p=(int *)FATFS_ADDRESS; (int)p < FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT &&  p[SECTOR_SIZE/4]!=-1; p=&p[SECTOR_SIZE/4+1]) {
-		if(p[SECTOR_SIZE/4] == blk_addr)
-			q=p;
+	if(lun == *FS_CPU - '0') {
+		int i,*p,*q=NULL;
+			for(p=(int *)FATFS_ADDRESS; (int)p < FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT &&  p[SECTOR_SIZE/4]!=-1; p=&p[SECTOR_SIZE/4+1]) {
+				if(p[SECTOR_SIZE/4] == blk_addr)
+					q=p;
+			}
+			if((int)p >= FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT)
+				return RES_ERROR;
+			if(q)
+				p=q;
+			q=(int *)buf;
+			for(i=0;i<SECTOR_SIZE/4; ++i)
+				*q++=~(*p++);	
+			if(--blk_len)
+				return STORAGE_Read (lun, (uint8_t *)q, ++blk_addr, blk_len);
+			return RES_OK; 
+	} else {
+		if(!ramdsk)
+			return RES_NOTRDY;
+		memcpy(buf,&ramdsk[blk_addr*(SECTOR_SIZE)],blk_len*SECTOR_SIZE);
+		return RES_OK; 
 	}
-	if((int)p >= FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT)
-		return RES_ERROR;
-	if(q)
-		p=q;
-	q=(int *)buf;
-	for(i=0;i<SECTOR_SIZE/4; ++i)
-		*q++=~(*p++);	
-	if(--blk_len)
-		return STORAGE_Read (lun, (uint8_t *)q, ++blk_addr, blk_len);
-	return RES_OK; 
 }
 //_____________________________________________________________________________________________
 /**
@@ -234,33 +261,41 @@ int i,*p,*q=NULL;
   * @retval Status
   */
 int8_t STORAGE_Write (uint8_t lun, 
-                  uint8_t *buf, 
-                  uint32_t blk_addr,
-                  uint16_t blk_len)
+											uint8_t *buf, 
+											uint32_t blk_addr,
+											uint16_t blk_len)
 {
-int i,*p,*q=NULL;
-	for(p=(int *)FATFS_ADDRESS; (int)p < FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT &&  p[SECTOR_SIZE/4]!=-1; p=&p[SECTOR_SIZE/4+1])
-		if(p[SECTOR_SIZE/4] == blk_addr)
-			q=p;
+	if(lun == *FS_CPU - '0') {
+	int i,*p,*q=NULL;
+		for(p=(int *)FATFS_ADDRESS; (int)p < FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT &&  p[SECTOR_SIZE/4]!=-1; p=&p[SECTOR_SIZE/4+1])
+			if(p[SECTOR_SIZE/4] == blk_addr)
+				q=p;
 
-	if((int)p >= FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT)
-		return RES_ERROR;
+		if((int)p >= FATFS_ADDRESS + PAGE_SIZE*PAGE_COUNT)
+			return RES_ERROR;
 
-	q=(int *)buf;
-	for(i=0; i<SECTOR_SIZE/4; ++i)	
-		if(*q++)
-			break;
-
-	if(i<SECTOR_SIZE/4) {												// all zeroes ???
 		q=(int *)buf;
-		for(i=0; i<SECTOR_SIZE/4; ++i,++p,++q)
-			FLASH_Program((int)p,~(*q));
-		FLASH_Program((int)p,blk_addr);
+		
+//		for(i=0; i<SECTOR_SIZE/4; ++i)	
+//			if(*q++)
+//				break;
+
+//		if(i<SECTOR_SIZE/4) {												// all zeroes ???
+			q=(int *)buf;
+			for(i=0; i<SECTOR_SIZE/4; ++i,++p,++q)
+				FLASH_Program((int)p,~(*q));
+			FLASH_Program((int)p,blk_addr);
+//		}
+		
+		if(--blk_len)
+			return STORAGE_Write (lun, (uint8_t *)q, ++blk_addr, blk_len);
+		return RES_OK; 
+	} else {
+		if(!ramdsk)
+			return RES_NOTRDY;
+		memcpy(&ramdsk[blk_addr*(SECTOR_SIZE)],buf,blk_len*SECTOR_SIZE);
+		return RES_OK; 
 	}
-	
-	if(--blk_len)
-		return STORAGE_Write (lun, (uint8_t *)q, ++blk_addr, blk_len);
-	return RES_OK; 
 }	  
 //_____________________________________________________________________________________________
 /**
@@ -276,72 +311,6 @@ int8_t STORAGE_GetMaxLun (void)
 /**
   * @}
   */ 
-
-
-/**
-  * @}
-  */ 
-/*-----------------------------------------------------------------------*/
-void	SectorQuery(void) {
-int		i,j,*p,*q;
-
-			p=(int *)FATFS_ADDRESS;
-			for(i=0; i<SECTOR_COUNT; ++i) {
-				if(!((i%255)%16))
-					__print("\r\n");
-				if(!(i%255))
-					__print("\r\n");		
-				if(p[SECTOR_SIZE/4] == -1)
-					__print(" --- ");
-				else {
-					q=&p[SECTOR_SIZE/4+1];
-					j=i;
-					while(++j<SECTOR_COUNT && p[SECTOR_SIZE/4] != q[SECTOR_SIZE/4])
-						q=&q[SECTOR_SIZE/4+1];
-					if(j==SECTOR_COUNT)
-						__print(" %-4d",p[SECTOR_SIZE/4]);
-					else
-						__print("%c%-4d",'*',p[SECTOR_SIZE/4]);
-				}
-				p=&p[SECTOR_SIZE/4+1];
-			}
-}
-/*-----------------------------------------------------------------------*/
-int		Defragment(int mode) {
-int 	i,f,e,*p,*q,buf[SECTOR_SIZE/4];
-int		c0=0,c1=0;
-
-			f=FATFS_SECTOR;																															// f=koda prvega 128k sektorja
-			e=PAGE_SIZE;																																// e=velikost sektorja
-			p=(int *)FATFS_ADDRESS;																											// p=hw adresa sektorja
-			do {
-				do {
-					++c0;
-					Watchdog();																															//jk822iohfw
-					q=&p[SECTOR_SIZE/4+1];																									
-					while(p[SECTOR_SIZE/4] != q[SECTOR_SIZE/4] && q[SECTOR_SIZE/4] != -1)		// iskanje ze prepisanih sektorjev
-						q=&q[SECTOR_SIZE/4+1];
-					if(q[SECTOR_SIZE/4] == -1) {																						// ce ni kopija, se ga prepise na konec fs
-						for(i=0; i<SECTOR_SIZE/4;++i)
-							buf[i]=~p[i];
-						Watchdog();
-						if(mode)
-							STORAGE_Write (FSDRIVE_CPU,(uint8_t *)buf,p[SECTOR_SIZE/4],1);			// STORAGE_Write bo po prvem brisanju zacel na
-					} else																																	// zacetku !!!
-						++c1;
-					p=&p[SECTOR_SIZE/4+1]; 
-				} while(((int)p)-FATFS_ADDRESS <  e && p[SECTOR_SIZE/4] != -1);						// prepisana cela stran...
-				if(mode)
-					FLASH_Erase(f);																													// brisi !
-				f+=FLASH_Sector_1; 
-				e+=PAGE_SIZE;
-			} while(p[SECTOR_SIZE/4] != -1);	
-			if(mode) {
-				FLASH_Erase(f);																														// se zadnja !
-				return 0;
-			} else 
-				return(100*c1/c0);
-}
 /*-----------------------------------------------------------------------*/
 DWORD get_fattime (void) {
 			return __time__;

@@ -699,7 +699,7 @@ void ADC_VBATCmd(FunctionalState NewState)
   *            @arg ADC_Channel_18: ADC Channel18 selected                       
   * @param  Rank: The rank in the regular group sequencer.
   *          This parameter must be between 1 to 16.
-  * @param  ADC_SampleTime: The sample time value to be set for the selected channel. 
+  * @param  ADC_Ts: The sample time value to be set for the selected channel. 
   *          This parameter can be one of the following values:
   *            @arg ADC_SampleTime_3Cycles: Sample time equal to 3 cycles
   *            @arg ADC_SampleTime_15Cycles: Sample time equal to 15 cycles
@@ -711,14 +711,14 @@ void ADC_VBATCmd(FunctionalState NewState)
   *            @arg ADC_SampleTime_480Cycles: Sample time equal to 480 cycles	
   * @retval None
   */
-void ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime)
+void ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_Ts)
 {
   uint32_t tmpreg1 = 0, tmpreg2 = 0;
   /* Check the parameters */
   assert_param(IS_ADC_ALL_PERIPH(ADCx));
   assert_param(IS_ADC_CHANNEL(ADC_Channel));
   assert_param(IS_ADC_REGULAR_RANK(Rank));
-  assert_param(IS_ADC_SAMPLE_TIME(ADC_SampleTime));
+  assert_param(IS_ADC_SAMPLE_TIME(ADC_Ts));
   
   /* if ADC_Channel_10 ... ADC_Channel_18 is selected */
   if (ADC_Channel > ADC_Channel_9)
@@ -733,7 +733,7 @@ void ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Ra
     tmpreg1 &= ~tmpreg2;
     
     /* Calculate the mask to set */
-    tmpreg2 = (uint32_t)ADC_SampleTime << (3 * (ADC_Channel - 10));
+    tmpreg2 = (uint32_t)ADC_Ts << (3 * (ADC_Channel - 10));
     
     /* Set the new sample time */
     tmpreg1 |= tmpreg2;
@@ -753,7 +753,7 @@ void ADC_RegularChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Ra
     tmpreg1 &= ~tmpreg2;
     
     /* Calculate the mask to set */
-    tmpreg2 = (uint32_t)ADC_SampleTime << (3 * ADC_Channel);
+    tmpreg2 = (uint32_t)ADC_Ts << (3 * ADC_Channel);
     
     /* Set the new sample time */
     tmpreg1 |= tmpreg2;
@@ -1177,7 +1177,7 @@ void ADC_MultiModeDMARequestAfterLastTransferCmd(FunctionalState NewState)
   *            @arg ADC_Channel_18: ADC Channel18 selected                       
   * @param  Rank: The rank in the injected group sequencer. 
   *          This parameter must be between 1 to 4.
-  * @param  ADC_SampleTime: The sample time value to be set for the selected channel. 
+  * @param  ADC_Ts: The sample time value to be set for the selected channel. 
   *          This parameter can be one of the following values:
   *            @arg ADC_SampleTime_3Cycles: Sample time equal to 3 cycles
   *            @arg ADC_SampleTime_15Cycles: Sample time equal to 15 cycles
@@ -1189,14 +1189,14 @@ void ADC_MultiModeDMARequestAfterLastTransferCmd(FunctionalState NewState)
   *            @arg ADC_SampleTime_480Cycles: Sample time equal to 480 cycles	
   * @retval None
   */
-void ADC_InjectedChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_SampleTime)
+void ADC_InjectedChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t Rank, uint8_t ADC_Ts)
 {
   uint32_t tmpreg1 = 0, tmpreg2 = 0, tmpreg3 = 0;
   /* Check the parameters */
   assert_param(IS_ADC_ALL_PERIPH(ADCx));
   assert_param(IS_ADC_CHANNEL(ADC_Channel));
   assert_param(IS_ADC_INJECTED_RANK(Rank));
-  assert_param(IS_ADC_SAMPLE_TIME(ADC_SampleTime));
+  assert_param(IS_ADC_SAMPLE_TIME(ADC_Ts));
   /* if ADC_Channel_10 ... ADC_Channel_18 is selected */
   if (ADC_Channel > ADC_Channel_9)
   {
@@ -1207,7 +1207,7 @@ void ADC_InjectedChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t R
     /* Clear the old sample time */
     tmpreg1 &= ~tmpreg2;
     /* Calculate the mask to set */
-    tmpreg2 = (uint32_t)ADC_SampleTime << (3*(ADC_Channel - 10));
+    tmpreg2 = (uint32_t)ADC_Ts << (3*(ADC_Channel - 10));
     /* Set the new sample time */
     tmpreg1 |= tmpreg2;
     /* Store the new register value */
@@ -1222,7 +1222,7 @@ void ADC_InjectedChannelConfig(ADC_TypeDef* ADCx, uint8_t ADC_Channel, uint8_t R
     /* Clear the old sample time */
     tmpreg1 &= ~tmpreg2;
     /* Calculate the mask to set */
-    tmpreg2 = (uint32_t)ADC_SampleTime << (3 * ADC_Channel);
+    tmpreg2 = (uint32_t)ADC_Ts << (3 * ADC_Channel);
     /* Set the new sample time */
     tmpreg1 |= tmpreg2;
     /* Store the new register value */
@@ -1331,16 +1331,16 @@ void ADC_ExternalTrigInjectedConvConfig(ADC_TypeDef* ADCx, uint32_t ADC_External
   /* Check the parameters */
   assert_param(IS_ADC_ALL_PERIPH(ADCx));
   assert_param(IS_ADC_EXT_INJEC_TRIG(ADC_ExternalTrigInjecConv));
-  
+
   /* Get the old register value */
   tmpreg = ADCx->CR2;
-  
+
   /* Clear the old external event selection for injected group */
   tmpreg &= CR2_JEXTSEL_RESET;
-  
+
   /* Set the external event selection for injected group */
   tmpreg |= ADC_ExternalTrigInjecConv;
-  
+
   /* Store the new register value */
   ADCx->CR2 = tmpreg;
 }

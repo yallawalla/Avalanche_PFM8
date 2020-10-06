@@ -30,6 +30,7 @@
 #include "usbd_ioreq.h"
 #include "usb_conf.h"
 #include "stdio.h"
+#include "pfm.h"
 /** @addtogroup USBD_USER
 * @{
 */
@@ -101,7 +102,7 @@ USBD_Usr_cb_TypeDef USR_CDC_cb =
   USBD_VCP_DeviceConfigured,
   USBD_VCP_DeviceSuspended,
   USBD_VCP_DeviceResumed,
-  
+
   USBD_VCP_DeviceConnected,
   USBD_VCP_DeviceDisconnected,    
 };
@@ -111,18 +112,6 @@ USBD_Usr_cb_TypeDef USR_CDC_cb =
 __ALIGN_BEGIN
 USB_OTG_CORE_HANDLE							USB_OTG_Core;
 __ALIGN_END
-extern 	USBD_DEVICE 						USR_MSC_desc,
-																USR_VCP_desc;
-extern 	USBD_Class_cb_TypeDef  	USBD_MSC_cb,
-																USBD_CDC_cb;
-
-void	 	Initialize_device_msc(void) {
-				USBD_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USR_MSC_desc, &USBD_MSC_cb, &USR_MSC_cb);
-}
-
-void		Initialize_device_vcp(void) {
-				USBD_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USR_VCP_desc, &USBD_CDC_cb, &USR_CDC_cb);
-}
 
 /**
 * @}
@@ -159,9 +148,7 @@ void		Initialize_device_vcp(void) {
 */
 void USBD_MSC_DeviceInit(void)
 {
-#ifdef __PRINTDBG__
-	__print("..MSC initialized\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..MSC initialized\r\n");
 }
 
 /**
@@ -172,9 +159,7 @@ void USBD_MSC_DeviceInit(void)
 */
 void USBD_MSC_DeviceReset(uint8_t speed)
 {
-#ifdef __PRINTDBG__
-	__print("..MSC reset\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..MSC reset\r\n");
 }
 
 
@@ -186,20 +171,18 @@ void USBD_MSC_DeviceReset(uint8_t speed)
 */
 void USBD_MSC_DeviceConfigured (void)
 {
-#ifdef __PRINTDBG__
-	__print("..MSC configured\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..MSC configured\r\n");
 }
+
 /**
 * @brief  USBD_MSC_ResetUSBDevice 
 * @param  None
 * @retval None
 */
+
 void USBD_MSC_DeviceSuspended(void)
 {
-#ifdef __PRINTDBG__
-	__print("..MSC suspended\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..MSC suspended\r\n");
 }
 
 
@@ -210,9 +193,7 @@ void USBD_MSC_DeviceSuspended(void)
 */
 void USBD_MSC_DeviceResumed(void)
 {
-	#ifdef __PRINTDBG__
-	__print("..MSC resumed\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..MSC resumed\r\n");
 }
 
 /**
@@ -223,9 +204,7 @@ void USBD_MSC_DeviceResumed(void)
 */
 void USBD_MSC_DeviceConnected (void)
 {
-#ifdef __PRINTDBG__
-	__print("..MSC connected\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..MSC connected\r\n");
 }
 
 
@@ -237,9 +216,7 @@ void USBD_MSC_DeviceConnected (void)
 */
 void USBD_MSC_DeviceDisconnected (void)
 {
-#ifdef __PRINTDBG__
-	__print("..MSC disconnected\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..MSC disconnected\r\n");
 }
 /*****************************************************************************/
 /**
@@ -250,9 +227,7 @@ void USBD_MSC_DeviceDisconnected (void)
 */
 void USBD_VCP_DeviceInit(void)
 {
-#ifdef __PRINTDBG__
-	__print("..VCP initialized\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..VCP initialized\r\n");
 }
 
 /**
@@ -263,9 +238,7 @@ void USBD_VCP_DeviceInit(void)
 */
 void USBD_VCP_DeviceReset(uint8_t speed)
 {
-#ifdef __PRINTDBG__
-	__print("..VCP reset\r\n");
-#endif	
+	_DEBUG_(_DBG_SYS_MSG,"..VCP reset\r\n");
 }
 
 
@@ -277,10 +250,9 @@ void USBD_VCP_DeviceReset(uint8_t speed)
 */
 void USBD_VCP_DeviceConfigured (void)
 {
-#ifdef __PRINTDBG__
-__print("..VCP configured\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..VCP configured\r\n");
 }
+
 /**
 * @brief  USBD_MSC_ResetUSBDevice 
 * @param  None
@@ -288,9 +260,7 @@ __print("..VCP configured\r\n");
 */
 void USBD_VCP_DeviceSuspended(void)
 {
-#ifdef __PRINTDBG__
-	__print("..VCP suspended\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..VCP suspended\r\n");
 }
 
 
@@ -301,9 +271,7 @@ void USBD_VCP_DeviceSuspended(void)
 */
 void USBD_VCP_DeviceResumed(void)
 {
-#ifdef __PRINTDBG__
-	__print("..VCP resumed\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..VCP resumed\r\n");
 }
 
 /**
@@ -314,9 +282,7 @@ void USBD_VCP_DeviceResumed(void)
 */
 void USBD_VCP_DeviceConnected (void)
 {
-#ifdef __PRINTDBG__
-	__print("..VCP connected\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..VCP connected\r\n");
 }
 
 
@@ -328,9 +294,7 @@ void USBD_VCP_DeviceConnected (void)
 */
 void USBD_VCP_DeviceDisconnected (void)
 {
-#ifdef __PRINTDBG__
-	__print("..VCP disconnected\r\n");
-#endif
+	_DEBUG_(_DBG_SYS_MSG,"..VCP disconnected\r\n");
 }
 /**
 * @}

@@ -27,10 +27,10 @@ GPIO_InitTypeDef	GPIO_InitStructure;
 						GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
 						GPIO_Init(GPIOB, &GPIO_InitStructure);
 						GPIO_ResetBits(GPIOB,GPIO_Pin_6 | GPIO_Pin_7);
-						Wait(25,App_Loop);
+						_wait(25,_proc_loop);
 						I2C_SoftwareResetCmd(I2C1,ENABLE);
 						I2C_SoftwareResetCmd(I2C1,DISABLE);
-						p=Initialize_I2C(p->addr,p->speed);	
+						Initialize_I2C(p, p->addr, p->speed);	
 					}
 }
 //______________________________________________________________________________________
@@ -41,15 +41,16 @@ GPIO_InitTypeDef	GPIO_InitStructure;
   * @retval None
   */
 //______________________________________________________________________________________
-_i2c 			*Initialize_I2C(int addr, int speed)
+_i2c 			*Initialize_I2C(_i2c *i2c, int addr, int speed)
 {
 I2C_InitTypeDef I2C_InitStructure;
 GPIO_InitTypeDef	GPIO_InitStructure;
-_i2c			*p=calloc(1,sizeof(_i2c));
+					if(!i2c)
+						i2c=calloc(1,sizeof(_i2c));
 					if(addr)
-						p->addr=addr;
+						i2c->addr=addr;
 					if(speed)
-						p->speed=speed;
+						i2c->speed=speed;
 
 					GPIO_StructInit(&GPIO_InitStructure);
 
@@ -81,10 +82,16 @@ _i2c			*p=calloc(1,sizeof(_i2c));
 					I2C_StretchClockCmd(I2C1, ENABLE);
 					I2C_ARPCmd(I2C1, ENABLE);
 					I2C_AcknowledgeConfig(I2C1, ENABLE);	
+					
+					
+					
+					
+					
+					
 					I2C_Cmd(I2C1, ENABLE);
 					I2C_ITConfig(I2C1, I2C_IT_ERR , ENABLE);
 
-					return p;
+					return i2c;
 }
 //______________________________________________________________________________________
 /**
@@ -104,7 +111,7 @@ int				to=__time__+25;
 						I2C_ITConfig(I2C1, (I2C_IT_EVT | I2C_IT_BUF), ENABLE);
 						I2C_GenerateSTART(I2C1, ENABLE);
 						while(p->ntx && __time__< to)
-							App_Loop();
+							_proc_loop();
 						if(p->ntx) {
 							Reset_I2C(p);
 							if(--nrpt)
@@ -147,7 +154,7 @@ int				to=__time__+25;
 						else
 							writeI2C(p,dBuffer,1);
 						while(p->nrx && __time__< to)
-							App_Loop();
+							_proc_loop();
 						if(p->nrx) {
 							Reset_I2C(p);
 							if(--nrpt)

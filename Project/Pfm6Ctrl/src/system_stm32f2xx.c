@@ -143,24 +143,18 @@
 /*!< Uncomment the following line if you need to relocate your vector Table in
      Internal SRAM. */
 /* #define VECT_TAB_SRAM */
+
 #define VECT_TAB_OFFSET  0x00 /*!< Vector Table base offset field. 
                                    This value must be a multiple of 0x200. */
 
 /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N */
 
-#define PLL_M      HSE_VALUE/1000000
+#define PLL_M		HSE_VALUE/1000000
 
-//#ifdef __DISCO__
-//#define PLL_N      336							
-//#define PLL_P      4
-//#define PLL_Q      7
-//#endif
+#define PLL_N		240
+#define PLL_P		2
+#define PLL_Q		5
 
-//#ifdef __PFM6__
-#define PLL_N      240
-#define PLL_P      2
-#define PLL_Q      5
-//#endif
 
 /**
   * @}
@@ -389,9 +383,13 @@ static void SetSysClock(void)
     }
    
     /* Configure Flash prefetch, Instruction cache, Data cache and wait state */
-
+#if defined (__F2__) || defined (__F4__)
     FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS;
-
+#elif defined (__F7__)
+    FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_7WS;
+#else
+    *** define cpu
+#endif
     /* Select the main PLL as system clock source */
     RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_SW));
     RCC->CFGR |= RCC_CFGR_SW_PLL;

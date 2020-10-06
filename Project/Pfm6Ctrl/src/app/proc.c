@@ -1,102 +1,73 @@
-#include	"pfm.h"
-/*******************************************************************************
-* Function Name	: 
-* Description		: 
-* Output				:
-* Return				:
-*******************************************************************************/
-app list[20] = {
-	{(func *)ParseCom,					(arg *)&__com0,0,0,0,"ParseCOM"},
-	{(func *)ParseCom,					(arg *)&__com1,0,0,0,"ParseUSB"},
-	{(func *)ParseCanTx,				(arg *)&pfm,0,0,0,"txCAN"},
-	{(func *)ParseCanRx,				(arg *)&pfm,0,0,0,"rxCAN"},
-	{(func *)ProcessingEvents,	(arg *)&pfm,0,0,0,"events"},
-	{(func *)ProcessingStatus,	(arg *)&pfm,0,1,0,"status"},
-	{(func *)ProcessingCharger,	(arg *)&pfm,0,1,0,"charger6"},
-	{(func *)USBHost,						(arg *)NULL,0,0,0,"host USB"},
-	{(func *)Watchdog,					(arg *)NULL,0,0,0,"Watchdog"},
-	{(func *)Lightshow,					(arg *)NULL,0,0,0,"Leds"}
-};
-/*******************************************************************************
-* Function Name	: 
-* Description		: 
-* Output				:
-* Return				:
-*******************************************************************************/
-void	App_Loop(void) {
-static 
-	int	current_job=-1;
-int		i=current_job;
-			if(++current_job >= sizeof(list)/sizeof(app))
-				current_job=0;				
-			if(list[i].f && list[i].dt >= 0 && __time__ >= list[i].t) {
-				int		dt=list[i].dt;
-				list[i].dt = -1;
-				list[i].to=__time__;
-				list[i].f(*list[i].arg);
-				list[i].to=__time__-list[i].to;
-				list[i].dt=dt;
-				list[i].t = __time__ + dt;
+#include "proc.h"
+_buffer 	*_proc_buf=NULL;
+//______________________________________________________________________________
+_proc	*_proc_add(void *f,void *arg,char *name, int dt) {
+_proc	*p=malloc(sizeof(_proc));
+			if(p != NULL) {
+				p->f=(func *)f;
+				p->arg=arg;
+				p->name=name;
+				p->t=__time__;
+				p->dt=dt;
+				if(!_proc_buf)
+					_proc_buf=_buffer_init(_PROC_BUFFER_SIZE*sizeof(_proc));
+				_buffer_push(_proc_buf,&p,sizeof(_proc *));
+			}
+			return p;
+}
+//______________________________________________________________________________
+void	*_proc_loop(void) {
+_proc	*p=NULL;
+			if(_proc_buf && _buffer_pull(_proc_buf,&p,sizeof(_proc *)) && p) {
+				if(__time__ >= p->t) {
+					p->to = __time__ - p->t;
+					p->f(p);
+					p->t = __time__ + p->dt;
+				}
+				_buffer_push(_proc_buf,&p,sizeof(_proc *));
+			}
+			return p;
+}
+//______________________________________________________________________________
+void	_proc_remove(void  *f,void *arg) {
+_proc	*p;
+int		i=_buffer_count(_proc_buf)/sizeof(_proc *);
+			while(i--) {
+				_buffer_pull(_proc_buf,&p,sizeof(_proc *));
+				if(f == p->f && arg == p->arg)
+					free(p);
+				else
+					_buffer_push(_proc_buf,&p,sizeof(_proc *));
 			}
 }
-/*******************************************************************************
-* Function Name	: 
-* Description		: 
-* Output				:
-* Return				:
-*******************************************************************************/
-app		*App_Find(func *f,arg *a) {
-int		i;
-			for(i=0; i<sizeof(list)/sizeof(app); ++i)
-				if(list[i].f == f && (!a || list[i].arg == a)) 
-					return &list[i];
-			return NULL;
+//______________________________________________________________________________
+_proc	*_proc_find(void  *f,void *arg) {
+_proc	*p,*q=NULL;
+int		i=_buffer_count(_proc_buf)/sizeof(_proc *);
+			while(i--) {
+				_buffer_pull(_proc_buf,&p,sizeof(_proc *));
+				if(f == p->f && (arg == p->arg || !arg))
+					q=p;
+				_buffer_push(_proc_buf,&p,sizeof(_proc *));
+			}
+			return q;
 }
-/*******************************************************************************
-* Function Name	: 
-* Description		: 
-* Output				:
-* Return				:
-*******************************************************************************/
-void	App_Add(func *f,arg *a,char *name, int dt) {
-int		i;
-			for(i=0; i<sizeof(list)/sizeof(app); ++i)
-				if(list[i].f == NULL) {
-						list[i].to=0;
-						list[i].t=__time__+dt;
-						list[i].f=f;
-						list[i].arg=a;
-						list[i].name=name;
-						list[i].dt=dt;
-						return;
-				}
+//______________________________________________________________________________
+void	_proc_list(void) {
+_proc	*p;	
+int		i	=_buffer_count(_proc_buf)/sizeof(_proc *);
+			__print("...\r\n");
+			while(i--) {
+				_buffer_pull(_proc_buf,&p,sizeof(_proc *));
+				__print("%08X,%08X,%s,%d\r\n",(int)p->f,(int)p->arg,p->name,p->to);
+				_buffer_push(_proc_buf,&p,sizeof(_proc *));
+			}
 }
-/*******************************************************************************
-* Function Name	: 
-* Description		: 
-* Output				:
-* Return				:
-*******************************************************************************/
-void	App_Remove(func *f,arg *a) {
-int		i;
-			for(i=0; i<sizeof(list)/sizeof(app); ++i)
-				if(list[i].f == f && list[i].arg == a)
-					list[i].f=NULL;
-}
-/*******************************************************************************
-* Function Name	: 
-* Description		: 
-* Output				:
-* Return				:
-*******************************************************************************/
-void	App_List(void) {
-int		i;
-			for(i=0; i<sizeof(list)/sizeof(app); ++i) {
-				if(list[i].f == 0)
-					continue;
-				if(list[i].dt >= 0)
-					__print("\r\n%08X,%08X,%s,%d",(int)list[i].f,(int)list[i].arg,list[i].name,list[i].to);
-				else
-					__print("\r\n%08X,%08X,%s,---",(int)list[i].f,(int)list[i].arg,list[i].name);
+//___________________________________________________________________________
+void	_wait(int t,void *(*f)(void)) {
+int		to=__time__+t;
+			while(to > __time__) {
+				if(f)
+					f();
 			}
 }

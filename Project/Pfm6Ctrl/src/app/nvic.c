@@ -55,28 +55,27 @@ void 	Initialize_NVIC() {
 			NVIC_InitStructure.NVIC_IRQChannel = CAN2_TX_IRQn;
 			NVIC_Init(&NVIC_InitStructure);
 
-			NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;							// fan sensor
+			NVIC_InitStructure.NVIC_IRQChannel = TIM8_TRG_COM_TIM14_IRQn;	// fan sensor
 			NVIC_Init(&NVIC_InitStructure);
-			
-			NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;				// HW errors
+
+			NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;					// HW errors
 			NVIC_Init(&NVIC_InitStructure);
 			
 			NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
 			NVIC_Init(&NVIC_InitStructure);
 			
-			NVIC_InitStructure.NVIC_IRQChannel = ADC_IRQn;							// analog watchdogs
+			NVIC_InitStructure.NVIC_IRQChannel = ADC_IRQn;								// analog watchdogs
 			NVIC_Init(&NVIC_InitStructure);
 
-
-			NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;	
+			NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;							// com3
 			NVIC_Init(&NVIC_InitStructure);
 
-			NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;						// USART1
+			NVIC_InitStructure.NVIC_IRQChannel = USART6_IRQn;							// com6
 			NVIC_Init(&NVIC_InitStructure);
 }
 /******************************************************************************/
 void	Watchdog_init(int t) {
-	#ifndef __DISCO__
+#if		!defined (__DISC4__) && !defined (__DISC7__)
 			IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
 			IWDG_SetPrescaler(IWDG_Prescaler_32);
 			IWDG_SetReload(t);
@@ -84,7 +83,7 @@ void	Watchdog_init(int t) {
 			IWDG_ReloadCounter();
 			IWDG_Enable();
 			IWDG_WriteAccessCmd(IWDG_WriteAccess_Disable);
-	#endif
+#endif
 }
 /******************************************************************************/
 void	Watchdog(void) {

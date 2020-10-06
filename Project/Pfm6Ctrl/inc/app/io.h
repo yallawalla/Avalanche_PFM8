@@ -26,7 +26,7 @@ typedef struct _io
 				int		(*parse)(char *);
 				struct _io *io;
 	}			 arg;
-	FIL		*file;
+//	FIL		*file; 														17.3.2017 odkomentiraj vse 	#kj873uhjfru
 } _io;
 //______________________________________________________________________________________
 _buffer	*_buffer_init(int),

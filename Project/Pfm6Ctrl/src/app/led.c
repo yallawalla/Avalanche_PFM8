@@ -14,43 +14,29 @@
 */
 
 #include		<stdlib.h>
-#if defined  (STM32F2XX)
-#include		"stm32f2xx.h"
-#
-#elif defined (__PVC__)
-#include		"stm32f10x.h"
-#elif	undefined (STM32F2XX || __PVC__)
-*** undefined target !!!!
-#endif
+#include		"cpu.h"
+#include		"proc.h"
 
-#if		defined (__PFM6__)
-	#define	__LED_ON(a,b)			GPIO_ResetBits(a,b);
-	#define	__LED_OFF(a,b)		GPIO_SetBits(a,b);
-#elif  defined (__DISCO__)
-	#define	__LED_OFF(a,b)		GPIO_ResetBits(a,b);
-	#define	__LED_ON(a,b)			GPIO_SetBits(a,b);
-#elif  defined (__PVC__)
-	#define	__LED_OFF(a,b)
-	#define	__LED_ON(a,b)
+#if		!defined (__DISC4__) && !defined (__DISC7__)
+	#define	__LED_ON(a,b)			GPIO_ResetBits(a,b)
+	#define	__LED_OFF(a,b)		GPIO_SetBits(a,b)
 #else
-	#### error, no HW defined
+	#define	__LED_ON(a,b)
+	#define	__LED_OFF(a,b)
 #endif
-
 
 GPIO_TypeDef *gpio[10];		// pointer na GPIO od indiv. leda
-short					pin[10];		// oznaka pina 
-
+short					pin[10];		// oznaka pina
 /**********************************************************************/
 /**
-  * @brief  LED processing
-  * @param a: led ID, 0.9 as defined in pfm.h ... _RED1,_BLUE2 ... etc.
+	* @brief  LED processing
+	* @param a: led ID, 0.9 as defined in pfm.h ... _RED1,_BLUE2 ... etc.
   * @param b: msecs, 0=off, -1=perm. on, a=-1 = periodic call, 1 msec
   * @retval : None
   */
 void	_led(int a, int b) {
 int				i;
-static 	int 	t[]={1,1,1,1,1,1,1,1,1,1};
-
+static 		int 	t[]={1,1,1,1,1,1,1,1,1,1};
 				if(a==-1) {
 					for(i=0;i<10;++i) {
 						if(t[i])
@@ -73,11 +59,17 @@ static 	int 	t[]={1,1,1,1,1,1,1,1,1,1};
 //______________________________________________________________________
 #define	NN 30
 #define	Nk 10
-extern volatile int __time__;
 //______________________________________________________________________
-void		Lightshow(void) {
-static	int	t1=0,t2=0,t3=0;
-				if(__time__ < 10000) {
+void		Lightshow(_proc *proc) {
+int 		*time = proc->arg;
+static	int	t=0,t1=0,t2=0,t3=0;
+	
+				if(*time != t) {
+					t=*time;
+					_led(-1,-1);
+				}
+
+				if(t < 10000) {
 					if(!(++t1 % NN)) {
 						_led(t3,0);
 						++t2;
@@ -97,18 +89,13 @@ static	int	t1=0,t2=0,t3=0;
 // leds GPIO setup _____________________________________________________
 //
 void	Initialize_LED(char *p[], int n) {
-#if		defined (__PFM6__) || defined(__DISCO__)
+#if		defined (__PFM6__) || defined (__PFM8__)
 GPIO_InitTypeDef	GPIO_InitStructure;
 int		i;
 			GPIO_StructInit(&GPIO_InitStructure);
 			GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-#if		defined (__PFM6__)
 			GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-#elif  defined (__DISCO__)
-			GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-#else
-	#### error, no HW defined
-#endif
+
 			for(i=0; i<n; ++i) {
 				switch(*p[i]) {
 					case 'a':gpio[i]=GPIOA;break;

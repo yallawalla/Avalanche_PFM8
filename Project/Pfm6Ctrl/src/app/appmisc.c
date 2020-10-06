@@ -1,4 +1,5 @@
 #include	"pfm.h"
+#include <ctype.h>
 /**
   ******************************************************************************
   * @file    appmisc.c
@@ -11,20 +12,7 @@
 /** @addtogroup PFM6_Application
 * @{
 */
-/*******************************************************************************
-* Function Name : Wait
-* Description   :	recursive call to main loop !!!
-* Input         :
-* Output        :
-* Return        :
-*******************************************************************************/
-void	Wait(int t,void (*f)(void)) {
-int		to=__time__+t;
-			while(to > __time__) {
-				if(f)
-					f();
-			}
-}
+_io	*__dbug;
 /*******************************************************************************
 * Function Name : ScopeDumpBinary
 * Description   :
@@ -61,8 +49,8 @@ union	{
 							_ADC.adc.I /=4;
 							io=_stdio(io);
 							for(j=0; j<sizeof(_ADCDMA); ++j)
-								while(__stdout.io->put(__stdout.io->tx,_ADC.c[j])==EOF)
-									Watchdog();
+								while(__stdout.io->put(__stdout.io->tx,_ADC.c[j])==EOF);
+									_proc_loop();
 							io=_stdio(io);
 							_ADC.adc.U =0;
 							_ADC.adc.I =0;
@@ -84,155 +72,95 @@ char	q[16];
 			*p += n;
 			return(strtoul(q,NULL,16));
 			}
-/*******************************************************************************/
-/**
-  * @brief  temperature interpolation from 	ADC data
-  * @param t: ADC readout
-  * @retval : temperature (10x deg.C)
-  */
-const int Ttab[]={											// tabela kontrolnih toèk
-			2500,								  						// za interpolacijo tempreature
-			5000,								  						// zaradi prec izracuna x 100
-			8000,
-			12500
-			};
-
-const	int Rtab[]={
-			(4096.0*_Rdiv(47000.0,22000.0)),	// tabela vhodnih toèk za
-			(4096.0*_Rdiv(18045.0,22000.0)),	// interpolacijo (readout iz ADC !!!)
-			(4096.0*_Rdiv(6685.6,22000.0)),
-			(4096.0*_Rdiv(1936.6,22000.0))
-			};
 
 _QSHAPE			qshape[_MAX_QSHAPE];
 _USER_SHAPE	ushape[_MAX_USER_SHAPE];
-			
-#define	_K1											(_STATUS(p, PFM_STAT_SIMM1)/1)
-#define	_K2											(_STATUS(p, PFM_STAT_SIMM2)/2)
-
-#define _SHPMOD_OFF		0
-#define _SHPMOD_MAIN	1
-#define _SHPMOD_CAL		2
-#define _SHPMOD_QSWCH	4
-
-#define	_minmax(x,x1,x2,y1,y2) 	__min(__max(((y2-y1)*(x-x1))/(x2-x1)+y1,y1),y2)
 /*******************************************************************************
-* Function Name : SetPwmTab
-* Description   : set the pwm sequence
-* Input         : *p, PFM object pointer
+* Function Name :  
+* Description   : 
+* Input         :  
 * Return        :
 *******************************************************************************/
-void	SetPwmTab(PFM *p) {
-
-_TIM18DMA
-			*t=TIM18_buf;
-
+_TIM_DMA *__SetPwmTab(PFM *p, _TIM_DMA *t) {
 int		i,j,n;
-int		to			=p->Burst.Time;
-int		tpause	=p->Burst.Length/p->Burst.N - p->Burst.Time;								// dodatek ups....
-int		Uo=p->Burst.Pmax;
+int		to			=p->Burst->Time;
+int		tpause	=p->Burst->Length/p->Burst->N - p->Burst->Time;							// dodatek ups....
 int		dUo=0;																															// modif. 2,3,4... pulza, v %
-float	P2V = (float)_AD2HV(pfm->Burst.HVo)/_PWM_RATE_HI;
-//-------wait for prev to finish ---
-			while(_MODE(p,_PULSE_INPROC))
-				Wait(2,App_Loop);
+float	P2V = (float)_AD2HV(p->HVref)/_PWM_RATE_HI;
+int		Uo=p->Burst->PW = p->Burst->U *_PWM_RATE_HI/_AD2HV(10*p->HVref);
+//-------validate U parameter-------	
+			if(p->Burst->PW > 0 && p->Burst->PW >= _MAX_PWM_RATE) {
+				p->Burst->U=_MAX_PWM_RATE*_AD2HV(10*p->HVref)/_PWM_RATE_HI;
+				p->Burst->PW=_MAX_PWM_RATE;
+				_SET_ERROR(p,PFM_ERR_UB);
+			}
 //-------user shape part -----------																			// 3. koren iz razmerja energij, ajde :)
+	
 			if(*(int *)ushape) {
-				float e2E=pow(pow(P2V*p->Burst.Pmax,3)/400000.0*p->Burst.Time*p->Burst.N/(*(int *)ushape),1.0/3.0)/P2V;
-				p->Burst.Length=0;
+				float e2E=pow(pow(P2V*p->Burst->PW,3)/400000.0*p->Burst->Time*p->Burst->N/(*(int *)ushape),1.0/3.0)/P2V;
+				p->Burst->Length=0;
 				for(i=1; ushape[i].T && i < _MAX_BURST/(10*_uS)-1 && i<_MAX_USER_SHAPE; ++t,++i) {
 					t->n=2*ushape[i].T/10-1;
-					t->T1=_K1*(e2E*ushape[i].U + p->Burst.Pdelay);
-					t->T3=_K2*(e2E*ushape[i].U + p->Burst.Pdelay);
-					p->Burst.Length+= ushape[i].T;
+					t->T=e2E*ushape[i].U + p->Burst->Pdelay;
 				}
-										
-				t->T1=_K1*p->Burst.Psimm[0];
-				t->T3=_K2*p->Burst.Psimm[1];
-				t->n=1;
-				++t;
-				t->T1=_K1*p->Burst.Psimm[0];
-				t->T3=_K2*p->Burst.Psimm[1];
-				t->n=0;
-				
-				p->Burst.Ereq=_SHPMOD_OFF;
-				p->Burst.Einterval= __min(p->Burst.Length, _MAX_BURST/_MAX_ADC_RATE);
-
+				p->Burst->Ereq=_SHPMOD_OFF;
 				_CLEAR_MODE(p, _P_LOOP);																					// current stab. off !!!
-				return;
+				t->n=0;																														// EOF
+				return t;																			
 			}
 //-------DELAY----------------------
-			for(n=2*((p->Burst.Delay*_uS)/_PWM_RATE_HI)-1; n>0; n -= 256, ++t) {
-				t->T1=_K1*p->Burst.Pdelay;
-				t->T3=_K2*p->Burst.Pdelay;
-				if(n > 255)
-					t->n=255;
-				else
-					t->n=n;
+			for(n=2*((p->Burst->Delay*_uS)/_PWM_RATE_HI)-1; n>0; n -= 256, ++t) {
+				t->T=p->Burst->Pdelay;
+				(n > 255) ? (t->n=255) : (t->n=n);
 			};
-			
-			p->Burst.Einterval= __min(p->Burst.Length + p->Burst.Delay, _MAX_BURST/_MAX_ADC_RATE);
-//-------preludij-------------------
-			if(p->Burst.Ereq & (_SHPMOD_CAL | _SHPMOD_QSWCH)) {
+//-------Preludij-------------------
+			if(p->Burst->Ereq & (_SHPMOD_CAL | _SHPMOD_QSWCH)) {
 				int	du=0,u=0;
 				for(i=0; i<_MAX_QSHAPE; ++i)
-					if(p->Burst.Time==qshape[i].qref) {
+					if(p->Burst->Time==qshape[i].qref) {
 						if(qshape[i].q0 > 0) {
-							p->Burst.Einterval = __min(p->Burst.Einterval + qshape[i].q0, _MAX_BURST/_MAX_ADC_RATE);
 							to=qshape[i].q0;
-							Uo=(int)(pow((pow(p->Burst.Pmax,3)*p->Burst.N*qshape[i].qref/to),1.0/3.0)+0.5);
-							if(p->Burst.Ereq & _SHPMOD_MAIN) {
+							Uo=(int)(pow((pow(p->Burst->PW,3)*p->Burst->N*qshape[i].qref/to),1.0/3.0)+0.5);
+							if(p->Burst->Ereq & _SHPMOD_MAIN) {
 								if(Uo > qshape[i].q1)
 									Uo = qshape[i].q1;
 							} else
 								qshape[i].q1=Uo;
+//_______________________________________________________________________________________________________
 // prePULSE + delay
 							for(n=((to*_uS)/_PWM_RATE_HI); n>0; n--,++t) 	{
 								du+=(2*Uo-u-2*du)*70/qshape[i].q0;
 								u+=du*70/qshape[i].q0;						
-								t[0].T1=_K1*(p->Burst.Pdelay + du + u*qshape[i].q2/100);
-								t[0].T3=_K2*(p->Burst.Pdelay + du + u*qshape[i].q2/100);
+								t->T=p->Burst->Pdelay + du + u*qshape[i].q2/100;
 								t->n=1;
 							}
 //_______________________________________________________________________________________________________
 // if Uo < q1 or calibrating prePULSE finish prePULSE & return
-							if(Uo < qshape[i].q1 || p->Burst.Ereq == _SHPMOD_CAL) {
-								while(du > p->Burst.Pdelay) 	{
+							if(Uo < qshape[i].q1 || p->Burst->Ereq == _SHPMOD_CAL) {
+								while(du > p->Burst->Pdelay) 	{
 									du+=(0-u-2*du)*70/qshape[i].q0; 
 									u+=du*70/qshape[i].q0;
-									t[0].T1=_K1*(p->Burst.Pdelay + du + u*qshape[i].q2/100);
-									t[0].T3=_K2*(p->Burst.Pdelay + du + u*qshape[i].q2/100);
+									t->T=p->Burst->Pdelay + du + u*qshape[i].q2/100;
 									t->n=1;
 									++t;
 									++to;
 								}
 
-								for(n=2*((p->Burst.Length*_uS/p->Burst.N-to*_uS)/_PWM_RATE_HI)-1;n>0;n -= 256,++t)	{
-									t->T1=_K1*p->Burst.Pdelay;
-									t->T3=_K2*p->Burst.Pdelay;
-									if(n > 255)
-										t->n=255;
-									else
-										t->n=n;
+								for(n=2*((p->Burst->Length*_uS/p->Burst->N-to*_uS)/_PWM_RATE_HI)-1;n>0;n -= 256,++t)	{
+									t->T=p->Burst->Pdelay;
+									(n > 255) ? (t->n=255) : (t->n=n);
 								}
-//-------end of sequence------------						
-								t->T1=_K1*p->Burst.Psimm[0];
-								t->T3=_K2*p->Burst.Psimm[1];
-								t->n=1;
-								++t;
-								t->T1=_K1*p->Burst.Psimm[0];
-								t->T3=_K2*p->Burst.Psimm[1];
 								t->n=0;
-								return;
+								return t;
 							}
 						}
 //_______________________________________________________________________________________________________
 // else change parameters & continue to 1.pulse
 //
-						if(p->Burst.Ereq & _SHPMOD_QSWCH) {
+						if(p->Burst->Ereq & _SHPMOD_QSWCH) {
 							to=qshape[i].qref;
-							Uo=p->Burst.Pmax;
-							dUo=pow(p->Burst.Pmax*P2V,3) - 400000000 / qshape[i].qref * qshape[i].q3;				// varianta z zmanjsevanjem za fiksno E(J);
+							Uo=p->Burst->PW;
+							dUo=pow(p->Burst->PW*P2V,3) - 400000000 / qshape[i].qref * qshape[i].q3;			// varianta z zmanjsevanjem za fiksno E(J);
 							if(dUo > 0)
 								dUo=pow(dUo,1.0/3.0)/P2V - Uo;
 							else
@@ -241,65 +169,88 @@ float	P2V = (float)_AD2HV(pfm->Burst.HVo)/_PWM_RATE_HI;
 //						dUo=(Uo * qshape[i].q3)/100 - Uo;																								// varianta z zmanjsevanjem v % napetosti
 						} else {
 							to=qshape[i].q3;
-							Uo=(int)(pow((pow(p->Burst.Pmax,3)*p->Burst.N*qshape[i].qref - pow(qshape[i].q1,3)*qshape[i].q0)/qshape[i].qref/p->Burst.N,1.0/3.0)+0.5);
 							tpause=_minmax(Uo,260,550,20,100);
-						}
-					}				
-			}
-			if(p->Burst.Ereq & _SHPMOD_MAIN) {
-//-------PULSE----------------------
-				for(j=0; j<p->Burst.N; ++j) {
-					for(n=2*((to*_uS + _PWM_RATE_HI/2)/_PWM_RATE_HI)-1; n>0; n -= 256, ++t) {
-						
-						if(j == 0) {
-							t->T1=_K1*(Uo+p->Burst.Pdelay);
-							t->T3=_K2*(Uo+p->Burst.Pdelay);				
-						} else {
-							t->T1=_K1*(Uo+dUo+p->Burst.Pdelay);
-							t->T3=_K2*(Uo+dUo+p->Burst.Pdelay);							
-						}
-						
-						if(n > 255)
-							t->n=255;
-						else {
-							t->n=n;
-//							if(p->Pockels.width)
-								p->Pockels.trigger=n;
-//							else
-//								p->Pockels.trigger=0;
+							Uo=(int)(pow((pow(p->Burst->PW,3)*p->Burst->N*qshape[i].qref - pow(qshape[i].q1,3)*qshape[i].q0)/qshape[i].qref/p->Burst->N,1.0/3.0)+0.5);
 						}
 					}
-//-------PAUSE----------------------			
-					for(n=2*((tpause*_uS)/_PWM_RATE_HI)-1;n>0;n -= 256,++t)	{
-						t->T1=_K1*p->Burst.Pdelay;
-						t->T3=_K2*p->Burst.Pdelay;
+			}
+			if(p->Burst->Ereq & _SHPMOD_MAIN) {
+//-------PULSE----------------------
+				for(j=0; j<p->Burst->N; ++j) {
+					for(n=2*((to*_uS + _PWM_RATE_HI/2)/_PWM_RATE_HI)-1; n>0; n -= 256, ++t) {
+						if(j == 0) {
+							t->T=Uo+p->Burst->Pdelay;
+						} else {
+							t->T=Uo+dUo+p->Burst->Pdelay;
+						}
 						if(n > 255)
-							t->n=255;
+							(t->n=255);
 						else
-							t->n=n;
+							(t->n=p->Burst->pockels.trigger=n);
+					}
+//-------PAUSE----------------------
+					for(n=2*((tpause*_uS)/_PWM_RATE_HI)-1;n>0;n -= 256,++t)	{
+						t->T=p->Burst->Pdelay;
+						(n > 255) ? (t->n=255) : (t->n=n);
 					}
 				}
 			}
 //------- fill seq. till end, except in user mode--------		
-			if(p->Burst.Ereq != _SHPMOD_OFF) {
-				for(n=2*((p->Burst.Length*_uS - p->Burst.N*(to+tpause)*_uS)/_PWM_RATE_HI)-1;n>0;n -= 256,++t)	{
-					t->T1=_K1*p->Burst.Pdelay;
-					t->T3=_K2*p->Burst.Pdelay;
-					if(n > 255)
-						t->n=255;
-					else
-						t->n=n;
+			if(p->Burst->Ereq != _SHPMOD_OFF) {
+				for(n=2*((p->Burst->Length*_uS - p->Burst->N*(to+tpause)*_uS)/_PWM_RATE_HI)-1;n>0;n -= 256,++t)	{
+					t->T=p->Burst->Pdelay;
+					(n > 255) ? (t->n=255) : (t->n=n);
 				}
 			}
-//-------end of sequence------------						
-			t->T1=_K1*p->Burst.Psimm[0];
-			t->T3=_K2*p->Burst.Psimm[1];
-			t->n=1;
-			++t;
-			t->T1=_K1*p->Burst.Psimm[0];
-			t->T3=_K2*p->Burst.Psimm[1];
 			t->n=0;
-	}
+			return t;
+}
+/*******************************************************************************
+* Function Name : SetPwmTab
+* Description   : Selects the n'th pw buffer
+*								: Calls the waveform generator __SetPwmTab
+*								: Calculates energy integrating interval to ADC
+* Input         : *p, PFM object pointer
+* Return        :
+*******************************************************************************/
+void	_SetPwmTab(PFM *p, int ch) {
+			int n;																						// active channel
+			_TIM_DMA *t;
+			while(_MODE(p,_PULSE_INPROC))
+				_wait(2,_proc_loop);
+			
+			if(ch == PFM_STAT_SIMM1) {				
+				p->Burst = &p->burst[0];
+				t=__SetPwmTab(p,_TIM.pwch1);
+				for(n=0; t-- != _TIM.pwch1; n+= t->n);
+				_TIM.eint1 = (n)*(_PWM_RATE_HI/_uS/2);
+			}
+			else if(ch == PFM_STAT_SIMM2) {
+				p->Burst = &p->burst[1];
+				t=__SetPwmTab(p,_TIM.pwch2);
+				for(n=0; t-- != _TIM.pwch2; n+= t->n);
+				_TIM.eint2 = (n)*(_PWM_RATE_HI/_uS/2);
+			} else {
+				p->Burst = &p->burst[0];
+				t = __SetPwmTab(p,_TIM.pwch1);
+				memcpy(_TIM.pwch2,_TIM.pwch1,sizeof(_TIM_DMA)*_MAX_BURST/_PWM_RATE_HI);
+				memcpy(&pfm->burst[1],&pfm->burst[0],sizeof(burst));
+				for(n=0; t-- != _TIM.pwch1; n+= t->n);
+				_TIM.eint1=_TIM.eint2 = (n)*(_PWM_RATE_HI/_uS/2);
+			}
+			Eack(NULL);
+}
+/*******************************************************************************
+* Function Name : SetPwmTab
+* Description   : Selects the n'th pw buffer
+*								: Calls the waveform generator __SetPwmTab
+*								: Calculates energy integrating interval to ADC
+* Input         : *p, PFM object pointer
+* Return        :
+*******************************************************************************/
+void	SetPwmTab(PFM *p) {
+			_SetPwmTab(p, p->Simmer.active);
+}
 /*______________________________________________________________________________
 * Function Name : SetSimmerPw
 * Description   : simmer pulse width
@@ -307,13 +258,13 @@ float	P2V = (float)_AD2HV(pfm->Burst.HVo)/_PWM_RATE_HI;
 * Output        : None
 * Return        : None
 */
-void		SetSimmerPw(PFM *p) {
+static void	_TIMERS_PWM_SET(PFM *p, int rate) {
 
-int 		psimm0=p->Burst.Psimm[0];																//		#kwwe723lwhd
-int 		psimm1=p->Burst.Psimm[1];
-	
-			if(PFM_command(NULL,0) != _STATUS(p, PFM_STAT_SIMM1 | PFM_STAT_SIMM2)) {			
-				if(PFM_command(NULL,0) & PFM_STAT_SIMM1)
+int 	psimm0=p->Simmer.pw[0];
+int 	psimm1=p->Simmer.pw[1];
+
+			if(p->Simmer.active != _STATUS(p, PFM_STAT_SIMM1 | PFM_STAT_SIMM2)) {			
+				if(p->Simmer.active & PFM_STAT_SIMM1)
 						psimm1=psimm0;
 				else
 						psimm0=psimm1;
@@ -327,142 +278,120 @@ int 		psimm1=p->Burst.Psimm[1];
 					TIM8->CCR4=TIM8->CCR3=TIM1->CCR4=TIM1->CCR3=psimm1;
 				else
 					TIM8->CCR4=TIM8->CCR3=TIM1->CCR4=TIM1->CCR3=0;
+				TIM_OC2PolarityConfig(TIM1, _PWM_HIGH);
+				TIM_OC4PolarityConfig(TIM1, _PWM_HIGH);
+				TIM_OC2PolarityConfig(TIM8, _PWM_HIGH);
+				TIM_OC4PolarityConfig(TIM8, _PWM_HIGH);
 			} else {
 				if(_STATUS(p, PFM_STAT_SIMM1))  {
 					TIM8->CCR1=TIM1->CCR1=psimm0;
-					TIM8->CCR2=TIM1->CCR2=TIM1->ARR-psimm0;
+					TIM8->CCR2=TIM1->CCR2=rate-psimm0;
 				} else {
 					TIM8->CCR1=TIM1->CCR1=0;
-					TIM8->CCR2=TIM1->CCR2=TIM1->ARR;
+					TIM8->CCR2=TIM1->CCR2=rate;
 				}
 				if(_STATUS(p, PFM_STAT_SIMM2))  {
 					TIM8->CCR3=TIM1->CCR3=psimm1;
-					TIM8->CCR4=TIM1->CCR4=TIM1->ARR-psimm1;
+					TIM8->CCR4=TIM1->CCR4=rate-psimm1;
 				} else {
 					TIM8->CCR3=TIM1->CCR3=0;
-					TIM8->CCR4=TIM1->CCR4=TIM1->ARR;
+					TIM8->CCR4=TIM1->CCR4=rate;
 				}
-	}
-}
-/*______________________________________________________________________________
-*/
-void	IncrementSimmerRate(int rate) {
-static
-int		r=0,flag;
-			if(flag == (TIM1->CR1 & TIM_CR1_DIR))
-				return;
-			flag = (TIM1->CR1 & TIM_CR1_DIR);
-			if(!r && !rate)
-				return;
-			if(rate)
-				r=rate;
-			else {
-				if(TIM1->ARR < r) {
-					++TIM1->ARR;
-					++TIM8->ARR;
-					if(!_MODE(pfm,_XLAP_SINGLE)) {
-						++TIM1->CCR2;
-						++TIM1->CCR4;
-						++TIM8->CCR2;
-						++TIM8->CCR4;
-					}
-				}
+				TIM_OC2PolarityConfig(TIM1, _PWM_LOW);
+				TIM_OC4PolarityConfig(TIM1, _PWM_LOW);
+				TIM_OC2PolarityConfig(TIM8, _PWM_LOW);
+				TIM_OC4PolarityConfig(TIM8, _PWM_LOW);
 			}
+#if defined __PFM8__
+			if(_MODE(p,_XLAP_SINGLE)) {
+				if(_STATUS(p, PFM_STAT_SIMM1))
+					TIM2->CCR2=TIM2->CCR1=TIM4->CCR2=TIM4->CCR1=psimm0/2;
+				else
+					TIM2->CCR2=TIM2->CCR1=TIM4->CCR2=TIM4->CCR1=0;
+				if(_STATUS(p, PFM_STAT_SIMM2))
+					TIM2->CCR4=TIM2->CCR3=TIM4->CCR4=TIM4->CCR3=psimm1/2;
+				else
+					TIM2->CCR4=TIM2->CCR3=TIM4->CCR4=TIM4->CCR3=0;
+				TIM_OC2PolarityConfig(TIM2, _PWM_HIGH);
+				TIM_OC4PolarityConfig(TIM2, _PWM_HIGH);
+				TIM_OC2PolarityConfig(TIM4, _PWM_HIGH);
+				TIM_OC4PolarityConfig(TIM4, _PWM_HIGH);
+			} else {
+				if(_STATUS(p, PFM_STAT_SIMM1))  {
+					TIM2->CCR1=TIM4->CCR1=psimm0/2;
+					TIM2->CCR2=TIM4->CCR2=(rate-psimm0)/2;
+				} else {
+					TIM2->CCR1=TIM4->CCR1=0;
+					TIM2->CCR2=TIM4->CCR2=rate/2;
+				}
+				if(_STATUS(p, PFM_STAT_SIMM2))  {
+					TIM2->CCR3=TIM4->CCR3=psimm1/2;
+					TIM2->CCR4=TIM4->CCR4=(rate-psimm1)/2;
+				} else {
+					TIM2->CCR3=TIM4->CCR3=0;
+					TIM2->CCR4=TIM4->CCR4=rate/2;
+				}
+				TIM_OC2PolarityConfig(TIM4, _PWM_LOW);
+				TIM_OC4PolarityConfig(TIM4, _PWM_LOW);
+				TIM_OC2PolarityConfig(TIM2, _PWM_LOW);
+				TIM_OC4PolarityConfig(TIM2, _PWM_LOW);
+			}
+#endif
 }
-/*______________________________________________________________________________
+/*__________________________________________________________________________
 * Function Name : SetSimmerRate
 * Description   : simmer pulse width
 * Input         : None
 * Output        : None
 * Return        : None
 */
-void	SetSimmerRate(PFM *p, SimmerType type) {										// #kd890304ri
+void	SetSimmerRate(PFM *p, SimmerType type) {	
 int		simmrate;
-	
 			_CLEAR_MODE(pfm,_XLAP_SINGLE);
 			_CLEAR_MODE(pfm,_XLAP_DOUBLE);
 			_CLEAR_MODE(pfm,_XLAP_QUAD);
 			
 			if(type == _SIMMER_HIGH) {
 				simmrate = _PWM_RATE_HI;
-				_SET_MODE(pfm,pfm->Burst.HighSimmerMode);
+				_SET_MODE(pfm,pfm->Burst->Mode);
 			} else {
-				if(PFM_command(NULL,0) &  PFM_STAT_SIMM1)
-					simmrate=p->Burst.LowSimm[0];
-				else
-					simmrate=p->Burst.LowSimm[1];
-				
-				_SET_MODE(pfm,pfm->Burst.LowSimmerMode);
+				if(p->Simmer.active &  PFM_STAT_SIMM1) {
+					simmrate=p->Simmer.rate[0];
+					_SET_MODE(pfm,p->Simmer.mode);
+				}	else {
+					simmrate=p->Simmer.rate[1];
+					_SET_MODE(pfm,p->Simmer.mode);
+				}
 			}
-			
-			while(!(TIM1->CR1 & TIM_CR1_DIR)) Watchdog();
-			while((TIM1->CR1 & TIM_CR1_DIR)) Watchdog();
-	
-			TIM_CtrlPWMOutputs(TIM1, DISABLE);
-			TIM_CtrlPWMOutputs(TIM8, DISABLE);
-
-			TIM_SetCounter(TIM1,0);
-			TIM_SetCounter(TIM8,0);
-
-			TIM_Cmd(TIM1,DISABLE);
-			TIM_Cmd(TIM8,DISABLE);			
-			
-			TIM_SetCounter(TIM1,0);
-			TIM_SetCounter(TIM8,0);
-
-			TIM_SetCounter(TIM1,simmrate/4);
-			if(_MODE(p,_XLAP_QUAD))
-				TIM_SetCounter(TIM8,3*simmrate/4);
-			else
-				TIM_SetCounter(TIM8,simmrate/4);
-
-			TIM_SetAutoreload(TIM1,simmrate);
-			TIM_SetAutoreload(TIM8,simmrate);
-			SetSimmerPw(p);
-
-			if(_MODE(p,_XLAP_SINGLE)) {
-				TIM_OC2PolarityConfig(TIM1, TIM_OCPolarity_High);
-				TIM_OC4PolarityConfig(TIM1, TIM_OCPolarity_High);
-				TIM_OC2PolarityConfig(TIM8, TIM_OCPolarity_High);
-				TIM_OC4PolarityConfig(TIM8, TIM_OCPolarity_High);
+			__disable_irq();			
+			while(!(TIM1->CR1 & TIM_CR1_DIR));
+			while((TIM1->CR1 & TIM_CR1_DIR));
+			_TIMERS_HALT();
+			_DISABLE_PWM_OUT();
+			__enable_irq();
+			if(type == _SIMMER_HIGH) {
+				_TIMERS_RESYNC(p,simmrate);
+				_TIMERS_PWM_SET(p,simmrate);		
+				_TIMERS_ARR_SET(simmrate);
+				_TIMERS_PRELOAD_ON();
 			} else {
-				TIM_OC2PolarityConfig(TIM1, TIM_OCPolarity_Low);
-				TIM_OC4PolarityConfig(TIM1, TIM_OCPolarity_Low);
-				TIM_OC2PolarityConfig(TIM8, TIM_OCPolarity_Low);
-				TIM_OC4PolarityConfig(TIM8, TIM_OCPolarity_Low);
+				_TIMERS_PRELOAD_OFF();
+				_TIMERS_ARR_SET(simmrate);
+				_TIMERS_PWM_SET(p,simmrate);			
+				_TIMERS_RESYNC(p,simmrate);
 			}
-
-			if(_MODE(p,_PULSE_INPROC)) {
+			if(type == _SIMMER_HIGH) {
+				TriggerADC(p);
 				TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
 				TIM_ITConfig(TIM1,TIM_IT_Update,ENABLE);
-				TriggerADC(p);
+				_SET_MODE(pfm,_PULSE_INPROC);
 			} else {
 				TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
 				TIM_ITConfig(TIM1,TIM_IT_Update,DISABLE);
+				_CLEAR_MODE(pfm,_PULSE_INPROC);
 			}
-
-			TIM_CtrlPWMOutputs(TIM1, ENABLE);
-			TIM_CtrlPWMOutputs(TIM8, ENABLE);
 			TIM_Cmd(TIM1,ENABLE);
-
-			if(_MODE(p,_PULSE_INPROC)) {
-				_DEBUG_MSG("trigger at... %dV,%dA,%dV,%dA",_AD2HV(ADC3_AVG*ADC1_simmer.U),_AD2I(ADC1_simmer.I),_AD2HV(ADC3_AVG*ADC2_simmer.U),_AD2I(ADC2_simmer.I));	
-			} else {
-				_DEBUG_MSG("simmer %3d kHz, mode %d", _mS/simmrate,pfm->mode & 0x07);
-			}
-//_____________________________________________________________	
-// 		if(!(p->Error  & _CRITICAL_ERR_MASK))
-// 			EnableIgbt();
-}
-/*******************************************************************************/
-void	EnableIgbt(void) {
-			TIM_CtrlPWMOutputs(TIM1, ENABLE);
-			TIM_CtrlPWMOutputs(TIM8, ENABLE);		
-}
-/*******************************************************************************/
-void	DisableIgbt(void) {
-			TIM_CtrlPWMOutputs(TIM1, DISABLE);
-			TIM_CtrlPWMOutputs(TIM8, DISABLE);		
+			_ENABLE_PWM_OUT();
 }
 /*******************************************************************************/
 int		fanPmin=20;
@@ -470,10 +399,55 @@ int		fanPmax=95;
 int		fanTL=3000;
 int		fanTH=4000;
 /*******************************************************************************/
-int		IgbtTemp(void) {
-int		cc,t=__max( __fit(ADC3_buf[0].IgbtT1,Rtab,Ttab),
-									__fit(ADC3_buf[0].IgbtT2,Rtab,Ttab));
+/**
+  * @brief  temperature interpolation from 	ADC data
+  * @param t: ADC readout
+  * @retval : temperature (10x deg.C)
+  */
+int		IgbtTemp(temp_ch n) {
+const int Ttab[]={											// tabela kontrolnih toèk
+			2500,								  						// za interpolacijo tempreature
+			5000,								  						// zaradi prec izracuna x 100
+			8000,
+			12500
+			};
+#if		defined (__PFM6__)
 
+const	int Rtab[]={
+			(4096.0*_Rdiv(47000.0,22000.0)),	// tabela vhodnih toèk za
+			(4096.0*_Rdiv(18045.0,22000.0)),	// interpolacijo (readout iz ADC !!!)
+			(4096.0*_Rdiv(6685.6,22000.0)),
+			(4096.0*_Rdiv(1936.6,22000.0))
+			};
+	
+int		cc,t=__max( __fit(ADC3_buf[0].IgbtT[0],Rtab,Ttab),
+									__fit(ADC3_buf[0].IgbtT[1],Rtab,Ttab));
+
+#elif	defined (__PFM8__)
+																				// IgbtTemp()
+const	int Rtab[]={
+			(4096.0*_Rdiv(3000.0,10000.0)),		// tabela vhodnih toèk za
+			(4096.0*_Rdiv(3000.0,3598.7)),		// interpolacijo (readout iz ADC !!!)
+			(4096.0*_Rdiv(3000.0,1251.8)),
+			(4096.0*_Rdiv(3000.0,336.7))
+			};
+
+//int		cc,t=__max( __max(__fit(ADC3_buf[0].IgbtT[0],Rtab,Ttab),
+//												__fit(ADC3_buf[0].IgbtT[1],Rtab,Ttab)),
+//									__max(__fit(ADC3_buf[0].IgbtT[2],Rtab,Ttab),
+//												__fit(ADC3_buf[0].IgbtT[3],Rtab,Ttab)));
+
+int		cc,t = __max(__fit(ADC3_buf[0].IgbtT[0],Rtab,Ttab), __fit(ADC3_buf[0].IgbtT[1],Rtab,Ttab));
+#else
+
+const	int Rtab[]={
+			(4096.0*_Rdiv(47000.0,22000.0)),	// tabela vhodnih toèk za
+			(4096.0*_Rdiv(18045.0,22000.0)),	// interpolacijo (readout iz ADC !!!)
+			(4096.0*_Rdiv(6685.6,22000.0)),
+			(4096.0*_Rdiv(1936.6,22000.0))
+			};
+int		cc,t=(_FAN_PWM_RATE*fanPmin)/200;
+#endif
 			if(__time__ > 5000) {
 				if(t<fanTL)
 					cc=(_FAN_PWM_RATE*fanPmin)/200;
@@ -484,12 +458,15 @@ int		cc,t=__max( __fit(ADC3_buf[0].IgbtT1,Rtab,Ttab),
 						cc=(_FAN_PWM_RATE*(((t-fanTL)*(fanPmax-fanPmin))/(fanTH-fanTL)+fanPmin	))/200;
 				}
 				cc=__min(_FAN_PWM_RATE/2-5,__max(5,cc));
-				if(TIM_GetCapture1(TIM3) < cc)
-					TIM_SetCompare1(TIM3,TIM_GetCapture1(TIM3)+1);
+				if(TIM_GetCapture1(TIM13) < cc)
+					TIM_SetCompare1(TIM13,TIM_GetCapture1(TIM13)+1);
 				else
-					TIM_SetCompare1(TIM3,TIM_GetCapture1(TIM3)-1);
+					TIM_SetCompare1(TIM13,TIM_GetCapture1(TIM13)-1);
 			}
-			return(t/100);
+			if(n==T_MIN)
+				return(t);
+			else
+				return __fit(ADC3_buf[0].IgbtT[n-1],Rtab,Ttab);
 }
 /*******************************************************************************/
 /**
@@ -513,7 +490,7 @@ int		f1=(ft[1]*(t[0]-to)-ft[0]*(t[1]-to)) / (t[0]-t[1]);
 * Return        :
 *******************************************************************************/
 float	__lin2f(short i) {
-		return((i&0x7ff)*pow(2,i>>11));
+			return((i&0x7ff)*pow(2,i>>11));
 }
 /*******************************************************************************
 * Function Name : __f2lin
@@ -523,7 +500,7 @@ float	__lin2f(short i) {
 * Return        :
 *******************************************************************************/
 short	__f2lin(float u, short exp) {
-		return ((((int)(u/pow(2,exp>>11)))&0x7ff)  | (exp & 0xf800));
+			return ((((int)(u/pow(2,exp>>11)))&0x7ff)  | (exp & 0xf800));
 }
 /*******************************************************************************
 * Function Name : SetChargerVoltage
@@ -533,8 +510,7 @@ short	__f2lin(float u, short exp) {
 * Return        :
 *******************************************************************************/
 int		SetChargerVoltage(int u) {
-struct	
-			{signed int e:3;} 
+struct	{ signed int e:3; } 
 e3;
 int		i=_VOUT_MODE;
 
@@ -548,24 +524,17 @@ int		i=_VOUT_MODE;
 }
 /*******************************************************************************
 * Function Name : batch
-* Description   :	ADP1047 output voltage setup, using the default format
+* Description   :	
 * Input         :
 * Output        :
 * Return        :
 *******************************************************************************/
-int	batch(char *filename) {
-FIL		f;
-FATFS	fs;
-
-			if(f_chdrive(0)==FR_OK && f_mount(0,&fs)==FR_OK && f_open(&f,filename,FA_READ)==FR_OK) {
-				__print("\r\n>");
-				__stdin.io->file=&f;
-				do
-					ParseCom(__stdin.io);
-				while(!f_eof(&f));
-				__stdin.io->file=NULL;
+int		batch(char *filename) {
+			FIL		f;
+			if(f_open(&f,filename,FA_READ)==FR_OK) {
+				while(!f_eof(&f))
+					ParseFile(&f);
 				f_close(&f);
-				f_mount(0,NULL);
 				return _PARSE_OK;
 			} else
 				return _PARSE_ERR_OPENFILE;
@@ -581,26 +550,26 @@ void	CAN_console(void) {
 char	c[128];
 int		i,j;
 			__dbug=__stdin.io;
-			_SET_DBG(pfm,_DBG_CAN_COM);
-			printf("\r\n remote console open... \r\n>");
-			sprintf(c,">%02X%02X%02X",_ID_SYS2PFMcom,'v','\r');
+			_SET_MODE(pfm,_CAN_2_COM);
+			__print("\r\n remote console open... \r\n>");
+			sprintf(c,">%03X %02X %02X",_ID_SYS2PFMcom,'v','\r');
 			DecodeCom(c);
 			do {
 				for(i=0; i<8; ++i) {
 					j=getchar();
 					if(j == EOF || j == _CtrlE)
 						break;
-					sprintf(&c[2*i+3],"%02X",j);
+					sprintf(&c[3*i+4]," %02X",j);
 				}
 				if(i > 0)
 					DecodeCom(c);
-				App_Loop();
+				_proc_loop();
 			} while (j != _CtrlE);
-			sprintf(c,">%02X",_ID_SYS2PFMcom);
+			sprintf(c,">%03X",_ID_SYS2PFMcom);
 			DecodeCom(c);
-			_CLEAR_DBG(pfm,_DBG_CAN_COM);
+			_CLEAR_MODE(pfm,_CAN_2_COM);
 			__dbug=NULL;
-			printf("\r\n ....remote console closed\r\n>");
+			__print("\r\n ....remote console closed\r\n>");
 }
 /*******************************************************************************
 * Function Name : batch
@@ -609,20 +578,415 @@ int		i,j;
 * Output        :
 * Return        :
 *******************************************************************************/
-int			__print(char *format, ...) {
-
-	char 		buf[128],*p;
-	va_list	aptr;
-	int			ret;
-	
-	va_start(aptr, format);
-	ret = vsnprintf(buf, sizeof(buf), format, aptr);
-	va_end(aptr);
-	for(p=buf; *p; ++p)
-		while(fputc(*p,&__stdout)==EOF)
-			Wait(2,App_Loop);
-  return(ret);
+int		__print(char *format, ...) {
+			char 		buf[128],*p;
+			va_list	aptr;
+			int			ret;
+			
+			va_start(aptr, format);
+			ret = vsnprintf(buf, sizeof(buf), format, aptr);
+			va_end(aptr);
+			for(p=buf; *p; ++p)
+				while(fputc(*p,&__stdout)==EOF)
+					_wait(2,_proc_loop);
+			return(ret);
 }
+/**
+  * @}
+  */ 
+/*-----------------------------------------------------------------------*/
+void	SectorQuery(void) {
+int		i,j,*p,*q;
+
+			p=(int *)FATFS_ADDRESS;
+			for(i=0; i<SECTOR_COUNT; ++i) {
+				if(!((i%255)%16))
+					__print("\r\n");
+				if(!(i%255))
+					__print("\r\n");		
+				if(p[SECTOR_SIZE/4] == -1)
+					__print(" --- ");
+				else {
+					q=&p[SECTOR_SIZE/4+1];
+					j=i;
+					while(++j<SECTOR_COUNT && p[SECTOR_SIZE/4] != q[SECTOR_SIZE/4])
+						q=&q[SECTOR_SIZE/4+1];
+					if(j==SECTOR_COUNT)
+						__print(" %-04X",p[SECTOR_SIZE/4]);
+					else
+						__print("%c%-04X",'*',p[SECTOR_SIZE/4]);
+				}
+				p=&p[SECTOR_SIZE/4+1];
+			}
+}
+/*-----------------------------------------------------------------------*/																		
+int		FLASH_Erase(uint32_t FLASH_Sector) {
+int		m;
+			FLASH_Unlock();
+			FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR | FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR|FLASH_FLAG_PGSERR);	
+			do {
+				Watchdog();	
+				m=FLASH_EraseSector(FLASH_Sector,VoltageRange_3);
+			} while (m==FLASH_BUSY);
+			return(m);
+}
+/*-----------------------------------------------------------------------*/																		
+int		Defragment(int mode) {
+int 	i,f,e,*p,*q,buf[SECTOR_SIZE/4];
+int		c0=0,c1=0;
+
+			f=FATFS_SECTOR;																															// f=koda prvega 128k sektorja
+			e=PAGE_SIZE;																																// e=velikost sektorja
+			p=(int *)FATFS_ADDRESS;																											// p=hw adresa sektorja
+			do {
+				do {
+					++c0;
+					Watchdog();																															//jk822iohfw
+					q=&p[SECTOR_SIZE/4+1];																									
+					while(p[SECTOR_SIZE/4] != q[SECTOR_SIZE/4] && q[SECTOR_SIZE/4] != -1)		// iskanje ze prepisanih sektorjev
+						q=&q[SECTOR_SIZE/4+1];
+					if(q[SECTOR_SIZE/4] == -1) {																						// ce ni kopija, se ga prepise na konec fs
+						for(i=0; i<SECTOR_SIZE/4;++i)
+							buf[i]=~p[i];
+						Watchdog();
+						if(mode)
+							disk_write (*FS_CPU-'0',(uint8_t *)buf,p[SECTOR_SIZE/4],1);					// STORAGE_Write bo po prvem brisanju zacel na
+					} else																																	// zacetku !!!
+						++c1;
+					p=&p[SECTOR_SIZE/4+1]; 
+				} while(((int)p)-FATFS_ADDRESS <  e && p[SECTOR_SIZE/4] != -1);						// prepisana cela stran...
+				if(mode)
+					FLASH_Erase(f);																													// brisi !
+				f+=FLASH_Sector_1; 
+				e+=PAGE_SIZE;
+			} while(p[SECTOR_SIZE/4] != -1);	
+			if(mode) {
+				FLASH_Erase(f);																														// se zadnja !
+				return 0;
+			} else 
+				return(100*c1/c0);
+}
+//______________________________________________________________________________________
+char	*cgets(int c, int mode)
+{
+_buffer		*p=__stdin.io->gets;
+			
+			if(!p)
+				p=__stdin.io->gets=_buffer_init(__stdin.io->rx->size);
+			switch(c) {
+				case EOF:		
+				case '\n':
+					break;
+				case '\r':
+					*p->_push = '\0';
+					p->_push=p->_pull=p->_buf;
+					return(p->_buf);
+				case 0x08:
+				case 0x7F:
+					if(p->_push != p->_pull) {
+						--p->_push;
+						if(mode)
+							__print("\b \b");
+					}
+					break;
+				default:
+					if(p->_push != &p->_buf[p->size-1])
+						*p->_push++ = c;
+					else  {
+						*p->_push=c;
+						if(mode)
+							__print("%c",'\b');
+					}
+					if(mode) {
+						if(c < ' ' || c > 127)
+							__print("%c%02X%c",'<',c,'>');
+						else
+							__print("%c",c);
+					}
+					break;
+			}
+			return(NULL);
+}
+//______________________________________________________________________________________
+int		strscan(char *s,char *ss[],int c) {
+			int		i=0;
+			while(1)
+			{
+				while(*s==' ') ++s;
+				if(!*s)
+					return(i);
+
+				ss[i++]=s;
+				while(*s && *s!=c)
+				{
+					if(*s==' ')
+						*s='\0';
+					s++;
+				}
+				if(!*s)
+					return(i);
+				*s++=0;
+			}
+}
+//______________________________________________________________________________________
+int		numscan(char *s,char *ss[],int c) {
+			while(*s && !isdigit(*s)) 
+				++s;
+			return(strscan(s,ss,c));
+}
+//______________________________________________________________________________________
+int		hex2asc(int i)
+{
+			if(i<10)
+				return(i+'0');
+			else 
+				return(i-10+'A');
+}
+//_____________________________________________________________________________________
+int		asc2hex(int i)
+{
+			if(isxdigit(i))
+			{
+				if(isdigit(i))
+					return(i-'0');
+				else
+					return(toupper(i)-'A'+0x0a);
+			}
+			else
+				return(0);
+}
+//______________________________________________________________________________________
+int		getHEX(char *p, int n)
+{
+			int	i=0;
+			while(n-- && isxdigit(*p))
+				i=(i<<4) | asc2hex(*p++);
+			return(i);
+}
+//_____________________________________________________________________________________
+char	*endstr(char *p)
+{
+			while(*p)
+				++p;
+			return(p);
+}
+//_____________________________________________________________________________________
+#define		HEXREC3
+//_____________________________________________________________________________________
+int		sDump(char *p,int n)
+{
+			int	i,j;
+
+#ifdef	HEXREC1
+			i=(int)p + ((int)p >> 8);
+			if(n<252)
+				j=n;
+			else
+				j=252;
+			n -= j;
+			i += (j+3);
+			__print("\r\nS1%02X%04X",j+3,(int)p);
+#endif
+
+#ifdef	HEXREC2
+			i=(int)p + ((int)p >> 8) + ((int)p >> 16);
+			if(n<250)
+				j=n;
+			else
+				j=250;
+			n -= j;
+			i += (j+4);
+			__print("\r\nS2%02X%06X",j+4,(int)p);
+#endif
+
+#ifdef	HEXREC3
+			i=(int)p + ((int)p >> 8)+ ((int)p >>16)+ ((int)p >> 24);
+			if(n<248)
+				j=n;
+			else
+				j=248;
+			n -= j;
+			i += (j+5);
+			__print("\r\nS3%02X%08X",j+5,(int)p);
+#endif
+//_____________________________________________________________________________________
+			while(j--)
+			{
+				i += *p;
+				__print("%02X",*p++ & 0xff);
+			}
+			__print("%02X",~i & 0xff);
+			if(n)
+				sDump(p,n);
+			return(-1);
+}
+//_____________________________________________________________________________________
+int		iDump(int *p,int n)
+{
+			int		i,j,k;
+			union 	{int i; char c[sizeof(int)];} u;
+
+#ifdef	HEXREC1
+			i=(int)p + ((int)p >> 8);
+			if(n < (255-3)/sizeof(int))
+				j=n;
+			else
+				j=(255-3)/sizeof(int);
+			n -= j;
+			i += (sizeof(int)*j+3);
+			__print("\r\nS1%02X%04X",sizeof(int)*j+3,(int)p);
+#endif
+
+#ifdef	HEXREC2
+			i=(int)p + ((int)p >> 8) + ((int)p >> 16);
+			if(n < (255-5)/sizeof(int))
+				j=n;
+			else
+				j=(255-5)/sizeof(int);
+			n -= j;
+			i += (sizeof(int)*j+4);
+			__print("\r\nS2%02X%06X",sizeof(int)*j+4,(int)p);
+#endif
+
+#ifdef	HEXREC3
+			i=(int)p + ((int)p >> 8)+ ((int)p >>16)+ ((int)p >> 24);
+			if(n < (255-7)/sizeof(int))
+				j=n;
+			else
+				j=(255-7)/sizeof(int);
+			n -= j;
+			i += (sizeof(int)*j+5);
+			__print("\r\nS3%02X%08X",sizeof(int)*j+5,(int)p);
+#endif
+//_____________________________________________________________________________________
+			while(j--)
+			{
+				u.i=*p++;
+				for(k=0; k<sizeof(int); ++k)
+				{
+					i += u.c[k]; 
+					__print("%02X",u.c[k]);
+				}
+			}
+			__print("%02X",~i & 0xff);
+			if(n)
+				iDump(p,n);
+			return(-1);
+}
+//_____________________________________________________________________________________
+int		sLoad(char *p)
+{
+			int	 err,k,n;
+			char *q,*a=NULL;
+			k=*++p;												// skip 'S', k='1','2','3'
+			++p;
+			err=n=getHEX(p,2);
+			q=p;
+			++q;++q;
+			while(--n) {
+				err += getHEX(q,2);
+				++q;++q;
+			}
+			if(((~err) & 0xff) != getHEX(q,2))
+				__print("...checksum error !");
+			else {
+				n=getHEX(p,2);				++p;++p;
+				switch(k) {
+				case '1':
+					a=(char *)getHEX(p,4);	++p;++p;++p;++p;
+					n=n-3;
+					break;
+				case '2':
+					a=(char *)getHEX(p,6);	++p;++p;++p;++p;++p;++p;
+					n=n-4;
+					break;
+				case '3':
+					a=(char *)getHEX(p,8);	++p;++p;++p;++p;++p;++p;++p;++p;
+					n=n-5;
+					break;
+				}
+				while(n--) {
+					*(char *)a=getHEX(p,2);
+					++a;++p;++p;
+				}
+			}
+			return(-1);
+}
+
+#if !defined (__DISC7__)
+
+extern 	USBD_DEVICE 						USR_MSC_desc,	USR_VCP_desc;
+extern 	USBD_Class_cb_TypeDef  	USBD_MSC_cb,	USBD_CDC_cb;
+extern 	USBH_HOST								USB_Host;
+extern 	USB_OTG_CORE_HANDLE  		USB_OTG_Core;
+typedef enum {off, on} vbus;
+void	 	Vbus(vbus on) {
+	
+#if defined (_VBUS_BIT) && defined (_VBUS_PORT)
+				GPIO_InitTypeDef					GPIO_InitStructure;
+				GPIO_StructInit(&GPIO_InitStructure);
+				GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+				GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+				GPIO_InitStructure.GPIO_Pin = _VBUS_BIT;
+				GPIO_Init(_VBUS_PORT, &GPIO_InitStructure);
+				if(on)
+					GPIO_ResetBits(_VBUS_PORT,_VBUS_BIT);
+				else
+					GPIO_SetBits(_VBUS_PORT,_VBUS_BIT);
+#endif
+}
+#endif
+
+void	 	USB_MSC_device(void) {
+#ifdef _VBUS_BIT
+				Vbus(off);
+#endif
+#if defined (_USB_DIR_BIT) && defined (_USB_DIR_PORT)
+				GPIO_SetBits(_USB_DIR_PORT,_USB_DIR_BIT);
+#endif
+				USBD_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USR_MSC_desc, &USBD_MSC_cb, &USR_MSC_cb);
+}
+
+void		USB_VCP_device(void) {
+#ifdef _VBUS_BIT
+				Vbus(off);
+#endif
+#if defined (_USB_DIR_BIT) && defined (_USB_DIR_PORT)
+				GPIO_SetBits(_USB_DIR_PORT,_USB_DIR_BIT);
+#endif
+				USBD_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USR_VCP_desc, &USBD_CDC_cb, &USR_CDC_cb);
+}
+
+void		USBHost (_proc *p) {
+				USBH_Process(&USB_OTG_Core, p->arg);
+}
+
+void		USB_MSC_host(void) {
+#if defined (_USB_DIR_BIT) && defined (_USB_DIR_PORT)
+				GPIO_ResetBits(_USB_DIR_PORT,_USB_DIR_BIT);
+#endif
+#ifdef _VBUS_BIT
+				Vbus(on);
+#endif
+	
+				USBH_App=USBH_Iap;
+				USBH_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USB_Host, &USBH_MSC_cb, &USR_USBH_MSC_cb);
+				if(!_proc_find((func *)USBHost,&USB_Host))
+					_proc_add((func *)USBHost,&USB_Host,"host USB",0);
+}
+
+/*						VBUS
+PFM6 F4					N
+PFM6 F7					N
+PFM8 F4					N
+PFM8 F7					N
+DISC F4					Y
+DISC F746				Y
+DISC F769				Y
+*/
+
+
+
 /**
 * @}
 */
@@ -630,3 +994,4 @@ int			__print(char *format, ...) {
 >1a
 +e 0
 */
+
