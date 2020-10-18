@@ -4,7 +4,7 @@ _buffer 	*_proc_buf=NULL;
 _proc	*_proc_add(void *f,void *arg,char *name, int dt) {
 _proc	*p=malloc(sizeof(_proc));
 			if(p != NULL) {
-				p->f=(func *)f;
+				p->f=(void(*)(void *))f;
 				p->arg=arg;
 				p->name=name;
 				p->t=__time__;
@@ -16,7 +16,7 @@ _proc	*p=malloc(sizeof(_proc));
 			return p;
 }
 //______________________________________________________________________________
-void	*_proc_loop(void) {
+void	_proc_loop(void) {
 _proc	*p=NULL;
 			if(_proc_buf && _buffer_pull(_proc_buf,&p,sizeof(_proc *)) && p) {
 				if(__time__ >= p->t) {
@@ -26,7 +26,6 @@ _proc	*p=NULL;
 				}
 				_buffer_push(_proc_buf,&p,sizeof(_proc *));
 			}
-			return p;
 }
 //______________________________________________________________________________
 void	_proc_remove(void  *f,void *arg) {
@@ -64,7 +63,7 @@ int		i	=_buffer_count(_proc_buf)/sizeof(_proc *);
 			}
 }
 //___________________________________________________________________________
-void	_wait(int t,void *(*f)(void)) {
+void	_wait(int t,void (*f)(void)) {
 int		to=__time__+t;
 			while(to > __time__) {
 				if(f)

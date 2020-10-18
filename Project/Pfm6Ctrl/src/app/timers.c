@@ -340,7 +340,7 @@ void 		*Initialize_F2V(_proc *p) {
 		TIM_SelectMasterSlaveMode(TIM3,TIM_MasterSlaveMode_Enable);
 
 		TIM_Cmd(TIM3,ENABLE);
-		_proc_add((func *)Initialize_F2V,NULL,"F2V",1);
+		_proc_add(Initialize_F2V,NULL,"F2V",1);
 	} else {
 		if(pfm->Burst && TIM_GetCapture2(TIM3)) {
 			pfm->Burst->U=6000000/TIM_GetCapture2(TIM3);

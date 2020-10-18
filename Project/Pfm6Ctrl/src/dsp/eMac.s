@@ -4,6 +4,8 @@
 ;
 ;
                 AREA    |.text|, CODE, READONLY
+                PRESERVE8
+                THUMB
 
 eMac			PROC
 				push		{r4-r6}
@@ -24,4 +26,15 @@ __eloop
 				bx			lr
                 ENDP
 				EXPORT		eMac
+
+				IMPORT  	hard_fault_handler_c
+HardFault_Handler			PROC
+				TST LR, #4
+				ITE EQ
+				MRSEQ R0, MSP
+				MRSNE R0, PSP
+				B hard_fault_handler_c
+                ENDP
+				EXPORT		HardFault_Handler
+					
 				END

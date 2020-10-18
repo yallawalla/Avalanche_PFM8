@@ -129,7 +129,7 @@ static uint16_t VCP_Init(void)
 						__com=_io_init(256,256);
 						__com->put= putVCP;
 						__com->get= getVCP;	
-						_proc_add((func *)ParseCom,__com,"VCP parser",0);
+						_proc_add(ParseCom,__com,"VCP parser",0);
 
 					}
 					return USBD_OK;
@@ -144,7 +144,7 @@ static uint16_t VCP_Init(void)
 static uint16_t VCP_DeInit(void)
 {
 					_io_close(__com);
-					_proc_remove((func *)ParseCom,__com);
+					_proc_remove(ParseCom,__com);
 					return USBD_OK;
 }
 //_____________________________________________________________________________________

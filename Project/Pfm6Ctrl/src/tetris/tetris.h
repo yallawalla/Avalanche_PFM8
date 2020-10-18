@@ -1,8 +1,8 @@
 #ifndef TETRIS_H
 # define TETRIS_H
 
-void			*_proc_loop(void);
-void			_wait(int,void *(*)(void));
+void			_proc_loop(void);
+void			_wait(int,void (*)(void));
 int				__print(char *format, ...);
 
 

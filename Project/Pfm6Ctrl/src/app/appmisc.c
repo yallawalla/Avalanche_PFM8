@@ -957,7 +957,7 @@ void		USB_VCP_device(void) {
 				USBD_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USR_VCP_desc, &USBD_CDC_cb, &USR_CDC_cb);
 }
 
-void		USBHost (_proc *p) {
+void		USBHost(_proc *p) {
 				USBH_Process(&USB_OTG_Core, p->arg);
 }
 
@@ -971,8 +971,8 @@ void		USB_MSC_host(void) {
 	
 				USBH_App=USBH_Iap;
 				USBH_Init(&USB_OTG_Core, USB_OTG_FS_CORE_ID, &USB_Host, &USBH_MSC_cb, &USR_USBH_MSC_cb);
-				if(!_proc_find((func *)USBHost,&USB_Host))
-					_proc_add((func *)USBHost,&USB_Host,"host USB",0);
+				if(!_proc_find(USBHost,&USB_Host))
+					_proc_add(USBHost,&USB_Host,"host USB",0);
 }
 
 /*						VBUS

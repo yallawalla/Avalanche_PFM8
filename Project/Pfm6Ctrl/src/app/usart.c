@@ -250,6 +250,7 @@ GPIO_InitTypeDef				GPIO_InitStructure;
 	return io;
 }
 //______________________________________________________________________________________
+#ifndef	__DISC4__
 _io *Initialize_USART6(int speed) {
 
 USART_InitTypeDef 			USART_InitStructure;
@@ -295,6 +296,7 @@ GPIO_InitTypeDef				GPIO_InitStructure;
 	USART_ITConfig(USART6, USART_IT_RXNE, ENABLE);		
 	return io;
 }
+#endif
 /*******************************************************************************
 * Function Name  : USART3_IRQHandler
 * Description    : This function handles USART3  interrupt request.

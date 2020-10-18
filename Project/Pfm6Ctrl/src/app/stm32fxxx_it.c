@@ -69,7 +69,7 @@ void NMI_Handler(void)
   * @param  None
   * @retval None
   */
-void HardFault_Handler(void)
+void __HardFault_Handler(void)
 {
 	_stdio(__com1);
 	__print(":%04d HardFault_Handler\r\n>",__time__ % 10000);

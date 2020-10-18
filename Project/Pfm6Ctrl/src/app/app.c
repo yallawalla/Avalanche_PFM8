@@ -158,21 +158,21 @@ int				i,j;
 #endif
 //---------------------------------------------------------------------------------
 					if(__com1)
-						_proc_add((func *)ParseCom,__com1,						"COM1 parser",0);
+						_proc_add(ParseCom,__com1,						"COM1 parser",0);
 					if(__com3)
-						_proc_add((func *)ParseCom,__com3,						"COM3 parser",0);
+						_proc_add(ParseCom,__com3,						"COM3 parser",0);
 					if(__com6)
-						_proc_add((func *)ParseCom,__com6,						"COM6 parser",0);
+						_proc_add(ParseCom,__com6,						"COM6 parser",0);
 					
-					_proc_add((func *)ParseCanTx,pfm,								"CAN tx",0);
-					_proc_add((func *)ParseCanRx,pfm,								"CAN rx",0);
-					_proc_add((func *)ProcessingStatus,pfm,					"status",1);
-					_proc_add((func *)ProcessingEvents,pfm,					"events",0);
-					_proc_add((func *)ProcessingCharger,pfm,				"charger6",1);
+					_proc_add(ParseCanTx,pfm,								"CAN tx",0);
+					_proc_add(ParseCanRx,pfm,								"CAN rx",0);
+					_proc_add(ProcessingStatus,pfm,					"status",1);
+					_proc_add(ProcessingEvents,pfm,					"events",0);
+					_proc_add(ProcessingCharger,pfm,				"charger6",1);
 
 #if		defined (__PFM6__) || defined (__PFM8__)
-					_proc_add((func *)Watchdog,NULL,								"watchdog",0);
-					_proc_add((func *)Lightshow,(void *)&__time__,	"leds",0);
+					_proc_add(Watchdog,NULL,								"watchdog",0);
+					_proc_add(Lightshow,(void *)&__time__,	"leds",0);
 #endif
 //---------------------------------------------------------------------------------
 					SysTick_init();
@@ -181,7 +181,7 @@ int				i,j;
 					Watchdog_init(300);	
 					Initialize_DAC();
 //---------------------------------------------------------------------------------
-					_stdio(__com1);
+					_stdio(__com3);
 					if(RCC_GetFlagStatus(RCC_FLAG_SFTRST) == SET)
 						__print("\r ... SWR reset, %dMHz\r\n>",SystemCoreClock/1000000);
 					else if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET)
@@ -196,7 +196,7 @@ int				i,j;
 					RCC_ClearFlag(); 
 					f_chdrive(FS_CPU);
 					f_mount(pfm->fatfs,FS_CPU,1);
-							ungets("@cfg.ini\r");
+						ungets("@cfg.ini\r");
 					_stdio(NULL);
 }
 /*______________________________________________________________________________
@@ -785,13 +785,13 @@ PFM				*p=proc->arg;
 								if(rx.DLC) {
 									if(__can->arg.io == NULL) {
 										__can->arg.io=_io_init(128,128);
-										_proc_add((func *)ParseCom,__can->arg.io,"ParseCAN-IO",0);
+										_proc_add(ParseCom,__can->arg.io,"ParseCAN-IO",0);
 									}
 									while(__can->arg.io->rx->size - _buffer_count(__can->arg.io->rx) < 8)
 										_wait(2,_proc_loop);
 									_buffer_push(__can->arg.io->rx,rx.Data,rx.DLC);
 								} else {
-									_proc_remove((func *)ParseCom,__can->arg.io);
+									_proc_remove(ParseCom,__can->arg.io);
 									__can->arg.io=_io_close(__can->arg.io);
 								}
 								break;

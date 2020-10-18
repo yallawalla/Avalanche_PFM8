@@ -50,10 +50,9 @@ UINT			bw;
 static		
 	void		SaveSettings() {
 FIL				f;
-FATFS			fs;
 UINT			bw;
 					if(f_chdrive(FS_CPU) == FR_OK &&
-						f_mount(&fs,FS_CPU,1) == FR_OK && 
+						f_mount(pfm->fatfs,FS_CPU,1) == FR_OK && 
 							f_open(&f,"/tandem1.bin",FA_WRITE | FA_OPEN_ALWAYS) == FR_OK) {
 								f_write(&f,pfm->burst,2*sizeof(burst),&bw);
 								f_write(&f,&triggerMode,sizeof(triggerMode),&bw);
@@ -133,7 +132,7 @@ static
 							triggerMode = __max(_BOTH,__min(_Nd, triggerMode));
 						break;
 						case 1:
-							pfm->burst[1].Period = __max(2,__min(2000, pfm->burst[1].Period + a));
+							pfm->burst[1].Period = __max(2,__min(3000, pfm->burst[1].Period + a));
 							if(!_MODE(pfm,_ALTERNATE_TRIGGER))
 								pfm->burst[0].Period=pfm->burst[1].Period;
 							if(nPack && tPack < nPack * pfm->burst[1].Period)
@@ -256,7 +255,7 @@ static
 							tPack = __max(tPack, nPack * pfm->burst[1].Period);
 							break;
 						case 1:
-							tPack	= __max(nPack*pfm->burst[1].Period,__min(2000,tPack + a));
+							tPack	= __max(nPack*pfm->burst[1].Period,__min(3000,tPack + a));
 							nPack	= __min(nPack,tPack/pfm->burst[1].Period);
 							break;
 						default:
@@ -279,7 +278,7 @@ static
 								idx=0;
 								break;
 							case 0:
-								pfm->Burst->Time		= __max(50,__min(2000,pfm->Burst->Time +a));
+								pfm->Burst->Time		= __max(50,__min(3000,pfm->Burst->Time +a));
 								break;
 							case 1:
 								pfm->Burst->U				= __max(0,__min(8000,pfm->Burst->U +10*a));

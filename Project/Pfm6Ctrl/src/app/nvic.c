@@ -75,7 +75,7 @@ void 	Initialize_NVIC() {
 }
 /******************************************************************************/
 void	Watchdog_init(int t) {
-#if		!defined (__DISC4__) && !defined (__DISC7__)
+//#if		!defined (__DISC4__) && !defined (__DISC7__)
 			IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
 			IWDG_SetPrescaler(IWDG_Prescaler_32);
 			IWDG_SetReload(t);
@@ -83,7 +83,7 @@ void	Watchdog_init(int t) {
 			IWDG_ReloadCounter();
 			IWDG_Enable();
 			IWDG_WriteAccessCmd(IWDG_WriteAccess_Disable);
-#endif
+//#endif
 }
 /******************************************************************************/
 void	Watchdog(void) {
