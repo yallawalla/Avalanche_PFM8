@@ -181,7 +181,7 @@ int				i,j;
 					Watchdog_init(300);	
 					Initialize_DAC();
 //---------------------------------------------------------------------------------
-					_stdio(__com3);
+					_stdio(__com1);
 					if(RCC_GetFlagStatus(RCC_FLAG_SFTRST) == SET)
 						__print("\r ... SWR reset, %dMHz\r\n>",SystemCoreClock/1000000);
 					else if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET)
@@ -218,8 +218,8 @@ PFM				*p=proc->arg;
 					}
 					if(__time__ > 10000 &&__time__ > p->fan_rate)
 						_SET_ERROR(p,PFM_FAN_ERR);				
-					else
-						_CLEAR_ERROR(p,PFM_FAN_ERR);
+//					else
+//						_CLEAR_ERROR(p,PFM_FAN_ERR);
 //______________________________________________________________________________
 //______________________________________________________________________________
 //______________________________________________________________________________
@@ -326,8 +326,8 @@ static		int		bounce=0;
 					p->Temp=IgbtTemp(T_MIN)/100;
 					if((p->Temp > (fanTH+fanTH/2)/100) || (p->Temp < -20))
 						_SET_ERROR(p,PFM_ERR_TEMP);
-					else
-						_CLEAR_ERROR(p,PFM_ERR_TEMP);
+//					else
+//						_CLEAR_ERROR(p,PFM_ERR_TEMP);
 //-------------------------------------------------------------------------------
 #if	defined (__PFM6__)
 					p->Up20 += (8*(ADC3_buf[0].Up20) - p->Up20)/8;				
@@ -335,18 +335,18 @@ static		int		bounce=0;
 //-------------------------------------------------------------------------------								
 					if(abs(p->Up20 - 8*_V2AD(20,68,12)) >  8*_V2AD(2,68,12) && __time__ > 3000)                                      
 						_SET_ERROR(p,PFM_ERR_48V);
-					else
-						_CLEAR_ERROR(p,PFM_ERR_48V);
+//					else
+//						_CLEAR_ERROR(p,PFM_ERR_48V);
 					
 					if(abs(p->Um5 - 8*_Vn2AD(-5,24,12)) > 8*_V2AD(1,24,12) && __time__ > 3000)       
 						_SET_ERROR(p,PFM_ERR_15V);
-					else
-						_CLEAR_ERROR(p,PFM_ERR_15V);
+//					else
+//						_CLEAR_ERROR(p,PFM_ERR_15V);
 
 					if(ADC3_buf[0].HV > 100 && abs(ADC3_buf[0].HV-ADC3_buf[0].HV2) > ADC3_buf[0].HV/5 && __time__ > 3000)
 						_SET_ERROR(p,PFM_HV2_ERR);
-					else
-						_CLEAR_ERROR(p,PFM_HV2_ERR);
+//					else
+//						_CLEAR_ERROR(p,PFM_HV2_ERR);
 //-------------------------------------------------------------------------------
 #elif defined (__PFM8__)
 					p->Up12 += (8*(ADC3_buf[0].Up12) - p->Up12)/8;
@@ -355,34 +355,34 @@ static		int		bounce=0;
 
 					if(abs(p->Up12 - 8*_V2AD(24.0,7500.0,560.0)) >  8*_V2AD(2.0,7500.0,560.0) && __time__ > 3000)                       
 						_SET_ERROR(p,PFM_ERR_48V);
-					else
-						_CLEAR_ERROR(p,PFM_ERR_48V);
+//					else
+//						_CLEAR_ERROR(p,PFM_ERR_48V);
 					
 					if(abs(p->Up5 - 8*_V2AD(5.0,560.0,560.0)) >  8*_V2AD(0.5,560.0,560.0) && __time__ > 3000)                       
 						_SET_ERROR(p,PFM_ERR_15V);
-					else
-						_CLEAR_ERROR(p,PFM_ERR_15V);
+//					else
+//						_CLEAR_ERROR(p,PFM_ERR_15V);
 						
-					if(_IGBT_READY)
-						_CLEAR_ERROR(p,PFM_SCRFIRED);
-					else
+					if(!_IGBT_READY)
 						_SET_ERROR(p,PFM_SCRFIRED);		
+//					else
+//						_CLEAR_ERROR(p,PFM_SCRFIRED);
 					
 					if(ADC3_buf[0].HV > _HV2AD(100.0)) {
 						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].HV2) > ADC3_buf[0].HV/10)
 							_SET_ERROR(p,PFM_HV2_ERR);
-						else
-							_CLEAR_ERROR(p,PFM_HV2_ERR);
+//						else
+//							_CLEAR_ERROR(p,PFM_HV2_ERR);
 						
 						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].VCAP1) > ADC3_buf[0].HV/4)
 							_SET_ERROR(p,PFM_ERR_VCAP1);
-						else
-							_CLEAR_ERROR(p,PFM_ERR_VCAP1);
+//						else
+//							_CLEAR_ERROR(p,PFM_ERR_VCAP1);
 
 						if(abs(ADC3_buf[0].HV/2-ADC3_buf[0].VCAP2) > ADC3_buf[0].HV/4)
 							_SET_ERROR(p,PFM_ERR_VCAP2);
-						else
-							_CLEAR_ERROR(p,PFM_ERR_VCAP2);
+//						else
+//							_CLEAR_ERROR(p,PFM_ERR_VCAP2);
 					}
 #else
 #endif
@@ -407,13 +407,13 @@ static		int		bounce=0;
 //-------------------------------------------------------------------------------
 						if(_STATUS(p,PFM_STAT_SIMM1) && abs(ADC3_buf[0].HV - ADC1_simmer.U) < ADC3_buf[0].HV/8)
 							_SET_ERROR(p,PFM_ERR_SIMM1);
-						else
-							_CLEAR_ERROR(p,PFM_ERR_SIMM1);
+//						else
+//							_CLEAR_ERROR(p,PFM_ERR_SIMM1);
 //-------------------------------------------------------------------------------
 						if(_STATUS(p,PFM_STAT_SIMM2) && abs(ADC3_buf[0].HV - ADC2_simmer.U) < ADC3_buf[0].HV/8)
 							_SET_ERROR(p,PFM_ERR_SIMM2);
-						else
-							_CLEAR_ERROR(p,PFM_ERR_SIMM2);
+//						else
+//							_CLEAR_ERROR(p,PFM_ERR_SIMM2);
 					}
 //-------------------------------------------------------------------------------
 					if(p->Simmer.timeout && __time__ >= p->Simmer.timeout) {	
@@ -463,7 +463,7 @@ static
 						else {																					// 100 ms charger6 scan, stop when i2c comms error !
 int						i=_STATUS_WORD;
 							if(readI2C(__charger6,(char *)&i,2))					// add status word >> error status. byte 3
-								p->Error = (p->Error & ((1<<24)-1)) | ((i & 0xff)<<24);
+								p->Error = ((p->Error & ((1<<24)-1)) | ((i & 0xff)<<24)) & ~pfm->Errmask;
 						}
 					} 
 //-------------------------------------------------------------------------------						

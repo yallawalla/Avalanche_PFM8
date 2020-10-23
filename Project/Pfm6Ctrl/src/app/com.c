@@ -326,13 +326,13 @@ int			DecodePlus(char *c) {
 				case 'i':
 					switch(strscan(++c,cc,',')) {
 						case 0:
-							Initialize_I2C(__charger6, 0x58, 50000);
+							__charger6=Initialize_I2C(NULL, 0x58,50000);
 						break;
 						case 1:
-							Initialize_I2C(__charger6, getHEX(cc[0],2), 0);
+							__charger6=Initialize_I2C(NULL, getHEX(cc[0],2), 50000);
 						break;
 						case 2:
-							Initialize_I2C(__charger6, getHEX(cc[0],2),atoi(cc[1]));
+							__charger6=Initialize_I2C(NULL, getHEX(cc[0],2),atoi(cc[1]));
 						break;
 					}
 					break;

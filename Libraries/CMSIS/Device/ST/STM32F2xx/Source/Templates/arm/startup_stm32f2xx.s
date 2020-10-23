@@ -191,9 +191,9 @@ NMI_Handler     PROC
                 EXPORT  NMI_Handler                [WEAK]
                 B       .
                 ENDP
-HardFault_Handler\
+__HardFault_Handler\
                 PROC
-                EXPORT  HardFault_Handler          [WEAK]
+                EXPORT  __HardFault_Handler          [WEAK]
                 B       .
                 ENDP
 MemManage_Handler\
@@ -427,6 +427,17 @@ __user_initial_stackheap
 
                  ENDIF
 
-                 END
+
+				IMPORT  	hard_fault_handler_c
+HardFault_Handler			PROC
+				TST LR, #4
+				ITE EQ
+				MRSEQ R0, MSP
+				MRSNE R0, PSP
+				B hard_fault_handler_c
+                ENDP
+				EXPORT		HardFault_Handler
+
+                END
 
 ;************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE*****
