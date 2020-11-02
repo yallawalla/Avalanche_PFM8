@@ -451,13 +451,14 @@ PFM				*p=proc->arg;
 static
 	int			ton=1500,					// _PFC_ON command delay
 					toff=1000,				// _PFC_OFF command delay
-					terr=0,						// shutdown repetition timer
-					tpoll=10000;			// 10Hz pfc status polling timer
+					terr=500,					// shutdown repetition timer
+					tpoll=100;				// 10Hz pfc status polling timer
 //-------------------------------------------------------------------------------
 // status polling context
 //
-					if(__time__ >= tpoll) {
-						tpoll = __time__ + 100;
+					if(__time__ > tpoll) {
+						while(tpoll <= __time__)
+							tpoll += 100;
 						if(_ERROR(p,PFM_I2C_ERR))
 							_CLEAR_ERROR(p,PFM_I2C_ERR);									// clear any previous i2c error 
 						else {																					// 100 ms charger6 scan, stop when i2c comms error !
@@ -470,21 +471,20 @@ int						i=_STATUS_WORD;
 //	critical PFM error handling
 //
 					if(p->Error  & ~pfm->Errmask  & _CRITICAL_ERR_MASK) {
-						if(p->Simmer.active)	{													// on error = simmer off
+						if(p->Simmer.active)														// on error = simmer off
 							PFM_command(p,0);
-							}
-						if(!terr--) {																		// elapsed ?
+						if(__time__ > terr) {																		// elapsed ?
 							int i=_PFC_OFF;																// PFC off
 							writeI2C(__charger6,(char *)&i,2);	
 							ADC_ITConfig(ADC3,ADC_IT_AWD,DISABLE);	
-							terr=500;																			// nest handler delay
 							ton=300;																			// recovery delay
+							while(terr <= __time__)
+								terr += 500;																	// next handler delay
 							_RED2(100);																		// indicator !!!
 						}
 						return;
 					}
 //-------------------------------------------------------------------------------
-					terr=0;																						// clear pending handler
 					if(p->Error)																			// non crirical error indicator
 						_RED2(100);
 //-------------------------------------------------------------------------------
