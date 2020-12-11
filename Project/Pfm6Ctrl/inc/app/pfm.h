@@ -27,7 +27,7 @@
 #if		defined		(__PFM6__)
 	#define 				SW_version	402		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	705
+	#define 				SW_version	704
 #else
 *** error, define HW platform
 #endif
@@ -247,8 +247,7 @@ typedef struct	{	unsigned short			IgbtT[4],HV2,HV,Up12,Up5,Up3,VCAP1,VCAP2;			} 
 
 typedef struct	{	unsigned short			U,I;								} _ADCDMA;
 typedef struct	{	unsigned short			DAC2,DAC1;					} _DACDMA;
-typedef struct	{	unsigned short			ntx,nrx;
-									unsigned int				addr,speed;
+typedef struct	{	unsigned short			addr,speed,ntx,nrx;
 									unsigned char				txbuf[4],rxbuf[4];	} _i2c;
 typedef struct	{					 short			q0,q1,q2,q3,qref;		}	_QSHAPE;
 typedef struct	{					 short			T,U;								}	_USER_SHAPE;

@@ -20,82 +20,59 @@ struct tetris {
         char data[5][5];
         int w;
         int h;
+				int color; 
     } current;
     int x;
     int y;
 };
 
-//struct tetris_block blocks[] =
-//{
-//    {{"\xdf\xdf", 
-//      "\xdf\xdf"},
-//    2, 2, 33
-//    },
-//    {{" \xdf ",
-//      "\xdf\xdf\xdf"},
-//    3, 2, 35
-//    },
-//    {{"\xdf\xdf\xdf\xdf"},
-//        4, 1, 34},
-//    {{"\xdf\xdf",
-//         "\xdf ",
-//         "\xdf "},
-//    2, 3, 35},
-//    {{"\xdf\xdf",
-//         " \xdf",
-//         " \xdf"},
-//    2, 3, 36},
-//    {{"\xdf\xdf ",
-//         " \xdf\xdf"},
-//    3, 2, 32}
-//};
-
-//struct tetris_block blocks[] =
-//{
-//    {{"##", 
-//         "##"},
-//    2, 2
-//    },
-//    {{" X ",
-//         "XXX"},
-//    3, 2
-//    },
-//    {{"@@@@"},
-//        4, 1},
-//    {{"OO",
-//         "O ",
-//         "O "},
-//    2, 3},
-//    {{"&&",
-//         " &",
-//         " &"},
-//    2, 3},
-//    {{"ZZ ",
-//         " ZZ"},
-//    3, 2}
-//};
 struct tetris_block blocks[] =
 {
-    {{"\x29\x29", 
-      "\x29\x29"},
+    {{"\xdf\xdf", 
+      "\xdf\xdf"},
+    2, 2, 33
+    },
+    {{" \xdf ",
+      "\xdf\xdf\xdf"},
+    3, 2, 35
+    },
+    {{"\xdf\xdf\xdf\xdf"},
+        4, 1, 34},
+    {{"\xdf\xdf",
+         "\xdf ",
+         "\xdf "},
+    2, 3, 35},
+    {{"\xdf\xdf",
+         " \xdf",
+         " \xdf"},
+    2, 3, 36},
+    {{"\xdf\xdf ",
+         " \xdf\xdf"},
+    3, 2, 32}
+};
+
+struct tetris_block blockss[] =
+{
+    {{"##", 
+         "##"},
     2, 2
     },
-    {{" \x2a ",
-      "\x2a\x2a\x2a"},
+    {{" X ",
+         "XXX"},
     3, 2
     },
-    {{"\x2b\x2b\x2b\x2b"},
-    4, 1},
-    {{"\x2c\x2c",
-      "\x2c ",
-      "\x2c "},
+    {{"@@@@"},
+        4, 1},
+    {{"OO",
+         "O ",
+         "O "},
     2, 3},
-    {{"\x2d\x2d",
-      " \x2d",
-      " \x2d"},
+    {{"&&",
+         " &",
+         " &"},
     2, 3},
-    {{"\x2e\x2e ",
-      " \x2e\x2e"},
+    {{"ZZ ",
+         " ZZ"},
     3, 2}
 };
 
@@ -119,8 +96,12 @@ struct tetris_level levels[]=
 
 #define TETRIS_PIECES (sizeof(blocks)/sizeof(struct tetris_block))
 #define TETRIS_LEVELS (sizeof(levels)/sizeof(struct tetris_level))
+
+//struct termios save;
+
 void
 tetris_cleanup_io() {
+//    tcsetattr(fileno(stdin),TCSANOW,&save);
 }
 
 void
@@ -130,6 +111,13 @@ tetris_signal_quit(int s) {
 
 void
 tetris_set_ioconfig() {
+//    struct termios custom;
+//    int fd=fileno(stdin);
+//    tcgetattr(fd, &save);
+//    custom=save;
+//    custom.c_lflag &= ~(ICANON|ECHO);
+//    tcsetattr(fd,TCSANOW,&custom);
+//    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0)|O_NONBLOCK);
 }
 
 void
@@ -161,26 +149,29 @@ void
 tetris_print(struct tetris *t) {
     int x,y;
     __print("%c[H",0x1b);
-    __print("[LEVEL: %d | SCORE: %d]\r\n ", t->level, t->score);
-    for (x=1; x<2*t->w+1; x++)
-        __print("_");
+    __print("[LEVEL: %d | SCORE: %d]\r\n", t->level, t->score);
+    for (x=0; x<2*t->w+2; x++)
+        __print("~");
     __print("\r\n");
     for (y=0; y<t->h; y++) {
-        __print ("|");
+        __print ("!");
         for (x=0; x<t->w; x++) {
             if (x>=t->x && y>=t->y 
                     && x<(t->x+t->current.w) && y<(t->y+t->current.h) 
-                    && t->current.data[y-t->y][x-t->x] != ' ')
-							__print("\033[%dm  \033[m", t->current.data[y-t->y][x-t->x]);
-						else
-							__print("\033[%dm  \033[m", t->game[x][y]);
+                    && t->current.data[y-t->y][x-t->x]!=' ')
+							{
+                __print("%c ", t->current.data[y-t->y][x-t->x]);
+							}
+            else
+						{
+               __print("%c ", t->game[x][y]);
+						}
         }
-        __print ("|\r\n");
+        __print ("!\r\n");
     }
-		__print ("|");
-    for (x=1; x<2*t->w+1; x++)
-        __print("_");
-    __print("|\r\n");
+    for (x=0; x<2*t->w+2; x++)
+        __print("~");
+    __print("\r\n");
 }
 
 void
@@ -308,44 +299,44 @@ void tetris_run(int w, int h) {
 
     tetris_new_block(&t);
     while (!t.gameover) {
-			_wait(10,_proc_loop);
-			if (count%50 == 0) {
-				tetris_gravity(&t);
-				tetris_check_lines(&t);
-				tetris_print(&t);
-			}
-			count++;
-			switch (getchar()) {
-				case 'D':
-						count=0;
-						t.x--;
-						if (tetris_hittest(&t))
-								t.x++;
-						break;
-				case 'C':
-						count=0;
-						t.x++;
-						if (tetris_hittest(&t))
-								t.x--;
-						break;
-				case ' ':
-						do
-							t.y++;
-						while(tetris_hittest(&t)==0);
-						t.y--;
-						tetris_print_block(&t);
-						count=0;
-						break;
-				case 'B':
-						count=0;
-						tetris_gravity(&t);
-						break;
-				case 'A':
-						count=0;
-						tetris_rotate(&t);
-						break;
-			
-			}
+				_wait(10,_proc_loop);
+        if (count%50 == 0) {
+					tetris_gravity(&t);
+          tetris_check_lines(&t);
+					tetris_print(&t);
+        }
+        count++;
+            switch (getchar()) {
+                case 'D':
+										count=0;
+                    t.x--;
+                    if (tetris_hittest(&t))
+                        t.x++;
+                    break;
+                case 'C':
+										count=0;
+                    t.x++;
+                    if (tetris_hittest(&t))
+                        t.x--;
+                    break;
+                case ' ':
+										do
+											t.y++;
+										while(tetris_hittest(&t)==0);
+										t.y--;
+										tetris_print_block(&t);
+										count=0;
+										break;
+                case 'B':
+										count=0;
+                    tetris_gravity(&t);
+                    break;
+                case 'A':
+										count=0;
+                    tetris_rotate(&t);
+                    break;
+				
+            }
     }
 
     tetris_print(&t);

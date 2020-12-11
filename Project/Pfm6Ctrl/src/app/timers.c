@@ -353,8 +353,7 @@ void 		*Initialize_F2V(_proc *p) {
 //		if(pfm->Error & ~pfm->Errmask & _CRITICAL_ERR_MASK)
 		if(pfm->Error & ~pfm->Errmask) {
 			GPIO_SetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);
-//			PFM_command(pfm,0);
-			_DISABLE_PWM_OUT();
+			PFM_command(pfm,0);
 		}	else
 			GPIO_ResetBits(_ERROR_OW_PORT,_ERROR_OW_BIT);
 	}
@@ -649,12 +648,14 @@ void		Trigger(PFM *p) {
 					if(p->Trigger.enotify) {																// only when energymeter present (ini setup)
 						int tout=__time__ + 5;																// set timeout
 						CanTxMsg tx = {_ID_SYS_TRIGG,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
+						_YELLOW1(50);
 						while(CAN_TransmitStatus(__CAN__, 0) == CAN_TxStatus_Pending &&
 							CAN_TransmitStatus(__CAN__, 1) == CAN_TxStatus_Pending &&
 								CAN_TransmitStatus(__CAN__, 2) == CAN_TxStatus_Pending) {
 									_proc_loop();																		// wait for transmitter free
 									if(__time__ > tout) {														// if timeout exc.
 										p->Trigger.enotify=0;													// exclude energymeter
+										_YELLOW1(5000);
 										break;																				// and proceed...
 									}
 								}

@@ -1315,11 +1315,6 @@
               <FilePath>..\src\readme.txt</FilePath>
             </File>
             <File>
-              <FileName>tetris.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\tetris\tetris.c</FilePath>
-            </File>
-            <File>
               <FileName>__DISC746.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC746.lib</FilePath>
@@ -1366,6 +1361,11 @@
                 </CommonProperty>
                 <FileArmAds/>
               </FileOption>
+            </File>
+            <File>
+              <FileName>tetris.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\tetris\tetris.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -2680,11 +2680,6 @@
               <FilePath>..\src\readme.txt</FilePath>
             </File>
             <File>
-              <FileName>tetris.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\tetris\tetris.c</FilePath>
-            </File>
-            <File>
               <FileName>__DISC746.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC746.lib</FilePath>
@@ -2731,6 +2726,11 @@
                 </CommonProperty>
                 <FileArmAds/>
               </FileOption>
+            </File>
+            <File>
+              <FileName>tetris.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\tetris\tetris.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -4630,11 +4630,6 @@
               <FilePath>..\src\readme.txt</FilePath>
             </File>
             <File>
-              <FileName>tetris.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\tetris\tetris.c</FilePath>
-            </File>
-            <File>
               <FileName>__DISC746.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC746.lib</FilePath>
@@ -4662,6 +4657,11 @@
               <FileName>__DISC769.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC769.lib</FilePath>
+            </File>
+            <File>
+              <FileName>tetris.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\tetris\tetris.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -5976,11 +5976,6 @@
               <FilePath>..\src\readme.txt</FilePath>
             </File>
             <File>
-              <FileName>tetris.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\tetris\tetris.c</FilePath>
-            </File>
-            <File>
               <FileName>__DISC746.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC746.lib</FilePath>
@@ -6027,6 +6022,11 @@
                 </CommonProperty>
                 <FileArmAds/>
               </FileOption>
+            </File>
+            <File>
+              <FileName>tetris.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\tetris\tetris.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -7926,11 +7926,6 @@
               <FilePath>..\src\readme.txt</FilePath>
             </File>
             <File>
-              <FileName>tetris.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\tetris\tetris.c</FilePath>
-            </File>
-            <File>
               <FileName>__DISC746.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC746.lib</FilePath>
@@ -7939,6 +7934,11 @@
               <FileName>__DISC769.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC769.lib</FilePath>
+            </File>
+            <File>
+              <FileName>tetris.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\tetris\tetris.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -9253,11 +9253,6 @@
               <FilePath>..\src\readme.txt</FilePath>
             </File>
             <File>
-              <FileName>tetris.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\tetris\tetris.c</FilePath>
-            </File>
-            <File>
               <FileName>__DISC746.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC746.lib</FilePath>
@@ -9304,6 +9299,11 @@
                 </CommonProperty>
                 <FileArmAds/>
               </FileOption>
+            </File>
+            <File>
+              <FileName>tetris.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\tetris\tetris.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -11203,11 +11203,6 @@
               <FilePath>..\src\readme.txt</FilePath>
             </File>
             <File>
-              <FileName>tetris.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\tetris\tetris.c</FilePath>
-            </File>
-            <File>
               <FileName>__DISC746.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC746.lib</FilePath>
@@ -11235,6 +11230,11 @@
                 </CommonProperty>
                 <FileArmAds/>
               </FileOption>
+            </File>
+            <File>
+              <FileName>tetris.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\tetris\tetris.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -13134,11 +13134,6 @@
               <FilePath>..\src\readme.txt</FilePath>
             </File>
             <File>
-              <FileName>tetris.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\tetris\tetris.c</FilePath>
-            </File>
-            <File>
               <FileName>__DISC746.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC746.lib</FilePath>
@@ -13166,6 +13161,11 @@
               <FileName>__DISC769.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\..\..\..\F7lib\MDK-ARM\output\__DISC769.lib</FilePath>
+            </File>
+            <File>
+              <FileName>tetris.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\tetris\tetris.c</FilePath>
             </File>
           </Files>
         </Group>
