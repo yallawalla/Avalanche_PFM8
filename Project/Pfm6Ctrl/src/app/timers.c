@@ -120,6 +120,8 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
 		GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
 
+		GPIO_InitStructure.GPIO_Pin = _FAULT_OC_BIT;		
+		GPIO_Init(_FAULT_OC_PORT, &GPIO_InitStructure);
 		GPIO_InitStructure.GPIO_Pin = _FAULT_BIT;		
 		GPIO_Init(_FAULT_PORT, &GPIO_InitStructure);
 		GPIO_InitStructure.GPIO_Pin = _IGBT_READY_BIT;						
@@ -394,10 +396,15 @@ void 		__EXTI_IRQHandler(void)
 
 				if(EXTI_GetITStatus(_FAULT_INT_line) == SET) { 						// IGBT FAULT					
 					EXTI_ClearITPendingBit(_FAULT_INT_line);								// clear flag
-#ifndef __PFM8__
+#ifdef __PFM8__
+				if(GPIO_ReadInputDataBit(_FAULT_OC_PORT, _FAULT_OC_BIT)== Bit_RESET)
+					_SET_ERROR(pfm,PFM_ERR_DRVERR0);
+				else
+					_SET_ERROR(pfm,PFM_ERR_DRVERR1);
+#else
 					if(_PFM_CWBAR)
-#endif
 						_SET_ERROR(pfm,PFM_ERR_DRVERR);
+#endif
 				}
 }
 /*******************************************************************************/

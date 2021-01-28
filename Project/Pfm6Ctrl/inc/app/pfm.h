@@ -27,7 +27,7 @@
 #if		defined		(__PFM6__)
 	#define 				SW_version	402		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	705
+	#define 				SW_version	706
 #else
 *** error, define HW platform
 #endif
@@ -161,13 +161,13 @@ typedef					enum
 #define 				PFM_ERR_UB  							0x0004					// can message 0x73, _PFM_SetHVmode error, charger not responding
 #define 				PFM_ERR_LNG 							0x0008					// flash tube idle voltage error
 #define 				PFM_ERR_TEMP							0x0010					// IGBT overheat
-#define 				PFM_ERR_DRVERR						0x0020					// dasaturation protection active
+#define 				PFM_ERR_DRVERR1						0x0020					// desaturation protection active
 #define 				PFM_SCRFIRED  						0x0040					// IGBT not ready, pfm8
 #define 				PFM_ERR_PULSEENABLE				0x0080					// crowbar
 #define 				PFM_ERR_PSRDYN						0x0100					// pwm threshold error
 #define 				PFM_ERR_48V  							0x0200					// 20V igbt supply error
 #define 				PFM_ERR_15V 							0x0400					// -5V igbt supply error
-
+#define 				PFM_ERR_DRVERR0						0x0800					// OCP50A protection active
 #define					PFM_ADCWDG_ERR						0x1000					// adc watchdog fired
 #define					PFM_FAN_ERR								0x2000					// igbt fan error
 #define					PFM_HV2_ERR								0x4000					// center cap voltaghe out of range
@@ -613,6 +613,8 @@ int			SetChargerVoltage(int);
 #define _FAULT_INT_line		EXTI_Line8
 #define _IGBT_READY_BIT 	GPIO_Pin_2
 #define _IGBT_READY_PORT 	GPIOE
+#define _FAULT_OC_BIT			GPIO_Pin_7
+#define _FAULT_OC_PORT		GPIOE
 #define _IGBT_RESET_BIT 	GPIO_Pin_3
 #define _IGBT_RESET_PORT 	GPIOE
 
@@ -718,7 +720,7 @@ int			SetChargerVoltage(int);
 								GPIO_SetBits(_TRIGGER2_PORT,_TRIGGER2_BIT);		  	\
 							} while(0)
 
-#define	_CRITICAL_ERR_MASK		(PFM_ERR_DRVERR | PFM_ERR_PULSEENABLE | PFM_ADCWDG_ERR |							\
+#define	_CRITICAL_ERR_MASK		(PFM_ERR_DRVERR0 | PFM_ERR_DRVERR1 | PFM_ERR_PULSEENABLE | PFM_ADCWDG_ERR |							\
 																PFM_ERR_PSRDYN | PFM_ERR_LNG | PFM_HV2_ERR | 												\
 																	PFM_I2C_ERR | PFM_ERR_VCAP1 | PFM_ERR_VCAP2 | PFM_ERR_VIN)
 							
