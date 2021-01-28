@@ -24,7 +24,7 @@ const char *_errStr[]={
 					"illegal parameter",
 					"illegal flash idle voltage",
 					"IGBT overheat",
-					"IGBT fault",
+					"IGBT fault DESAT",
 					"IGBT not ready",
 					"Crowbar fired",
 					"PWM overrange",
@@ -38,7 +38,7 @@ const char *_errStr[]={
 					"unspecified....",
 					"unspecified....",
 #endif
-					"(800)...unspecified ",
+					"IGBT fault OCP50A",
 					"HV out of range",
 					"IGBT fan error",
 					"HV mid voltage out of range",
