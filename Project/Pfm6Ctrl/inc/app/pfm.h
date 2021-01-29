@@ -27,7 +27,7 @@
 #if		defined		(__PFM6__)
 	#define 				SW_version	402		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	706
+	#define 				SW_version	707
 #else
 *** error, define HW platform
 #endif
@@ -606,6 +606,7 @@ void		SectorQuery(void);
 int 		Defragment(int);
 int			SetChargerVoltage(int);
 
+
 #define _FAULT_BIT				GPIO_Pin_8
 #define _FAULT_PORT				GPIOE
 #define _FAULT_INT_port 	EXTI_PortSourceGPIOE
@@ -618,6 +619,8 @@ int			SetChargerVoltage(int);
 #define _IGBT_RESET_BIT 	GPIO_Pin_3
 #define _IGBT_RESET_PORT 	GPIOE
 
+#define _IGBT_READY				(GPIO_ReadInputDataBit(_IGBT_READY_PORT,_IGBT_READY_BIT)== Bit_SET)				        		        
+#define _IGBT_OC_FAULT		(GPIO_ReadInputDataBit(_FAULT_OC_PORT, _FAULT_OC_BIT)== Bit_RESET)				        		        
 #define _USB_SENSE_BIT 		GPIO_Pin_10
 #define _USB_SENSE_PORT	 	GPIOD
 //_________________________________________________________________________________
@@ -683,7 +686,6 @@ int			SetChargerVoltage(int);
 #define _VBUS_PORT GPIOC
 #endif
 
-#define _IGBT_READY		(GPIO_ReadInputDataBit(_IGBT_READY_PORT,_IGBT_READY_BIT)== Bit_SET)				        		        
 #ifdef __PFM8__
 	#define	_PFM_CWBAR		(GPIO_ReadInputDataBit(_CWBAR_PORT, _CWBAR_BIT)== Bit_SET)
 #else

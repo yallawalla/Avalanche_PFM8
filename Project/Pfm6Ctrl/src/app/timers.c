@@ -396,10 +396,8 @@ void 		__EXTI_IRQHandler(void)
 				if(EXTI_GetITStatus(_FAULT_INT_line) == SET) { 						// IGBT FAULT					
 					EXTI_ClearITPendingBit(_FAULT_INT_line);								// clear flag
 #ifdef __PFM8__
-				if(GPIO_ReadInputDataBit(_FAULT_OC_PORT, _FAULT_OC_BIT)== Bit_RESET)
-					_SET_ERROR(pfm,PFM_ERR_DRVERR0);
-				else
-					_SET_ERROR(pfm,PFM_ERR_DRVERR1);
+					if(!_IGBT_OC_FAULT && !_TRIGGER1 && !_TRIGGER2)
+						_SET_ERROR(pfm,PFM_ERR_DRVERR1);
 #else
 					if(_PFM_CWBAR)
 						_SET_ERROR(pfm,PFM_ERR_DRVERR);

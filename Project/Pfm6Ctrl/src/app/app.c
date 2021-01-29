@@ -362,8 +362,11 @@ static		int		bounce=0;
 						_SET_ERROR(p,PFM_ERR_15V);
 //					else
 //						_CLEAR_ERROR(p,PFM_ERR_15V);
+					
+					if(_IGBT_OC_FAULT)
+						_SET_ERROR(pfm,PFM_ERR_DRVERR0);
 						
-					if(!_IGBT_READY)
+					if(!_IGBT_READY && !_TRIGGER1 && !_TRIGGER2)
 						_SET_ERROR(p,PFM_SCRFIRED);		
 //					else
 //						_CLEAR_ERROR(p,PFM_SCRFIRED);
