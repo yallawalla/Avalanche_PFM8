@@ -400,7 +400,7 @@ void 		__EXTI_IRQHandler(void)
 						_SET_ERROR(pfm,PFM_ERR_DRVERR1);
 #else
 					if(_PFM_CWBAR)
-						_SET_ERROR(pfm,PFM_ERR_DRVERR);
+						_SET_ERROR(pfm,PFM_ERR_DRVERR1);
 #endif
 				}
 }
