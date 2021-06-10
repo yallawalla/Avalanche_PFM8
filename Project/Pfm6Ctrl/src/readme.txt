@@ -791,8 +791,17 @@ v 6.01 Oct 17 2018, <A969CFE7>
 jeba s TIM4, QSwitch !!! popravljena...
 v 6.01 Oct 19 2018, <61AB4C87>
 
-8.11.2918
+8.11.2018
 v 6.02 Nov  8 2018, <24350F3F>
 - še ena s TIM4, iz Starwalker, lažni pockels ob nastavitvi..
 - start pockelsa premaknjen za 10u... ostalo od nekega poizkušanja, "moti" pri VERDE
 - odpravljen bug pri konzolni nastavitvi bursta s stirimi parametri... izpadlo pri popravljanju joint moda !!!
+
+29.01.2021
+image v 7.07 Jan 29 2021, <DFC10E50>
+
+10.06.2021
+spr. error 800, blokiran med burstom !!!
+v 7.08 Jun 10 2021, <634C13E9>
+
+

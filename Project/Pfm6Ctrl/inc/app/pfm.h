@@ -27,7 +27,7 @@
 #if		defined		(__PFM6__)
 	#define 				SW_version	402		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	707
+	#define 				SW_version	708
 #else
 *** error, define HW platform
 #endif
