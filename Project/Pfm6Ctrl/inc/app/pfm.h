@@ -27,7 +27,7 @@
 #if		defined		(__PFM6__)
 	#define 				SW_version	402		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	708
+	#define 				SW_version	709
 #else
 *** error, define HW platform
 #endif
@@ -693,7 +693,7 @@ int			SetChargerVoltage(int);
 #endif
 
 #define	_IGBT_RESET		{ int i; 																							\
-												for(i=0; i<10; ++i)		 															\
+												for(i=0; i<30; ++i)		 															\
 													GPIO_ResetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT); \
 											}																											\
 											GPIO_SetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT);				
