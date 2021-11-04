@@ -386,6 +386,7 @@ void 		__EXTI_IRQHandler(void)
 							_SET_STATUS(pfm,_PFM_CWBAR_STAT);
 							_CLEAR_ERROR(pfm, _CRITICAL_ERR_MASK);
 							_ENABLE_PWM_OUT();
+							_IGBT_RESET;
 						}	else {																							// falling edge, crowbar fired error
 							_CLEAR_STATUS(pfm,_PFM_CWBAR_STAT);
 							_SET_ERROR(pfm,PFM_ERR_PULSEENABLE);

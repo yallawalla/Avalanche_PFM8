@@ -27,7 +27,7 @@
 #if		defined		(__PFM6__)
 	#define 				SW_version	402		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	709
+	#define 				SW_version	710
 #else
 *** error, define HW platform
 #endif
@@ -692,11 +692,15 @@ int			SetChargerVoltage(int);
 	#define	_PFM_CWBAR		(GPIO_ReadInputDataBit(_CWBAR_PORT, _CWBAR_BIT)== Bit_RESET)
 #endif
 
+#ifdef __PFM8__
+#define	_IGBT_RESET_L		GPIO_ResetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT)
+#define	_IGBT_RESET_H		GPIO_SetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT)
 #define	_IGBT_RESET		{ int i; 																							\
-												for(i=0; i<30; ++i)		 															\
+												for(i=0; i<60; ++i)		 															\
 													GPIO_ResetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT); \
 											}																											\
 											GPIO_SetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT);				
+#endif
 
 #define _TRIGGER1			(!GPIO_ReadOutputDataBit(_TRIGGER1_PORT,_TRIGGER1_BIT))				        
 #define _TRIGGER1_ON	do {															\
@@ -838,7 +842,6 @@ static __inline void	_ENABLE_PWM_OUT(void) {
 			GPIOA->MODER |= ((2<<(2*0))  | (2<<(2*1)));																						//tim2,	PA 0,1
 			GPIOB->MODER |= ((2<<(2*10)) | (2<<(2*11)));																					//PB 8,9
 			GPIOD->MODER |= ((2<<(2*12)) | (2<<(2*13)) | (2<<(2*14)) | ((uint32_t)2<<(2*15)));		//tim4	PD 12,13,14,15
-			_IGBT_RESET;
 #endif
 }
 /*******************************************************************************/

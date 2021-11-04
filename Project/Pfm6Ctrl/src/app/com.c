@@ -112,6 +112,7 @@ int			DecodeMinus(char *c) {
 					_SET_STATUS(pfm,_PFM_CWBAR_STAT);
 					_CLEAR_ERROR(pfm,EOF);
 					_ENABLE_PWM_OUT();
+					_IGBT_RESET;
 					PFM_debug(NULL);
 				break;
 //__________________________________________________boot disable____________

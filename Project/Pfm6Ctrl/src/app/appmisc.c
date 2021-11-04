@@ -368,6 +368,7 @@ int		simmrate;
 			while((TIM1->CR1 & TIM_CR1_DIR));
 			_TIMERS_HALT();
 			_DISABLE_PWM_OUT();
+			_IGBT_RESET_L;
 			__enable_irq();
 			if(type == _SIMMER_HIGH) {
 				_TIMERS_RESYNC(p,simmrate);
@@ -391,7 +392,10 @@ int		simmrate;
 				_CLEAR_MODE(pfm,_PULSE_INPROC);
 			}
 			TIM_Cmd(TIM1,ENABLE);
-			_ENABLE_PWM_OUT();
+			if(!(pfm->Error & ~pfm->Errmask & _CRITICAL_ERR_MASK)) {
+				_ENABLE_PWM_OUT();
+				_IGBT_RESET_H;
+			}
 }
 /*******************************************************************************/
 int		fanPmin=20;
