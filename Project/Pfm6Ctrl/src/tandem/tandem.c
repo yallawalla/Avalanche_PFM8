@@ -34,10 +34,10 @@ static		int		nPack=0, tPack=1000, packTimeout=0;
 static		
 	void		LoadSettings() {
 FIL				f;
-FATFS			fs;
-UINT			bw;
-					if(f_chdrive(FS_CPU) == FR_OK &&
-						f_mount(&fs,FS_CPU,1) == FR_OK && 
+//FATFS			fs;
+uint32_t	bw;
+					if(/*f_chdrive(FS_CPU) == FR_OK &&
+						f_mount(&fs,FS_CPU,1) == FR_OK && */
 						f_open(&f,"/tandem1.bin",FA_READ) == FR_OK) {
 							f_read(&f,pfm->burst,2*sizeof(burst),&bw);
 							f_read(&f,&triggerMode,sizeof(triggerMode),&bw);
@@ -50,10 +50,10 @@ UINT			bw;
 static		
 	void		SaveSettings() {
 FIL				f;
-UINT			bw;
-					if(f_chdrive(FS_CPU) == FR_OK &&
-						f_mount(pfm->fatfs,FS_CPU,1) == FR_OK && 
-							f_open(&f,"/tandem1.bin",FA_WRITE | FA_OPEN_ALWAYS) == FR_OK) {
+uint32_t	bw;
+					if(/*f_chdrive(FS_CPU) == FR_OK &&
+						f_mount(pfm->fatfs,FS_CPU,1) == FR_OK &&*/
+							f_open(&f,"/tandem1.bin",FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
 								f_write(&f,pfm->burst,2*sizeof(burst),&bw);
 								f_write(&f,&triggerMode,sizeof(triggerMode),&bw);
 								f_write(&f,&nPack,sizeof(int),&bw);

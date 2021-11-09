@@ -1140,29 +1140,36 @@ void			PFM_command(PFM *p, int n) {
 						if(!_MODE(p,_CHANNEL1_DISABLE)) {																// if not Erbium  single channel
 int						u=p->HV/7;
 							if(_MODE(p,_CH1_SINGLE_TRIGGER))															// single trigger config.. as from V1.11
-								u=2*p->HV/7;
-#ifdef __PFM8__
-							u=_HV2AD(50);
-#endif
+								u*=2;
 							_TIM.I1off=ADC1_simmer.I;																			// get current sensor offset
 							_TIM.U1off=ADC1_simmer.U;																			// check idle voltage
-							if(abs(u - _AVG3*ADC1_simmer.U) > _HV2AD(50)) {								// HV +/- 50 range ???
+#ifdef __PFM8__
+							u=_HV2AD(100);
+							if(abs(u - _AVG3*ADC1_simmer.U) > _HV2AD(100)) {							// 0-200V range ???
 								_SET_ERROR(p,PFM_ERR_LNG);																	// if not, PFM_STAT_UBHIGH error 
 							}
+#else
+							if(abs(u - _AVG3*ADC1_simmer.U) > _HV2AD(50)) {								// HV/7 +/- 50 range ???
+								_SET_ERROR(p,PFM_ERR_LNG);																	// if not, PFM_STAT_UBHIGH error 
+							}
+#endif
 						}
-
 						if(!_MODE(p,_CHANNEL2_DISABLE)) {																// same for NdYAG channel
 int						u=p->HV/7;
 							if(_MODE(p,_CH2_SINGLE_TRIGGER))															// single trigger config.. as from V1.11
-								u=2*p->HV/7;
-#ifdef __PFM8__
-							u=_HV2AD(50);
-#endif
+								u*=2;
 							_TIM.I2off=ADC2_simmer.I;
 							_TIM.U2off=ADC2_simmer.U;
+#ifdef __PFM8__
+							u=_HV2AD(100);
+							if(abs(u - _AVG3*ADC2_simmer.U) > _HV2AD(100)) {
+								_SET_ERROR(p,PFM_ERR_LNG);
+							}
+#else
 							if(abs(u - _AVG3*ADC2_simmer.U) > _HV2AD(50)) {
 								_SET_ERROR(p,PFM_ERR_LNG);
 							}
+#endif
 						}
 					}
 //__________________________________________________________________________________________________________

@@ -804,4 +804,18 @@ image v 7.07 Jan 29 2021, <DFC10E50>
 spr. error 800, blokiran med burstom !!!
 v 7.08 Jun 10 2021, <634C13E9>
 
+9.11.2021
+Maretov cfg
+
+-l d0,d1,d2,d3,,d4,d5,d6,d7
+-l
+
+u 750,500,800
+s 200,200,50
+
+-u h
++m 9,10,15
+-P
++D 2,3
+-E 8
 

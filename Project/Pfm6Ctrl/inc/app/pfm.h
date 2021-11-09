@@ -27,7 +27,7 @@
 #if		defined		(__PFM6__)
 	#define 				SW_version	402		
 #elif 		defined		(__PFM8__)
-	#define 				SW_version	710
+	#define 				SW_version	711
 #else
 *** error, define HW platform
 #endif
@@ -692,15 +692,15 @@ int			SetChargerVoltage(int);
 	#define	_PFM_CWBAR		(GPIO_ReadInputDataBit(_CWBAR_PORT, _CWBAR_BIT)== Bit_RESET)
 #endif
 
-#ifdef __PFM8__
+
 #define	_IGBT_RESET_L		GPIO_ResetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT)
 #define	_IGBT_RESET_H		GPIO_SetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT)
-#define	_IGBT_RESET		{ int i; 																							\
-												for(i=0; i<60; ++i)		 															\
+#define	_IGBT_RESET			{ int i; 																							\
+													for(i=0; i<60; ++i)		 															\
 													GPIO_ResetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT); \
-											}																											\
-											GPIO_SetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT);				
-#endif
+												}																											\
+												GPIO_SetBits(_IGBT_RESET_PORT,_IGBT_RESET_BIT);		
+
 
 #define _TRIGGER1			(!GPIO_ReadOutputDataBit(_TRIGGER1_PORT,_TRIGGER1_BIT))				        
 #define _TRIGGER1_ON	do {															\
