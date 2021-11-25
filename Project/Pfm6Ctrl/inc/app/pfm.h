@@ -270,7 +270,7 @@ extern  struct _TIM {																			// realtime structure, used with timer s
 		eint,eint1,eint2,																			// adc dma length, usec
 		m1,m2,																								// timer repetition rate counter index, DMA table
 		active,																								// active channel
-		cref1,cref2,																					// current loop reference (after 200usec)
+		cref1,cref2,ts,																				// current loop reference (after 200usec)
 		ci1,ci2,																							// current loop gain
 		Hvref,Caps,Icaps;																			// test mode parameters
 

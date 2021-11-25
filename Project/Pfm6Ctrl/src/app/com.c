@@ -1101,12 +1101,13 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 					if(n>2) {
 						pfm->Burst->Period=atoi(cc[2]);
 					}
-					if(n>3) {
+					if(n>3 && atoi(cc[3])>0) {
 						pfm->Trigger.count=atoi(cc[3]);
+						pfm->Trigger.erpt=pfm->Trigger.count-1;
 						_CLEAR_MODE(pfm,_AUTO_TRIGGER);
 					}
 					else
-						pfm->Trigger.count=0;
+						pfm->Trigger.erpt=pfm->Trigger.count=0;
 					SetPwmTab(pfm);
 					break;
 //______________________________________________________________________________________
@@ -1264,21 +1265,22 @@ CanTxMsg	buf={0,0,CAN_ID_STD,CAN_RTR_DATA,0,0,0,0,0,0,0,0,0};
 					break;
 //______________________________________________________________________________________
 				case 't':
-				{
-#if defined (__F2__) || defined (__F4__) 
-					short *t30	=(short *)0x1FFF7A2C;
-					short *t110	=(short *)0x1FFF7A2E;
-#endif
-#ifdef __F7__
-					short *t30	=(short *)0x1FF0F44C ;
-					short *t110	=(short *)0x1FF0F44E;
-#endif
-					ADC_SoftwareStartInjectedConv(ADC1);
-					_wait(2,_proc_loop);
-					__print(" %d, %d",(110-30)*(ADC_GetInjectedConversionValue(ADC1, ADC_InjectedChannel_1) - *t30)/(*t110 - *t30) + 30,
-						(ADC_GetInjectedConversionValue(ADC1, ADC_InjectedChannel_1)*3300/4096-760)*4/10+25
-					);
-				}
+					_TIM.ts=atoi(++c);
+//				{
+//#if defined (__F2__) || defined (__F4__) 
+//					short *t30	=(short *)0x1FFF7A2C;
+//					short *t110	=(short *)0x1FFF7A2E;
+//#endif
+//#ifdef __F7__
+//					short *t30	=(short *)0x1FF0F44C ;
+//					short *t110	=(short *)0x1FF0F44E;
+//#endif
+//					ADC_SoftwareStartInjectedConv(ADC1);
+//					_wait(2,_proc_loop);
+//					__print(" %d, %d",(110-30)*(ADC_GetInjectedConversionValue(ADC1, ADC_InjectedChannel_1) - *t30)/(*t110 - *t30) + 30,
+//						(ADC_GetInjectedConversionValue(ADC1, ADC_InjectedChannel_1)*3300/4096-760)*4/10+25
+//					);
+//				}
 					break;
 //______________________________________________________________________________________
 				case 'f':

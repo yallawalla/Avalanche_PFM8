@@ -292,6 +292,7 @@ EXTI_InitTypeDef   				EXTI_InitStructure;
 		_TIM.Hvref=0;
 		_TIM.Caps=2000;																								// 2000 u
 		_TIM.Icaps=1000;																							// 1A
+		_TIM.ts=200;
 		}
 /*******************************************************************************
 * Function Name  : Initialize_F2V()
@@ -536,7 +537,7 @@ int 		hv,j,k,ki=30,kp=0;
 //					}
 //----- mode 10, current stab. ---------------------------------------------------									
 //
-						if(pfm->burst[0].Time > 200 && _MODE(pfm,_P_LOOP)) {	
+						if(pfm->burst[0].Time > _TIM.ts && _MODE(pfm,_P_LOOP)) {	
 //----- current loop for ch1, if cref1 present !----------------------------------									
 							if(_TIM.cref1 && _TIM.p1->T > pfm->burst[0].Pdelay*2) {
 								int dx=(_TIM.cref1 - ADC1_buf[k-5].U * ADC1_buf[k-5].I)/4096;
@@ -544,7 +545,7 @@ int 		hv,j,k,ki=30,kp=0;
 								x += _TIM.ci1/4096 + dx*kp/4096;
 							}
 //----- calc. cref1 after 200 us for ch1 -----------------------------------------									
-							if(k > 200 + pfm->burst[0].Delay) {
+							if(k > _TIM.ts + pfm->burst[0].Delay) {
 								if(!_TIM.cref1 && _TIM.p1->T > 2*pfm->burst[0].Pdelay) {
 									int n,jU=0,jI=0;
 									for(n=5;n<13;++n)	{
@@ -595,7 +596,7 @@ int 		hv,j,k,ki=30,kp=0;
 //					}
 //----- mode 10, current stab. ---------------------------------------------------									
 //
-						if(pfm->burst[1].Time>200 && _MODE(pfm,_P_LOOP)) {	
+						if(pfm->burst[1].Time > _TIM.ts && _MODE(pfm,_P_LOOP)) {	
 //----- current loop for ch2, if cref2 present !----------------------------------									
 							if(_TIM.cref2 && _TIM.p2->T > pfm->burst[1].Pdelay*2) {
 								int dx=(_TIM.cref2 - ADC2_buf[k-5].U * ADC2_buf[k-5].I)/4096;
@@ -603,7 +604,7 @@ int 		hv,j,k,ki=30,kp=0;
 								y += _TIM.ci2/4096 + dx*kp/4096;
 							}
 //----- calc. cref2 after 200 us for ch2 -----------------------------------------									
-							if(k > 200 + pfm->burst[1].Delay) {
+							if(k > _TIM.ts + pfm->burst[1].Delay) {
 								if(!_TIM.cref2 && _TIM.p2->T > 2*pfm->burst[1].Pdelay) {
 									int n,jU=0,jI=0;
 									for(n=5;n<13;++n)	{
